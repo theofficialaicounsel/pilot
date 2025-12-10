@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Copilot - Code & Document Builder</title>
     <style>
         * {
@@ -25,19 +25,21 @@
 
         html, body {
             width: 100%;
-            height: 100%;
+            min-height: 100%;
             margin: 0;
             padding: 0;
             background: var(--black);
             color: var(--text);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
+            overflow: auto; /* allow page scrolling on mobile */
         }
 
         body {
             display: grid;
             grid-template-columns: 1fr 1fr;
             grid-template-rows: 60px 1fr;
+            gap: 0;
+            min-height: 100vh;
         }
 
         .header {
@@ -48,10 +50,11 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            height: 60px;
         }
 
         .logo {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: bold;
             color: var(--yellow);
             display: flex;
@@ -60,7 +63,7 @@
         }
 
         .logo-icon {
-            font-size: 1.8rem;
+            font-size: 1.5rem;
         }
 
         .header-buttons {
@@ -73,11 +76,15 @@
             color: var(--text);
             border: 1px solid var(--light-gray);
             padding: 8px 16px;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
             font-weight: 500;
-            transition: all 0.3s ease;
+            transition: all 0.18s ease;
             font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
         }
 
         button:hover {
@@ -107,7 +114,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 0;
-            height: 100%;
+            height: calc(100vh - 60px); /* fill remaining viewport */
         }
 
         .left-panel {
@@ -115,16 +122,17 @@
             display: flex;
             flex-direction: column;
             background: var(--black);
+            min-height: 0; /* allow internal scrolling */
         }
 
         .panel-header {
-            padding: 20px;
+            padding: 18px;
             border-bottom: 1px solid var(--border);
             background: var(--dark-gray);
         }
 
         .panel-title {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: bold;
             color: var(--yellow);
             margin-bottom: 10px;
@@ -142,8 +150,8 @@
             color: var(--text);
             border: 1px solid var(--light-gray);
             padding: 8px;
-            border-radius: 4px;
-            font-size: 0.9rem;
+            border-radius: 6px;
+            font-size: 0.95rem;
         }
 
         .input-group select:focus {
@@ -155,25 +163,28 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: 20px;
+            padding: 16px;
             overflow-y: auto;
+            min-height: 0; /* important for scrolling inside grid */
         }
 
         .messages-box {
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
             overflow-y: auto;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             padding-right: 10px;
         }
 
         .message {
             padding: 12px;
-            border-radius: 4px;
+            border-radius: 8px;
             line-height: 1.5;
             word-wrap: break-word;
+            display: inline-block;
+            max-width: 100%;
         }
 
         .message.user {
@@ -192,11 +203,30 @@
             border-left: 3px solid var(--yellow);
         }
 
+        .message .msg-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .message .msg-text {
+            white-space: pre-wrap;
+            word-break: break-word;
+            flex: 1;
+        }
+
+        .message .msg-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
         .input-area {
             display: flex;
             gap: 10px;
-            padding: 0 20px 20px;
+            padding: 12px 16px 16px;
             border-top: 1px solid var(--border);
+            background: transparent;
         }
 
         textarea {
@@ -205,12 +235,12 @@
             color: var(--text);
             border: 1px solid var(--light-gray);
             padding: 10px;
-            border-radius: 4px;
+            border-radius: 8px;
             font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             resize: vertical;
-            min-height: 80px;
-            max-height: 150px;
+            min-height: 90px;
+            max-height: 240px;
         }
 
         textarea:focus {
@@ -221,48 +251,56 @@
         .input-actions {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
 
         .input-actions button {
-            width: 60px;
-            height: 100%;
+            width: 56px;
+            height: 56px;
+            font-size: 1.1rem;
+            border-radius: 8px;
         }
 
         .right-panel {
             display: flex;
             flex-direction: column;
             background: var(--black);
+            min-height: 0;
         }
 
         .cards-container {
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: 20px;
+            padding: 16px;
             overflow-y: auto;
+            gap: 12px;
+            min-height: 0;
         }
 
         .card {
             background: var(--dark-gray);
             border: 1px solid var(--light-gray);
             border-top: 3px solid var(--yellow);
-            border-radius: 4px;
-            padding: 15px;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 0;
+            transition: all 0.18s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         .card:hover {
             border-left: 3px solid var(--yellow);
-            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+            box-shadow: 0 6px 18px rgba(255, 215, 0, 0.12);
         }
 
         .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            gap: 12px;
         }
 
         .card-title {
@@ -273,40 +311,42 @@
 
         .card-actions {
             display: flex;
-            gap: 5px;
+            gap: 6px;
+            align-items: center;
         }
 
         .card-actions button {
-            padding: 4px 8px;
-            font-size: 0.8rem;
+            padding: 6px 8px;
+            font-size: 0.85rem;
+            border-radius: 6px;
         }
 
         .card-type {
             display: inline-block;
-            background: rgba(255, 215, 0, 0.1);
+            background: rgba(255, 215, 0, 0.08);
             color: var(--yellow);
             padding: 4px 8px;
-            border-radius: 3px;
+            border-radius: 6px;
             font-size: 0.75rem;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .card-desc {
             color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-bottom: 10px;
+            font-size: 0.95rem;
+            margin-bottom: 6px;
         }
 
         .card-preview {
             background: var(--black);
             border: 1px solid var(--border);
             padding: 10px;
-            border-radius: 3px;
+            border-radius: 6px;
             font-family: 'Courier New', monospace;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             color: var(--text-secondary);
-            max-height: 150px;
+            max-height: 220px;
             overflow-y: auto;
             white-space: pre-wrap;
             word-break: break-all;
@@ -315,15 +355,15 @@
         .card-meta {
             display: flex;
             justify-content: space-between;
-            margin-top: 10px;
-            padding-top: 10px;
+            margin-top: 8px;
+            padding-top: 8px;
             border-top: 1px solid var(--border);
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             color: var(--text-secondary);
         }
 
         .panel-controls {
-            padding: 20px;
+            padding: 14px;
             border-top: 1px solid var(--border);
             background: var(--dark-gray);
             display: flex;
@@ -333,19 +373,20 @@
 
         .panel-controls button {
             flex: 1;
-            min-width: 100px;
+            min-width: 88px;
+            border-radius: 8px;
         }
 
         .config-section {
-            padding: 20px;
+            padding: 14px;
             border-top: 1px solid var(--border);
             background: var(--dark-gray);
         }
 
         .config-label {
             color: var(--text-secondary);
-            font-size: 0.8rem;
-            margin-bottom: 5px;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
             display: block;
         }
 
@@ -355,9 +396,9 @@
             color: var(--text);
             border: 1px solid var(--light-gray);
             padding: 8px;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            margin-bottom: 10px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
         }
 
         .config-input:focus {
@@ -376,6 +417,7 @@
             z-index: 1000;
             align-items: center;
             justify-content: center;
+            padding: 16px;
         }
 
         .modal.show {
@@ -385,19 +427,19 @@
         .modal-content {
             background: var(--dark-gray);
             border: 2px solid var(--yellow);
-            border-radius: 8px;
-            padding: 30px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 80vh;
+            border-radius: 10px;
+            padding: 22px;
+            max-width: 720px;
+            width: 100%;
+            max-height: 86vh;
             overflow-y: auto;
         }
 
         .modal-header {
-            font-size: 1.3rem;
+            font-size: 1.25rem;
             font-weight: bold;
             color: var(--yellow);
-            margin-bottom: 20px;
+            margin-bottom: 14px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -407,7 +449,7 @@
             background: none;
             border: none;
             color: var(--yellow);
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             cursor: pointer;
             padding: 0;
         }
@@ -417,13 +459,13 @@
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .form-label {
             color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-bottom: 5px;
+            font-size: 0.95rem;
+            margin-bottom: 6px;
             display: block;
         }
 
@@ -433,8 +475,8 @@
             color: var(--text);
             border: 1px solid var(--light-gray);
             padding: 10px;
-            border-radius: 4px;
-            font-size: 0.9rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
             font-family: 'Courier New', monospace;
         }
 
@@ -447,7 +489,7 @@
             display: flex;
             gap: 10px;
             justify-content: flex-end;
-            margin-top: 20px;
+            margin-top: 12px;
         }
 
         ::-webkit-scrollbar {
@@ -487,6 +529,70 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* Responsive adjustments */
+        @media (max-width: 900px) {
+            body {
+                font-size: 15px;
+            }
+
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr 1fr;
+                height: auto;
+            }
+
+            .left-panel, .right-panel {
+                height: auto;
+                border-right: none;
+                border-top: 2px solid var(--yellow);
+            }
+
+            .panel-header, .panel-controls, .config-section, .panel-content {
+                padding: 12px;
+            }
+
+            .input-area {
+                padding: 10px 12px 14px;
+                gap: 8px;
+            }
+
+            textarea {
+                min-height: 120px;
+                max-height: 260px;
+                font-size: 0.95rem;
+            }
+
+            .input-actions button {
+                width: 48px;
+                height: 48px;
+                font-size: 1.1rem;
+            }
+
+            .messages-box .message.user,
+            .messages-box .message.assistant {
+                max-width: 100%;
+            }
+
+            .card {
+                padding: 12px;
+            }
+
+            .card-preview {
+                max-height: 220px;
+            }
+
+            .header {
+                padding: 8px 12px;
+            }
+
+            .logo { font-size: 1.05rem; }
+            .logo-icon { font-size: 1.25rem; }
+        }
+
+        /* Small touch target awareness */
+        button[aria-label] { touch-action: manipulation; }
+
     </style>
 </head>
 <body>
@@ -496,9 +602,9 @@
             <span>AI Copilot Workspace</span>
         </div>
         <div class="header-buttons">
-            <button onclick="showStats()">📊 Stats</button>
-            <button onclick="showSettings()">⚙️ Settings</button>
-            <button class="btn-primary" onclick="clearAll()">🗑️ Clear All</button>
+            <button onclick="showStats()" aria-label="Show stats">📊 Stats</button>
+            <button onclick="showSettings()" aria-label="Settings">⚙️ Settings</button>
+            <button class="btn-primary" onclick="clearAll()" aria-label="Clear all">🗑️ Clear All</button>
         </div>
     </header>
 
@@ -507,12 +613,12 @@
             <div class="panel-header">
                 <div class="panel-title">💬 Chat & Generation</div>
                 <div class="input-group">
-                    <select id="modeSelect">
+                    <select id="modeSelect" aria-label="Mode select">
                         <option value="chat">💬 Chat</option>
                         <option value="code">💻 Generate Code</option>
                         <option value="document">📄 Create Doc</option>
                     </select>
-                    <select id="languageSelect">
+                    <select id="languageSelect" aria-label="Language select">
                         <option value="javascript">JavaScript</option>
                         <option value="python">Python</option>
                         <option value="html">HTML/CSS</option>
@@ -524,12 +630,13 @@
 
             <div class="panel-content">
                 <div class="messages-box" id="messagesBox"></div>
+
                 <div class="input-area">
                     <textarea id="userInput" placeholder="Type your message or code request..."></textarea>
-                    <div class="input-actions">
-                        <button class="btn-primary" onclick="sendMessage()" title="Send (Enter)">⚡</button>
-                        <button onclick="copyLastMessage()" title="Copy">📋</button>
-                        <button onclick="clearMessages()" title="Clear">🗑️</button>
+                    <div class="input-actions" role="group" aria-label="Input actions">
+                        <button class="btn-primary" onclick="sendMessage()" title="Send (Enter)" aria-label="Send message">⚡</button>
+                        <button onclick="copyLastMessage()" title="Copy" aria-label="Copy last message">📋</button>
+                        <button onclick="clearMessages()" title="Clear" aria-label="Clear messages">🗑️</button>
                     </div>
                 </div>
             </div>
@@ -549,19 +656,24 @@
             <div class="cards-container" id="cardsContainer"></div>
 
             <div class="panel-controls">
-                <button onclick="exportCards()">📤 Export</button>
-                <button onclick="importCards()">📥 Import</button>
-                <button onclick="saveCardsLocal()">💾 Save</button>
-                <button onclick="loadCardsLocal()">📂 Load</button>
+                <button onclick="exportCards()" aria-label="Export cards">📤 Export</button>
+                <button onclick="importCards()" aria-label="Import cards">📥 Import</button>
+                <button onclick="triggerFileUpload()" aria-label="Upload file">📎 Upload</button>
+                <button onclick="saveCardsLocal()" aria-label="Save cards">💾 Save</button>
+                <button onclick="loadCardsLocal()" aria-label="Load cards">📂 Load</button>
+
+                <!-- hidden file input -->
+                <input type="file" id="fileInput" accept=".txt,.md,.json" style="display:none">
             </div>
         </div>
     </div>
 
+    <!-- Edit Card Modal -->
     <div class="modal" id="editModal">
         <div class="modal-content">
             <div class="modal-header">
                 <span>✏️ Edit Card</span>
-                <button class="modal-close" onclick="closeModal()">×</button>
+                <button class="modal-close" onclick="closeModal()" aria-label="Close edit modal">×</button>
             </div>
             <div class="form-group">
                 <label class="form-label">Title</label>
@@ -589,16 +701,19 @@
         </div>
     </div>
 
+    <!-- Settings Modal -->
     <div class="modal" id="settingsModal">
         <div class="modal-content">
             <div class="modal-header">
                 <span>⚙️ Settings</span>
-                <button class="modal-close" onclick="closeSettingsModal()">×</button>
+                <button class="modal-close" onclick="closeSettingsModal()" aria-label="Close settings">×</button>
             </div>
+
             <div class="form-group">
                 <label class="form-label">Worker API Endpoint</label>
                 <input type="text" class="form-input" id="settingsEndpoint" placeholder="https://your-worker.workers.dev">
             </div>
+
             <div class="form-group">
                 <label class="form-label">Model Preference</label>
                 <select class="form-input" id="modelSelect">
@@ -608,6 +723,7 @@
                     <option value="kat-coder">KAT Coder Pro</option>
                 </select>
             </div>
+
             <div class="form-group">
                 <label class="form-label">Theme</label>
                 <select class="form-input" id="themeSelect">
@@ -615,6 +731,24 @@
                     <option value="light">Light</option>
                 </select>
             </div>
+
+            <hr style="border-color: var(--border); margin: 10px 0;">
+
+            <div class="form-group">
+                <label class="form-label">Text-to-Speech Voice</label>
+                <select class="form-input" id="voiceSelect"></select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">TTS Rate: <span id="rateVal">1</span></label>
+                <input type="range" id="ttsRate" min="0.5" max="2" step="0.1" value="1">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">TTS Pitch: <span id="pitchVal">1</span></label>
+                <input type="range" id="ttsPitch" min="0.5" max="2" step="0.1" value="1">
+            </div>
+
             <div class="modal-footer">
                 <button onclick="closeSettingsModal()">Close</button>
                 <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
@@ -622,26 +756,27 @@
         </div>
     </div>
 
+    <!-- Stats Modal -->
     <div class="modal" id="statsModal">
         <div class="modal-content">
             <div class="modal-header">
                 <span>📊 Statistics</span>
-                <button class="modal-close" onclick="closeStatsModal()">×</button>
+                <button class="modal-close" onclick="closeStatsModal()" aria-label="Close stats">×</button>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div style="background: var(--gray); padding: 15px; border-radius: 4px; border-left: 3px solid var(--yellow);">
+                <div style="background: var(--gray); padding: 15px; border-radius: 6px; border-left: 3px solid var(--yellow);">
                     <div style="color: var(--yellow); font-size: 1.5rem; font-weight: bold;" id="statCards">0</div>
                     <div style="color: var(--text-secondary); font-size: 0.9rem;">Cards Generated</div>
                 </div>
-                <div style="background: var(--gray); padding: 15px; border-radius: 4px; border-left: 3px solid var(--yellow);">
+                <div style="background: var(--gray); padding: 15px; border-radius: 6px; border-left: 3px solid var(--yellow);">
                     <div style="color: var(--yellow); font-size: 1.5rem; font-weight: bold;" id="statMessages">0</div>
                     <div style="color: var(--text-secondary); font-size: 0.9rem;">Messages</div>
                 </div>
-                <div style="background: var(--gray); padding: 15px; border-radius: 4px; border-left: 3px solid var(--yellow);">
+                <div style="background: var(--gray); padding: 15px; border-radius: 6px; border-left: 3px solid var(--yellow);">
                     <div style="color: var(--yellow); font-size: 1.5rem; font-weight: bold;" id="statCode">0</div>
                     <div style="color: var(--text-secondary); font-size: 0.9rem;">Code Blocks</div>
                 </div>
-                <div style="background: var(--gray); padding: 15px; border-radius: 4px; border-left: 3px solid var(--yellow);">
+                <div style="background: var(--gray); padding: 15px; border-radius: 6px; border-left: 3px solid var(--yellow);">
                     <div style="color: var(--yellow); font-size: 1.5rem; font-weight: bold;" id="statTime">0m</div>
                     <div style="color: var(--text-secondary); font-size: 0.9rem;">Session Time</div>
                 </div>
@@ -653,15 +788,24 @@
     </div>
 
     <script>
+        // State
         let messages = [];
         let cards = [];
         let currentEditCard = null;
         let sessionStart = Date.now();
 
+        // TTS state
+        let voices = [];
+        let selectedVoiceIndex = null;
+        let ttsRate = 1;
+        let ttsPitch = 1;
+        let currentUtterance = null;
+
         document.addEventListener('DOMContentLoaded', () => {
             loadFromStorage();
             updateCardCount();
 
+            // Setup Enter to send
             document.getElementById('userInput').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -669,16 +813,39 @@
                 }
             });
 
+            // file input handling
+            document.getElementById('fileInput').addEventListener('change', handleFileInput);
+
+            // tts controls
+            document.getElementById('ttsRate').addEventListener('input', (e) => {
+                ttsRate = parseFloat(e.target.value);
+                document.getElementById('rateVal').textContent = ttsRate.toFixed(1);
+            });
+            document.getElementById('ttsPitch').addEventListener('input', (e) => {
+                ttsPitch = parseFloat(e.target.value);
+                document.getElementById('pitchVal').textContent = ttsPitch.toFixed(1);
+            });
+
+            // session timer
             setInterval(() => {
                 const minutes = Math.floor((Date.now() - sessionStart) / 60000);
                 document.getElementById('statTime').textContent = minutes + 'm';
             }, 60000);
+
+            // Load voices (asynchronously)
+            populateVoiceList();
+            if (typeof speechSynthesis !== 'undefined') {
+                speechSynthesis.onvoiceschanged = populateVoiceList;
+            }
 
             if (messages.length === 0) {
                 addMessage('assistant', '👋 Welcome! I can:\n• Generate code\n• Create documentation\n• Answer questions\n\nConfigure your API endpoint in the bottom left, then start chatting!');
             }
         });
 
+        /* ----------------------
+           Networking: sendMessage
+           ---------------------- */
         async function sendMessage() {
             const input = document.getElementById('userInput');
             const text = input.value.trim();
@@ -699,7 +866,7 @@
                 }
 
                 const apiPath = mode === 'code' ? '/api/code' : '/api/chat';
-                const body = mode === 'code' 
+                const body = mode === 'code'
                     ? { prompt: text, language }
                     : { message: text };
 
@@ -717,9 +884,10 @@
                     createCard({
                         type: 'code',
                         title: `${language} Code`,
-                        desc: text.substring(0, 100),
+                        desc: text.substring(0, 140),
                         content: data.code,
-                        language: data.language || language
+                        language: data.language || language,
+                        modelInfo: data.modelInfo
                     });
                     addMessage('assistant', `✅ Generated ${language} code!\n${data.modelInfo ? 'Model: ' + data.modelInfo.usedModel : ''}`);
                 } else if (data.response) {
@@ -735,46 +903,168 @@
             }
         }
 
+        /* ----------------------
+           Messages + UI helpers
+           ---------------------- */
         function addMessage(role, content) {
             const box = document.getElementById('messagesBox');
             const msg = document.createElement('div');
             msg.className = `message ${role}`;
-            msg.textContent = content;
+
+            const row = document.createElement('div');
+            row.className = 'msg-row';
+
+            const textEl = document.createElement('div');
+            textEl.className = 'msg-text';
+            textEl.textContent = content;
+
+            const actions = document.createElement('div');
+            actions.className = 'msg-actions';
+
+            // TTS button (toggle)
+            const ttsBtn = document.createElement('button');
+            ttsBtn.title = 'Read message';
+            ttsBtn.setAttribute('aria-label', 'Read message');
+            ttsBtn.textContent = '🔊';
+            ttsBtn.style.fontSize = '0.95rem';
+            ttsBtn.onclick = () => {
+                if (speechSynthesis && speechSynthesis.speaking) {
+                    stopSpeaking();
+                } else {
+                    speakText(content, {
+                        rate: ttsRate,
+                        pitch: ttsPitch,
+                        voiceIndex: selectedVoiceIndex
+                    }, () => {
+                        // on end
+                    });
+                }
+            };
+
+            // copy button
+            const copyBtn = document.createElement('button');
+            copyBtn.textContent = '📋';
+            copyBtn.title = 'Copy';
+            copyBtn.onclick = async () => {
+                try {
+                    await navigator.clipboard.writeText(content);
+                    copyBtn.textContent = '✓';
+                    setTimeout(() => copyBtn.textContent = '📋', 1500);
+                } catch (e) {
+                    alert('Clipboard write failed: ' + e.message);
+                }
+            };
+
+            actions.appendChild(ttsBtn);
+            actions.appendChild(copyBtn);
+
+            row.appendChild(textEl);
+            row.appendChild(actions);
+            msg.appendChild(row);
+
             box.appendChild(msg);
             box.scrollTop = box.scrollHeight;
-            messages.push({ role, content });
+
+            messages.push({ role, content, timestamp: Date.now() });
+            saveToStorage();
             updateCardCount();
         }
 
+        /* ----------------------
+           Cards: creation/editing
+           ---------------------- */
         function createCard(data) {
             const container = document.getElementById('cardsContainer');
             const card = document.createElement('div');
             card.className = 'card';
 
-            const preview = data.content.substring(0, 300) + (data.content.length > 300 ? '...' : '');
+            // sanitize preview using textContent
+            const previewText = data.content ? data.content.toString() : '';
+            const preview = previewText.substring(0, 300) + (previewText.length > 300 ? '...' : '');
 
-            card.innerHTML = `
-                <div class="card-header">
-                    <div style="flex: 1;">
-                        <div class="card-type">${data.type.toUpperCase()}</div>
-                        <div class="card-title">${data.title}</div>
-                    </div>
-                    <div class="card-actions">
-                        <button onclick="editCard(this)">✏️</button>
-                        <button onclick="copyCard(this)">📋</button>
-                        <button onclick="deleteCard(this)">🗑️</button>
-                    </div>
-                </div>
-                <div class="card-desc">${data.desc}</div>
-                <div class="card-preview">${preview}</div>
-                <div class="card-meta">
-                    <span>${data.language || data.type}</span>
-                    <span>${new Date().toLocaleTimeString()}</span>
-                </div>
-            `;
+            // header
+            const header = document.createElement('div');
+            header.className = 'card-header';
 
-            card.dataset.cardData = JSON.stringify(data);
+            const left = document.createElement('div');
+            left.style.flex = '1';
+            const typeEl = document.createElement('div');
+            typeEl.className = 'card-type';
+            typeEl.textContent = (data.type || 'item').toUpperCase();
+            const titleEl = document.createElement('div');
+            titleEl.className = 'card-title';
+            titleEl.textContent = data.title || (data.type || 'Card');
+
+            left.appendChild(typeEl);
+            left.appendChild(titleEl);
+
+            const actions = document.createElement('div');
+            actions.className = 'card-actions';
+
+            // edit button
+            const editBtn = document.createElement('button');
+            editBtn.textContent = '✏️';
+            editBtn.onclick = function () { editCard(this); };
+            editBtn.setAttribute('aria-label', 'Edit card');
+
+            // copy content
+            const copyBtn = document.createElement('button');
+            copyBtn.textContent = '📋';
+            copyBtn.onclick = function () { copyCard(this); };
+            copyBtn.setAttribute('aria-label', 'Copy card content');
+
+            // delete
+            const delBtn = document.createElement('button');
+            delBtn.textContent = '🗑️';
+            delBtn.onclick = function () { deleteCard(this); };
+            delBtn.setAttribute('aria-label', 'Delete card');
+
+            // TTS for card
+            const ttsBtn = document.createElement('button');
+            ttsBtn.textContent = '🔊';
+            ttsBtn.onclick = () => {
+                if (speechSynthesis && speechSynthesis.speaking) {
+                    stopSpeaking();
+                } else {
+                    speakText(data.content || '', {
+                        rate: ttsRate,
+                        pitch: ttsPitch,
+                        voiceIndex: selectedVoiceIndex
+                    });
+                }
+            };
+            ttsBtn.setAttribute('aria-label', 'Read card');
+
+            actions.appendChild(editBtn);
+            actions.appendChild(copyBtn);
+            actions.appendChild(delBtn);
+            actions.appendChild(ttsBtn);
+
+            header.appendChild(left);
+            header.appendChild(actions);
+
+            const desc = document.createElement('div');
+            desc.className = 'card-desc';
+            desc.textContent = data.desc || '';
+
+            const previewEl = document.createElement('div');
+            previewEl.className = 'card-preview';
+            previewEl.textContent = preview;
+
+            const meta = document.createElement('div');
+            meta.className = 'card-meta';
+            meta.innerHTML = `<span>${data.language || data.type || ''}</span><span>${new Date().toLocaleTimeString()}</span>`;
+
+            card.appendChild(header);
+            card.appendChild(desc);
+            card.appendChild(previewEl);
+            card.appendChild(meta);
+
+            // store data on element
+            card.dataset.cardData = JSON.stringify(data || {});
+
             container.appendChild(card);
+
             cards.push(data);
             updateCardCount();
             saveToStorage();
@@ -782,13 +1072,13 @@
 
         function editCard(btn) {
             const card = btn.closest('.card');
-            const data = JSON.parse(card.dataset.cardData);
+            const data = JSON.parse(card.dataset.cardData || '{}');
 
             currentEditCard = card;
-            document.getElementById('editTitle').value = data.title;
-            document.getElementById('editDesc').value = data.desc;
-            document.getElementById('editType').value = data.type;
-            document.getElementById('editContent').value = data.content;
+            document.getElementById('editTitle').value = data.title || '';
+            document.getElementById('editDesc').value = data.desc || '';
+            document.getElementById('editType').value = data.type || 'code';
+            document.getElementById('editContent').value = data.content || '';
 
             document.getElementById('editModal').classList.add('show');
         }
@@ -796,42 +1086,60 @@
         function saveEdit() {
             if (!currentEditCard) return;
 
+            const prev = JSON.parse(currentEditCard.dataset.cardData || '{}');
             const data = {
                 title: document.getElementById('editTitle').value,
                 desc: document.getElementById('editDesc').value,
                 type: document.getElementById('editType').value,
                 content: document.getElementById('editContent').value,
-                language: JSON.parse(currentEditCard.dataset.cardData).language
+                language: prev.language || prev.type || ''
             };
 
             currentEditCard.dataset.cardData = JSON.stringify(data);
-            const preview = data.content.substring(0, 300) + (data.content.length > 300 ? '...' : '');
             currentEditCard.querySelector('.card-title').textContent = data.title;
             currentEditCard.querySelector('.card-desc').textContent = data.desc;
-            currentEditCard.querySelector('.card-preview').textContent = preview;
+            currentEditCard.querySelector('.card-preview').textContent = data.content.substring(0, 300) + (data.content.length > 300 ? '...' : '');
+
+            // update cards array - simple strategy: replace first matching by timestamp/content
+            for (let i = 0; i < cards.length; i++) {
+                if ((cards[i].title === prev.title && cards[i].content === prev.content) || JSON.stringify(cards[i]) === JSON.stringify(prev)) {
+                    cards[i] = data;
+                    break;
+                }
+            }
 
             closeModal();
             saveToStorage();
+            updateCardCount();
         }
 
         function copyCard(btn) {
             const card = btn.closest('.card');
-            const data = JSON.parse(card.dataset.cardData);
-            navigator.clipboard.writeText(data.content);
-            btn.textContent = '✓';
-            setTimeout(() => btn.textContent = '📋', 2000);
+            const data = JSON.parse(card.dataset.cardData || '{}');
+            navigator.clipboard.writeText(data.content || '')
+                .then(() => {
+                    btn.textContent = '✓';
+                    setTimeout(() => btn.textContent = '📋', 1500);
+                })
+                .catch(() => alert('Copy failed'));
         }
 
         function deleteCard(btn) {
-            btn.closest('.card').remove();
+            const card = btn.closest('.card');
+            const data = JSON.parse(card.dataset.cardData || '{}');
+            // remove from DOM
+            card.remove();
+            // remove from cards array by matching content/title
+            cards = cards.filter(c => !(c.title === data.title && c.content === data.content));
             updateCardCount();
             saveToStorage();
         }
 
         function copyLastMessage() {
             if (messages.length > 0) {
-                const last = messages[messages.length - 1].content;
-                navigator.clipboard.writeText(last);
+                const last = messages[messages.length - 1].content || '';
+                navigator.clipboard.writeText(last)
+                    .catch(() => alert('Copy failed'));
             }
         }
 
@@ -839,6 +1147,7 @@
             if (confirm('Clear all messages?')) {
                 document.getElementById('messagesBox').innerHTML = '';
                 messages = [];
+                saveToStorage();
                 updateCardCount();
             }
         }
@@ -854,6 +1163,9 @@
             }
         }
 
+        /* ----------------------
+           Import / Export / Storage
+           ---------------------- */
         function exportCards() {
             const data = {
                 cards,
@@ -882,6 +1194,9 @@
                         if (data.cards) {
                             data.cards.forEach(card => createCard(card));
                         }
+                        if (data.messages) {
+                            data.messages.forEach(m => addMessage(m.role || 'assistant', m.content || ''));
+                        }
                         alert('✅ Imported!');
                     } catch (err) {
                         alert('❌ Error: ' + err.message);
@@ -890,6 +1205,35 @@
                 reader.readAsText(file);
             };
             input.click();
+        }
+
+        function triggerFileUpload() {
+            document.getElementById('fileInput').click();
+        }
+
+        async function handleFileInput(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const name = file.name.toLowerCase();
+
+            if (name.endsWith('.txt') || name.endsWith('.md') || name.endsWith('.json')) {
+                try {
+                    const text = await file.text();
+                    createCard({
+                        type: 'document',
+                        title: file.name,
+                        desc: 'Imported file',
+                        content: text,
+                        language: 'text'
+                    });
+                    alert('✅ File imported as a card');
+                } catch (err) {
+                    alert('❌ Error reading file: ' + err.message);
+                }
+            } else {
+                alert('File type not auto-parsed. Only .txt .md .json are auto-imported.');
+            }
+            e.target.value = '';
         }
 
         function saveCardsLocal() {
@@ -904,49 +1248,77 @@
         }
 
         function saveToStorage() {
-            localStorage.setItem('copilot-cards', JSON.stringify(cards));
-            localStorage.setItem('copilot-messages', JSON.stringify(messages));
-            localStorage.setItem('copilot-endpoint', document.getElementById('apiEndpoint').value);
+            try {
+                localStorage.setItem('copilot-cards', JSON.stringify(cards));
+                localStorage.setItem('copilot-messages', JSON.stringify(messages));
+                localStorage.setItem('copilot-endpoint', document.getElementById('apiEndpoint').value);
+                // save settings
+                const settings = {
+                    voiceIndex: selectedVoiceIndex,
+                    ttsRate,
+                    ttsPitch,
+                    theme: document.getElementById('themeSelect') ? document.getElementById('themeSelect').value : 'dark',
+                    model: document.getElementById('modelSelect') ? document.getElementById('modelSelect').value : 'auto'
+                };
+                localStorage.setItem('copilot-settings', JSON.stringify(settings));
+            } catch (e) {
+                console.warn('Save failed', e);
+            }
         }
 
         function loadFromStorage() {
             const saved = localStorage.getItem('copilot-cards');
             const msgs = localStorage.getItem('copilot-messages');
             const endpoint = localStorage.getItem('copilot-endpoint');
+            const settingsRaw = localStorage.getItem('copilot-settings');
 
             if (endpoint) document.getElementById('apiEndpoint').value = endpoint;
-            if (saved) cards = JSON.parse(saved);
-            if (msgs) messages = JSON.parse(msgs);
+            if (saved) {
+                try {
+                    cards = JSON.parse(saved) || [];
+                } catch (e) { cards = []; }
+            }
+            if (msgs) {
+                try {
+                    messages = JSON.parse(msgs) || [];
+                } catch (e) { messages = []; }
+            }
 
+            // Load settings
+            if (settingsRaw) {
+                try {
+                    const settings = JSON.parse(settingsRaw);
+                    selectedVoiceIndex = settings.voiceIndex ?? null;
+                    ttsRate = settings.ttsRate ?? 1;
+                    ttsPitch = settings.ttsPitch ?? 1;
+                    if (document.getElementById('ttsRate')) {
+                        document.getElementById('ttsRate').value = ttsRate;
+                        document.getElementById('rateVal').textContent = ttsRate.toFixed(1);
+                    }
+                    if (document.getElementById('ttsPitch')) {
+                        document.getElementById('ttsPitch').value = ttsPitch;
+                        document.getElementById('pitchVal').textContent = ttsPitch.toFixed(1);
+                    }
+                    if (document.getElementById('themeSelect')) {
+                        document.getElementById('themeSelect').value = settings.theme || 'dark';
+                    }
+                    if (document.getElementById('modelSelect')) {
+                        document.getElementById('modelSelect').value = settings.model || 'auto';
+                    }
+                } catch (e) { /* ignore */ }
+            }
+
+            // populate messages
+            const container = document.getElementById('cardsContainer');
+            container.innerHTML = '';
             cards.forEach(card => {
-                const container = document.getElementById('cardsContainer');
-                const cardEl = document.createElement('div');
-                cardEl.className = 'card';
+                createCard(card);
+            });
 
-                const preview = card.content.substring(0, 300) + (card.content.length > 300 ? '...' : '');
-
-                cardEl.innerHTML = `
-                    <div class="card-header">
-                        <div style="flex: 1;">
-                            <div class="card-type">${card.type.toUpperCase()}</div>
-                            <div class="card-title">${card.title}</div>
-                        </div>
-                        <div class="card-actions">
-                            <button onclick="editCard(this)">✏️</button>
-                            <button onclick="copyCard(this)">📋</button>
-                            <button onclick="deleteCard(this)">🗑️</button>
-                        </div>
-                    </div>
-                    <div class="card-desc">${card.desc}</div>
-                    <div class="card-preview">${preview}</div>
-                    <div class="card-meta">
-                        <span>${card.language || card.type}</span>
-                        <span>Saved</span>
-                    </div>
-                `;
-
-                cardEl.dataset.cardData = JSON.stringify(card);
-                container.appendChild(cardEl);
+            // messages
+            document.getElementById('messagesBox').innerHTML = '';
+            messages.forEach(m => {
+                addMessage(m.role || 'assistant', m.content || '');
             });
         }
 
@@ -955,7 +1327,7 @@
         }
 
         function showSettings() {
-            document.getElementById('settingsEndpoint').value = document.getElementById('apiEndpoint').value;
+            document.getElementById('settingsEndpoint').value = document.getElementById('apiEndpoint').value || '';
             document.getElementById('settingsModal').classList.add('show');
         }
 
@@ -965,6 +1337,12 @@
 
         function saveSettings() {
             document.getElementById('apiEndpoint').value = document.getElementById('settingsEndpoint').value;
+            // save TTS selections
+            const voiceSelect = document.getElementById('voiceSelect');
+            selectedVoiceIndex = voiceSelect && voiceSelect.selectedIndex >= 0 ? parseInt(voiceSelect.value) : null;
+            ttsRate = parseFloat(document.getElementById('ttsRate').value || 1);
+            ttsPitch = parseFloat(document.getElementById('ttsPitch').value || 1);
+
             saveToStorage();
             closeSettingsModal();
             alert('✅ Settings saved!');
@@ -992,8 +1370,118 @@
         }
 
         function updateCardCount() {
-            // Just update stats when shown
+            // Reserved for future UI updates; currently stats are updated when modals open
+            // Could update badge counters, etc.
         }
+
+        /* ----------------------
+           File import helpers
+           ---------------------- */
+        function saveToLocalFiles(fileName, content) {
+            const blob = new Blob([content], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        /* ----------------------
+           TTS: Web Speech API
+           ---------------------- */
+        function populateVoiceList() {
+            if (!('speechSynthesis' in window)) {
+                document.getElementById('voiceSelect') && (document.getElementById('voiceSelect').innerHTML = '<option>Not supported</option>');
+                return;
+            }
+            voices = speechSynthesis.getVoices() || [];
+            const select = document.getElementById('voiceSelect');
+            if (!select) return;
+            const prev = select.value;
+            select.innerHTML = '';
+            voices.forEach((v, i) => {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = `${v.name} ${v.lang ? '— ' + v.lang : ''}${v.default ? ' (default)' : ''}`;
+                select.appendChild(opt);
+            });
+            // restore previously selected voice index if available
+            if (selectedVoiceIndex !== null && selectedVoiceIndex < voices.length) {
+                select.value = selectedVoiceIndex;
+            } else if (typeof selectedVoiceIndex === 'number' && voices[selectedVoiceIndex]) {
+                select.value = selectedVoiceIndex;
+            } else {
+                // try to pick default voice
+                const d = voices.findIndex(v => v.default);
+                if (d >= 0) select.value = d;
+            }
+        }
+
+        function speakText(text, options = {}, onEnd) {
+            if (!('speechSynthesis' in window)) {
+                alert('TTS not supported in this browser.');
+                return;
+            }
+            stopSpeaking();
+
+            const utter = new SpeechSynthesisUtterance(String(text || ''));
+            utter.rate = options.rate || ttsRate || 1;
+            utter.pitch = options.pitch || ttsPitch || 1;
+            const idx = (options.voiceIndex !== undefined && options.voiceIndex !== null) ? options.voiceIndex : selectedVoiceIndex;
+            if (typeof idx === 'number' && voices[idx]) {
+                utter.voice = voices[idx];
+            }
+            utter.onend = () => {
+                currentUtterance = null;
+                if (typeof onEnd === 'function') onEnd();
+            };
+            utter.onerror = (e) => {
+                console.warn('TTS error', e);
+            };
+            currentUtterance = utter;
+            speechSynthesis.speak(utter);
+        }
+
+        function stopSpeaking() {
+            if (speechSynthesis && speechSynthesis.speaking) {
+                speechSynthesis.cancel();
+            }
+            currentUtterance = null;
+        }
+
+        /* ----------------------
+           Misc helpers
+           ---------------------- */
+        function saveToStorageDebounced() {
+            // could implement debounce if needed
+            saveToStorage();
+        }
+
+        // Expose some functions for inline handlers
+        window.showSettings = showSettings;
+        window.showStats = showStats;
+        window.clearAll = clearAll;
+        window.sendMessage = sendMessage;
+        window.copyLastMessage = copyLastMessage;
+        window.clearMessages = clearMessages;
+        window.exportCards = exportCards;
+        window.importCards = importCards;
+        window.saveCardsLocal = saveCardsLocal;
+        window.loadCardsLocal = loadCardsLocal;
+        window.triggerFileUpload = triggerFileUpload;
+        window.editCard = editCard;
+        window.copyCard = copyCard;
+        window.deleteCard = deleteCard;
+        window.closeModal = closeModal;
+        window.saveEdit = saveEdit;
+        window.saveSettings = saveSettings;
+        window.closeSettingsModal = closeSettingsModal;
+        window.closeStatsModal = closeStatsModal;
+        window.speakText = speakText;
+        window.stopSpeaking = stopSpeaking;
+        window.populateVoiceList = populateVoiceList;
+
     </script>
 </body>
 </html>
