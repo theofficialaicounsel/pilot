@@ -39,7 +39,6 @@
             overflow-x: hidden;
         }
 
-        /* Header */
         .header {
             background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%);
             padding: 1.5rem 2rem;
@@ -65,7 +64,6 @@
             font-size: 1.5rem;
             font-weight: 700;
             background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -129,7 +127,6 @@
             box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
         }
 
-        /* Main Layout */
         .main-container {
             max-width: 1600px;
             margin: 0 auto;
@@ -140,7 +137,6 @@
             min-height: calc(100vh - 80px);
         }
 
-        /* Sidebar */
         .sidebar {
             background: var(--bg-secondary);
             border-radius: var(--radius-lg);
@@ -214,14 +210,12 @@
             color: var(--text-secondary);
         }
 
-        /* Main Workspace */
         .workspace {
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
         }
 
-        /* Chat/Copilot Interface */
         .chat-container {
             background: var(--bg-secondary);
             border-radius: var(--radius-lg);
@@ -312,27 +306,6 @@
             line-height: 1.6;
         }
 
-        .message-actions {
-            margin-top: 0.75rem;
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .message-btn {
-            padding: 0.375rem 0.75rem;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: var(--radius-sm);
-            color: inherit;
-            font-size: 0.75rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .message-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
         .chat-input-container {
             padding: 1.5rem;
             border-top: 1px solid var(--border-color);
@@ -387,7 +360,6 @@
             border-color: var(--accent-primary);
         }
 
-        /* Cards Section */
         .cards-container {
             background: var(--bg-secondary);
             border-radius: var(--radius-lg);
@@ -519,7 +491,6 @@
             color: var(--text-secondary);
         }
 
-        /* Right Panel */
         .right-panel {
             background: var(--bg-secondary);
             border-radius: var(--radius-lg);
@@ -553,11 +524,11 @@
             padding: 1rem;
             text-align: center;
         }
+
         .stat-value {
             font-size: 1.5rem;
             font-weight: 700;
             background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 0.25rem;
@@ -593,7 +564,6 @@
             border-color: var(--accent-primary);
         }
 
-        /* Loading State */
         .loading {
             display: flex;
             align-items: center;
@@ -615,7 +585,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -708,12 +677,10 @@
             border-color: var(--accent-primary);
         }
 
-        /* Responsive */
         @media (max-width: 1200px) {
             .main-container {
                 grid-template-columns: 1fr;
             }
-
             .sidebar, .right-panel {
                 position: static;
             }
@@ -721,7 +688,6 @@
     </style>
 </head>
 <body>
-    <!-- Header -->
     <div class="header">
         <div class="header-content">
             <div class="logo">
@@ -736,9 +702,7 @@
         </div>
     </div>
 
-    <!-- Main Container -->
     <div class="main-container">
-        <!-- Left Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-section">
                 <div class="sidebar-title">Workspaces</div>
@@ -775,9 +739,7 @@
             </div>
         </aside>
 
-        <!-- Main Workspace -->
         <main class="workspace">
-            <!-- Chat/Copilot Interface -->
             <div class="chat-container">
                 <div class="chat-header">
                     <div class="chat-title">💬 AI Copilot</div>
@@ -834,14 +796,12 @@
                 </div>
             </div>
 
-            <!-- Cards Section -->
             <div class="cards-container">
                 <div class="cards-header">
                     <h2>📦 Generated Cards</h2>
                     <button class="btn" onclick="saveAllCards()">💾 Save All</button>
                 </div>
                 <div class="cards-grid" id="cardsGrid">
-                    <!-- Example card -->
                     <div class="card">
                         <div class="card-header">
                             <span class="card-type code">CODE</span>
@@ -863,7 +823,6 @@
             </div>
         </main>
 
-        <!-- Right Panel -->
         <aside class="right-panel">
             <div class="panel-section">
                 <div class="panel-title">📊 Statistics</div>
@@ -925,7 +884,6 @@
         </aside>
     </div>
 
-    <!-- Edit Card Modal -->
     <div class="modal" id="editModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -960,19 +918,16 @@
     </div>
 
     <script>
-        // State management
         let cards = [];
         let messages = [];
         let currentEditingCard = null;
         let sessionStartTime = Date.now();
 
-        // Update session timer
         setInterval(() => {
             const minutes = Math.floor((Date.now() - sessionStartTime) / 60000);
             document.getElementById('sessionTime').textContent = minutes + 'm';
         }, 60000);
 
-        // Handle Enter key in chat
         function handleKeyPress(event) {
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
@@ -980,7 +935,6 @@
             }
         }
 
-        // Send message to copilot
         async function sendMessage() {
             const input = document.getElementById('chatInput');
             const message = input.value.trim();
@@ -989,11 +943,9 @@
             const mode = document.getElementById('modeSelect').value;
             const language = document.getElementById('languageSelect').value;
 
-            // Add user message
             addMessage('user', message);
             input.value = '';
 
-            // Show loading
             document.getElementById('loadingIndicator').style.display = 'flex';
 
             try {
@@ -1004,7 +956,6 @@
                     return;
                 }
 
-                // Determine endpoint based on mode
                 const endpoint = mode === 'code' ? '/api/code' : '/api/chat';
                 const requestBody = mode === 'code' 
                     ? { prompt: message, language: language }
@@ -1024,9 +975,7 @@
 
                 const data = await response.json();
 
-                // Handle response based on mode
                 if (mode === 'code' && data.code) {
-                    // Add code to cards
                     addCard({
                         type: 'code',
                         title: `${language} Code`,
@@ -1041,7 +990,6 @@
 
                     addMessage('assistant', `✅ I've generated the ${language} code and added it to your cards!${modelInfo}${data.explanation ? '\n\n' + data.explanation : ''}`);
                 } else if (data.response) {
-                    // Chat response
                     addMessage('assistant', data.response);
                 } else {
                     addMessage('assistant', '✅ Request completed successfully!');
@@ -1055,7 +1003,6 @@
             }
         }
 
-        // Add message to chat
         function addMessage(role, content) {
             const messagesContainer = document.getElementById('chatMessages');
             const messageDiv = document.createElement('div');
@@ -1064,13 +1011,13 @@
             const now = new Date();
             const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-messageDiv.innerHTML = `
-    <div class="message-header">
-        <span>${role === 'user' ? '👤 You' : '🤖 Assistant'}</span>
-        <span>${timeStr}</span>
-    </div>
-    <div class="message-content">${content.replace(/\n/g, '<br>')}</div>
-`;
+            messageDiv.innerHTML = `
+                <div class="message-header">
+                    <span>${role === 'user' ? '👤 You' : '🤖 Assistant'}</span>
+                    <span>${timeStr}</span>
+                </div>
+                <div class="message-content">${content.replace(/\n/g, '<br>')}</div>
+            `;
 
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -1079,7 +1026,6 @@ messageDiv.innerHTML = `
             updateStats();
         }
 
-        // Add card to workspace
         function addCard(cardData) {
             const cardsGrid = document.getElementById('cardsGrid');
             const card = document.createElement('div');
@@ -1106,21 +1052,18 @@ messageDiv.innerHTML = `
                 </div>
             `;
 
-            // Store full data
             card.dataset.cardData = JSON.stringify(cardData);
 
             cardsGrid.appendChild(card);
             cards.push(cardData);
             updateStats();
 
-            // Auto-save if enabled
             const autoSave = document.getElementById('autoSave').value;
             if (autoSave === 'true') {
                 saveToLocalStorage();
             }
         }
 
-        // Edit card
         function editCard(button) {
             const card = button.closest('.card');
             const cardData = JSON.parse(card.dataset.cardData);
@@ -1134,7 +1077,6 @@ messageDiv.innerHTML = `
             document.getElementById('editModal').classList.add('active');
         }
 
-        // Save card edit
         function saveCardEdit() {
             if (!currentEditingCard) return;
 
@@ -1144,7 +1086,6 @@ messageDiv.innerHTML = `
             cardData.type = document.getElementById('editType').value;
             cardData.content = document.getElementById('editContent').value;
 
-            // Update card display
             currentEditingCard.querySelector('.card-title').textContent = cardData.title;
             currentEditingCard.querySelector('.card-description').textContent = cardData.description;
             currentEditingCard.querySelector('.card-type').textContent = cardData.type.toUpperCase();
@@ -1157,7 +1098,6 @@ messageDiv.innerHTML = `
             saveToLocalStorage();
         }
 
-        // Copy card content
         function copyCard(button) {
             const card = button.closest('.card');
             const cardData = JSON.parse(card.dataset.cardData);
@@ -1169,7 +1109,6 @@ messageDiv.innerHTML = `
             });
         }
 
-        // Delete card
         function deleteCard(button) {
             if (confirm('Delete this card?')) {
                 const card = button.closest('.card');
@@ -1179,13 +1118,11 @@ messageDiv.innerHTML = `
             }
         }
 
-        // Close modal
         function closeModal() {
             document.getElementById('editModal').classList.remove('active');
             currentEditingCard = null;
         }
 
-        // Update statistics
         function updateStats() {
             const cardElements = document.querySelectorAll('.card');
             const codeCards = Array.from(cardElements).filter(card => {
@@ -1198,7 +1135,6 @@ messageDiv.innerHTML = `
             document.getElementById('codeCount').textContent = codeCards.length;
         }
 
-        // Save to localStorage
         function saveToLocalStorage() {
             const cardElements = document.querySelectorAll('.card');
             const cardsData = Array.from(cardElements).map(card => 
@@ -1208,7 +1144,6 @@ messageDiv.innerHTML = `
             localStorage.setItem('copilot-messages', JSON.stringify(messages));
         }
 
-        // Load from localStorage
         function loadFromLocalStorage() {
             const savedCards = localStorage.getItem('copilot-cards');
             const savedMessages = localStorage.getItem('copilot-messages');
@@ -1223,13 +1158,11 @@ messageDiv.innerHTML = `
             }
         }
 
-        // Save all cards
         function saveAllCards() {
             saveToLocalStorage();
             alert('✅ All cards saved to browser storage!');
         }
 
-        // Export workspace
         function exportWorkspace() {
             const cardElements = document.querySelectorAll('.card');
             const cardsData = Array.from(cardElements).map(card => 
@@ -1251,7 +1184,6 @@ messageDiv.innerHTML = `
             URL.revokeObjectURL(url);
         }
 
-        // Import file
         function importFile() {
             const input = document.createElement('input');
             input.type = 'file';
@@ -1275,7 +1207,6 @@ messageDiv.innerHTML = `
             input.click();
         }
 
-        // Clear all
         function clearAll() {
             if (confirm('Clear all cards and messages? This cannot be undone.')) {
                 document.getElementById('cardsGrid').innerHTML = '';
@@ -1286,17 +1217,14 @@ messageDiv.innerHTML = `
                 localStorage.removeItem('copilot-cards');
                 localStorage.removeItem('copilot-messages');
 
-                // Re-add welcome message
                 addMessage('assistant', 'Hello! I\'m your AI copilot. I can help you with:\n• Generate code in any language\n• Create documentation\n• Refactor and improve code\n• Answer technical questions\n\nWhat would you like to build today?');
             }
         }
 
-        // Settings
         function openSettings() {
             alert('Settings panel is on the right side of the screen!');
         }
 
-        // New workspace
         function newWorkspace() {
             if (confirm('Create a new workspace? Current workspace will be saved.')) {
                 saveToLocalStorage();
@@ -1304,18 +1232,15 @@ messageDiv.innerHTML = `
             }
         }
 
-        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             loadFromLocalStorage();
             updateStats();
 
-            // Load saved API endpoint
             const savedEndpoint = localStorage.getItem('api-endpoint');
             if (savedEndpoint) {
                 document.getElementById('apiEndpoint').value = savedEndpoint;
             }
 
-            // Save API endpoint on change
             document.getElementById('apiEndpoint').addEventListener('change', (e) => {
                 localStorage.setItem('api-endpoint', e.target.value);
             });
