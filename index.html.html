@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Copilot Workspace - AI-Powered Development</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #151932;
+            --bg-card: #1e2139;
+            --bg-card-hover: #252a47;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-success: #10b981;
+            --accent-warning: #f59e0b;
+            --text-primary: #e5e7eb;
+            --text-secondary: #9ca3af;
+            --border-color: #2d3250;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-md);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-success);
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .btn {
+            padding: 0.625rem 1.25rem;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent-primary);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border: none;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Main Layout */
+        .main-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 350px 1fr 380px;
+            gap: 1.5rem;
+            min-height: calc(100vh - 80px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+        }
+
+        .sidebar-section {
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+        }
+
+        .workspace-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .workspace-item {
+            padding: 0.75rem;
+            background: var(--bg-card);
+            border: 1px solid transparent;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .workspace-item:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent-primary);
+        }
+
+        .workspace-item.active {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--accent-primary);
+        }
+
+        .workspace-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .workspace-info h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .workspace-info p {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Main Workspace */
+        .workspace {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Chat/Copilot Interface */
+        .chat-container {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+
+        .chat-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: var(--bg-card);
+            border-radius: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--accent-primary);
+            border-radius: 4px;
+        }
+
+        .message {
+            padding: 1rem 1.25rem;
+            border-radius: var(--radius-md);
+            max-width: 85%;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-header {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        .message-content {
+            line-height: 1.6;
+        }
+
+        .message-actions {
+            margin-top: 0.75rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .message-btn {
+            padding: 0.375rem 0.75rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--radius-sm);
+            color: inherit;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .message-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .chat-input-container {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-card);
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 0.875rem 1rem;
+            color: var(--text-primary);
+            font-size: 0.9375rem;
+            font-family: inherit;
+            resize: none;
+            max-height: 120px;
+            transition: all 0.2s ease;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .chat-options {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .option-select {
+            padding: 0.5rem 0.875rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 0.8125rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .option-select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        /* Cards Section */
+        .cards-container {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .cards-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .cards-header h2 {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .cards-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent-primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .card-type {
+            display: inline-block;
+            padding: 0.25rem 0.625rem;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent-primary);
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .card-type.code { 
+            background: rgba(139, 92, 246, 0.1); 
+            color: var(--accent-secondary); 
+        }
+        .card-type.document { 
+            background: rgba(16, 185, 129, 0.1); 
+            color: var(--accent-success); 
+        }
+        .card-type.snippet { 
+            background: rgba(245, 158, 11, 0.1); 
+            color: var(--accent-warning); 
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .card-action {
+            width: 28px;
+            height: 28px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+
+        .card-action:hover {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+
+        .card-title {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-description {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+        }
+
+        .card-preview {
+            background: var(--bg-primary);
+            border-radius: var(--radius-sm);
+            padding: 0.75rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Right Panel */
+        .right-panel {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+        }
+
+        .panel-section {
+            margin-bottom: 2rem;
+        }
+
+        .panel-title {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .config-item {
+            margin-bottom: 1rem;
+        }
+
+        .config-label {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .config-input {
+            width: 100%;
+            padding: 0.625rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+
+        .config-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .loading-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border-color);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            animation: modalSlide 0.3s ease;
+        }
+
+        @keyframes modalSlide {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-sm);
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .code-editor {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            min-height: 300px;
+            resize: vertical;
+            width: 100%;
+        }
+
+        .code-editor:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar, .right-panel {
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">⚡</div>
+                Copilot Workspace
+            </div>
+            <div class="header-actions">
+                <div class="status-badge">● Connected</div>
+                <button class="btn" onclick="openSettings()">⚙️ Settings</button>
+                <button class="btn btn-primary" onclick="newWorkspace()">+ New Workspace</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Left Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Workspaces</div>
+                <div class="workspace-list">
+                    <div class="workspace-item active">
+                        <div class="workspace-icon">📝</div>
+                        <div class="workspace-info">
+                            <h3>Code Assistant</h3>
+                            <p>Active now</p>
+                        </div>
+                    </div>
+                    <div class="workspace-item">
+                        <div class="workspace-icon">📄</div>
+                        <div class="workspace-info">
+                            <h3>Documentation</h3>
+                            <p>3 cards</p>
+                        </div>
+                    </div>
+                    <div class="workspace-item">
+                        <div class="workspace-icon">🎨</div>
+                        <div class="workspace-info">
+                            <h3>Design System</h3>
+                            <p>7 cards</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">Quick Actions</div>
+                <button class="btn" style="width: 100%; margin-bottom: 0.5rem;" onclick="importFile()">📥 Import File</button>
+                <button class="btn" style="width: 100%; margin-bottom: 0.5rem;" onclick="exportWorkspace()">📤 Export Workspace</button>
+                <button class="btn" style="width: 100%;" onclick="clearAll()">🗑️ Clear All</button>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="workspace">
+            <!-- Chat/Copilot Interface -->
+            <div class="chat-container">
+                <div class="chat-header">
+                    <div class="chat-title">💬 AI Copilot</div>
+                    <div class="loading" id="loadingIndicator" style="display: none;">
+                        <div class="loading-spinner"></div>
+                        Processing...
+                    </div>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message assistant">
+                        <div class="message-header">
+                            <span>🤖 Assistant</span>
+                            <span>Just now</span>
+                        </div>
+                        <div class="message-content">
+                            Hello! I'm your AI copilot. I can help you with:
+                            <br>• Generate code in any language
+                            <br>• Create documentation
+                            <br>• Refactor and improve code
+                            <br>• Answer technical questions
+                            <br><br>What would you like to build today?
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-input-container">
+                    <div class="chat-options">
+                        <select class="option-select" id="modeSelect">
+                            <option value="chat">💬 Chat</option>
+                            <option value="code">💻 Generate Code</option>
+                            <option value="document">📄 Create Document</option>
+                            <option value="refactor">🔧 Refactor</option>
+                        </select>
+                        <select class="option-select" id="languageSelect">
+                            <option value="javascript">JavaScript</option>
+                            <option value="python">Python</option>
+                            <option value="html">HTML</option>
+                            <option value="css">CSS</option>
+                            <option value="react">React</option>
+                            <option value="typescript">TypeScript</option>
+                        </select>
+                    </div>
+                    <div class="chat-input-wrapper">
+                        <textarea 
+                            class="chat-input" 
+                            id="chatInput" 
+                            placeholder="Ask me anything or describe what you'd like to create..."
+                            rows="2"
+                            onkeypress="handleKeyPress(event)"
+                        ></textarea>
+                        <button class="btn btn-primary" onclick="sendMessage()">
+                            Send ⚡
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cards Section -->
+            <div class="cards-container">
+                <div class="cards-header">
+                    <h2>📦 Generated Cards</h2>
+                    <button class="btn" onclick="saveAllCards()">💾 Save All</button>
+                </div>
+                <div class="cards-grid" id="cardsGrid">
+                    <!-- Example card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-type code">CODE</span>
+                            <div class="card-actions">
+                                <button class="card-action" onclick="editCard(this)" title="Edit">✏️</button>
+                                <button class="card-action" onclick="copyCard(this)" title="Copy">📋</button>
+                                <button class="card-action" onclick="deleteCard(this)" title="Delete">🗑️</button>
+                            </div>
+                        </div>
+                        <div class="card-title">Example Function</div>
+                        <div class="card-description">A sample code snippet to get you started</div>
+                        <div class="card-preview">function hello() { return "Hello, World!"; }</div>
+                        <div class="card-meta">
+                            <span>JavaScript</span>
+                            <span>Just now</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Panel -->
+        <aside class="right-panel">
+            <div class="panel-section">
+                <div class="panel-title">📊 Statistics</div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="cardCount">1</div>
+                        <div class="stat-label">Cards</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="messageCount">1</div>
+                        <div class="stat-label">Messages</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="codeCount">1</div>
+                        <div class="stat-label">Code Blocks</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="sessionTime">0m</div>
+                        <div class="stat-label">Session</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <div class="panel-title">⚙️ Configuration</div>
+                <div class="config-item">
+                    <div class="config-label">Worker API Endpoint</div>
+                    <input 
+                        type="text" 
+                        class="config-input" 
+                        id="apiEndpoint"
+                        placeholder="https://your-worker.workers.dev"
+                        value=""
+                    />
+                </div>
+                <div class="config-item">
+                    <div class="config-label">Model Preference</div>
+                    <select class="config-input" id="modelPreference">
+                        <option value="auto">Auto (Best Available)</option>
+                        <option value="deepseek-coder">DeepSeek Coder</option>
+                        <option value="qwen-coder">Qwen Coder</option>
+                        <option value="kat-coder">KAT Coder Pro</option>
+                    </select>
+                </div>
+                <div class="config-item">
+                    <div class="config-label">Auto-save Cards</div>
+                    <select class="config-input" id="autoSave">
+                        <option value="true">Enabled</option>
+                        <option value="false">Disabled</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <div class="panel-title">🎨 Theme</div>
+                <button class="btn" style="width: 100%; margin-bottom: 0.5rem;">🌙 Dark Mode</button>
+                <button class="btn" style="width: 100%;">🎨 Customize</button>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Edit Card Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Edit Card</div>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="config-item">
+                <div class="config-label">Card Title</div>
+                <input type="text" class="config-input" id="editTitle" />
+            </div>
+            <div class="config-item">
+                <div class="config-label">Description</div>
+                <input type="text" class="config-input" id="editDescription" />
+            </div>
+            <div class="config-item">
+                <div class="config-label">Type</div>
+                <select class="config-input" id="editType">
+                    <option value="code">Code</option>
+                    <option value="document">Document</option>
+                    <option value="snippet">Snippet</option>
+                </select>
+            </div>
+            <div class="config-item">
+                <div class="config-label">Content</div>
+                <textarea class="code-editor" id="editContent"></textarea>
+            </div>
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button class="btn btn-primary" style="flex: 1;" onclick="saveCardEdit()">Save Changes</button>
+                <button class="btn" style="flex: 1;" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let cards = [];
+        let messages = [];
+        let currentEditingCard = null;
+        let sessionStartTime = Date.now();
+
+        // Update session timer
+        setInterval(() => {
+            const minutes = Math.floor((Date.now() - sessionStartTime) / 60000);
+            document.getElementById('sessionTime').textContent = minutes + 'm';
+        }, 60000);
+
+        // Handle Enter key in chat
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        // Send message to copilot
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const mode = document.getElementById('modeSelect').value;
+            const language = document.getElementById('languageSelect').value;
+
+            // Add user message
+            addMessage('user', message);
+            input.value = '';
+
+            // Show loading
+            document.getElementById('loadingIndicator').style.display = 'flex';
+
+            try {
+                const apiEndpoint = document.getElementById('apiEndpoint').value;
+
+                if (!apiEndpoint) {
+                    addMessage('assistant', '⚠️ Please configure your Worker API endpoint in the settings panel on the right.');
+                    return;
+                }
+
+                // Determine endpoint based on mode
+                const endpoint = mode === 'code' ? '/api/code' : '/api/chat';
+                const requestBody = mode === 'code' 
+                    ? { prompt: message, language: language }
+                    : { message: message };
+
+                const response = await fetch(apiEndpoint + endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Handle response based on mode
+                if (mode === 'code' && data.code) {
+                    // Add code to cards
+                    addCard({
+                        type: 'code',
+                        title: `${language} Code`,
+                        description: message.substring(0, 100),
+                        content: data.code,
+                        language: data.language || language,
+                        model: data.modelInfo?.usedModel || 'Unknown'
+                    });
+
+                    const modelInfo = data.modelInfo ? 
+                        `\n\n✨ Generated using ${data.modelInfo.usedModel} (${data.modelInfo.isFree ? 'Free' : '$' + data.modelInfo.costPerMillion + '/M tokens'})` : '';
+
+                    addMessage('assistant', `✅ I've generated the ${language} code and added it to your cards!${modelInfo}${data.explanation ? '\n\n' + data.explanation : ''}`);
+                } else if (data.response) {
+                    // Chat response
+                    addMessage('assistant', data.response);
+                } else {
+                    addMessage('assistant', '✅ Request completed successfully!');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('assistant', `❌ Error: ${error.message}. Please check your API endpoint and try again.`);
+            } finally {
+                document.getElementById('loadingIndicator').style.display = 'none';
+            }
+        }
+
+        // Add message to chat
+        function addMessage(role, content) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            messageDiv.innerHTML = `
+                <div class="message-header">
+                    <span>${role === 'user' ? '👤 You' : '🤖 Assistant'}</span>
+                    <span>${timeStr}</span>
+                </div>
+                <div class="message-content">${content.replace(/
+/g, '<br>')}</div>
+            `;
+
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            messages.push({ role, content, timestamp: now });
+            updateStats();
+        }
+
+        // Add card to workspace
+        function addCard(cardData) {
+            const cardsGrid = document.getElementById('cardsGrid');
+            const card = document.createElement('div');
+            card.className = 'card';
+
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            card.innerHTML = `
+                <div class="card-header">
+                    <span class="card-type ${cardData.type}">${cardData.type.toUpperCase()}</span>
+                    <div class="card-actions">
+                        <button class="card-action" onclick="editCard(this)" title="Edit">✏️</button>
+                        <button class="card-action" onclick="copyCard(this)" title="Copy">📋</button>
+                        <button class="card-action" onclick="deleteCard(this)" title="Delete">🗑️</button>
+                    </div>
+                </div>
+                <div class="card-title">${cardData.title}</div>
+                <div class="card-description">${cardData.description}</div>
+                <div class="card-preview">${cardData.content.substring(0, 100)}${cardData.content.length > 100 ? '...' : ''}</div>
+                <div class="card-meta">
+                    <span>${cardData.language || cardData.type}</span>
+                    <span>${timeStr}</span>
+                </div>
+            `;
+
+            // Store full data
+            card.dataset.cardData = JSON.stringify(cardData);
+
+            cardsGrid.appendChild(card);
+            cards.push(cardData);
+            updateStats();
+
+            // Auto-save if enabled
+            const autoSave = document.getElementById('autoSave').value;
+            if (autoSave === 'true') {
+                saveToLocalStorage();
+            }
+        }
+
+        // Edit card
+        function editCard(button) {
+            const card = button.closest('.card');
+            const cardData = JSON.parse(card.dataset.cardData);
+
+            currentEditingCard = card;
+            document.getElementById('editTitle').value = cardData.title;
+            document.getElementById('editDescription').value = cardData.description;
+            document.getElementById('editType').value = cardData.type;
+            document.getElementById('editContent').value = cardData.content;
+
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        // Save card edit
+        function saveCardEdit() {
+            if (!currentEditingCard) return;
+
+            const cardData = JSON.parse(currentEditingCard.dataset.cardData);
+            cardData.title = document.getElementById('editTitle').value;
+            cardData.description = document.getElementById('editDescription').value;
+            cardData.type = document.getElementById('editType').value;
+            cardData.content = document.getElementById('editContent').value;
+
+            // Update card display
+            currentEditingCard.querySelector('.card-title').textContent = cardData.title;
+            currentEditingCard.querySelector('.card-description').textContent = cardData.description;
+            currentEditingCard.querySelector('.card-type').textContent = cardData.type.toUpperCase();
+            currentEditingCard.querySelector('.card-type').className = `card-type ${cardData.type}`;
+            currentEditingCard.querySelector('.card-preview').textContent = 
+                cardData.content.substring(0, 100) + (cardData.content.length > 100 ? '...' : '');
+            currentEditingCard.dataset.cardData = JSON.stringify(cardData);
+
+            closeModal();
+            saveToLocalStorage();
+        }
+
+        // Copy card content
+        function copyCard(button) {
+            const card = button.closest('.card');
+            const cardData = JSON.parse(card.dataset.cardData);
+
+            navigator.clipboard.writeText(cardData.content).then(() => {
+                const originalText = button.textContent;
+                button.textContent = '✓';
+                setTimeout(() => button.textContent = originalText, 2000);
+            });
+        }
+
+        // Delete card
+        function deleteCard(button) {
+            if (confirm('Delete this card?')) {
+                const card = button.closest('.card');
+                card.remove();
+                updateStats();
+                saveToLocalStorage();
+            }
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('editModal').classList.remove('active');
+            currentEditingCard = null;
+        }
+
+        // Update statistics
+        function updateStats() {
+            const cardElements = document.querySelectorAll('.card');
+            const codeCards = Array.from(cardElements).filter(card => {
+                const data = JSON.parse(card.dataset.cardData);
+                return data.type === 'code';
+            });
+
+            document.getElementById('cardCount').textContent = cardElements.length;
+            document.getElementById('messageCount').textContent = messages.length;
+            document.getElementById('codeCount').textContent = codeCards.length;
+        }
+
+        // Save to localStorage
+        function saveToLocalStorage() {
+            const cardElements = document.querySelectorAll('.card');
+            const cardsData = Array.from(cardElements).map(card => 
+                JSON.parse(card.dataset.cardData)
+            );
+            localStorage.setItem('copilot-cards', JSON.stringify(cardsData));
+            localStorage.setItem('copilot-messages', JSON.stringify(messages));
+        }
+
+        // Load from localStorage
+        function loadFromLocalStorage() {
+            const savedCards = localStorage.getItem('copilot-cards');
+            const savedMessages = localStorage.getItem('copilot-messages');
+
+            if (savedCards) {
+                const cardsData = JSON.parse(savedCards);
+                cardsData.forEach(cardData => addCard(cardData));
+            }
+
+            if (savedMessages) {
+                messages = JSON.parse(savedMessages);
+            }
+        }
+
+        // Save all cards
+        function saveAllCards() {
+            saveToLocalStorage();
+            alert('✅ All cards saved to browser storage!');
+        }
+
+        // Export workspace
+        function exportWorkspace() {
+            const cardElements = document.querySelectorAll('.card');
+            const cardsData = Array.from(cardElements).map(card => 
+                JSON.parse(card.dataset.cardData)
+            );
+
+            const exportData = {
+                cards: cardsData,
+                messages: messages,
+                exportDate: new Date().toISOString()
+            };
+
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `copilot-workspace-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Import file
+        function importFile() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        if (data.cards) {
+                            data.cards.forEach(cardData => addCard(cardData));
+                        }
+                        alert('✅ Workspace imported successfully!');
+                    } catch (error) {
+                        alert('❌ Error importing file: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        // Clear all
+        function clearAll() {
+            if (confirm('Clear all cards and messages? This cannot be undone.')) {
+                document.getElementById('cardsGrid').innerHTML = '';
+                document.getElementById('chatMessages').innerHTML = '';
+                cards = [];
+                messages = [];
+                updateStats();
+                localStorage.removeItem('copilot-cards');
+                localStorage.removeItem('copilot-messages');
+
+                // Re-add welcome message
+                addMessage('assistant', 'Hello! I\'m your AI copilot. I can help you with:\n• Generate code in any language\n• Create documentation\n• Refactor and improve code\n• Answer technical questions\n\nWhat would you like to build today?');
+            }
+        }
+
+        // Settings
+        function openSettings() {
+            alert('Settings panel is on the right side of the screen!');
+        }
+
+        // New workspace
+        function newWorkspace() {
+            if (confirm('Create a new workspace? Current workspace will be saved.')) {
+                saveToLocalStorage();
+                location.reload();
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFromLocalStorage();
+            updateStats();
+
+            // Load saved API endpoint
+            const savedEndpoint = localStorage.getItem('api-endpoint');
+            if (savedEndpoint) {
+                document.getElementById('apiEndpoint').value = savedEndpoint;
+            }
+
+            // Save API endpoint on change
+            document.getElementById('apiEndpoint').addEventListener('change', (e) => {
+                localStorage.setItem('api-endpoint', e.target.value);
+            });
+        });
+    </script>
+</body>
+</html>
