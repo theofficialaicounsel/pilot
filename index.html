@@ -31,7 +31,7 @@
             background: var(--black);
             color: var(--text);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: auto; /* allow page scrolling on mobile */
+            overflow: auto;
         }
 
         body {
@@ -114,7 +114,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 0;
-            height: calc(100vh - 60px); /* fill remaining viewport */
+            height: calc(100vh - 60px);
         }
 
         .left-panel {
@@ -122,7 +122,7 @@
             display: flex;
             flex-direction: column;
             background: var(--black);
-            min-height: 0; /* allow internal scrolling */
+            min-height: 0;
         }
 
         .panel-header {
@@ -165,7 +165,7 @@
             flex-direction: column;
             padding: 16px;
             overflow-y: auto;
-            min-height: 0; /* important for scrolling inside grid */
+            min-height: 0;
         }
 
         .messages-box {
@@ -283,12 +283,12 @@
             border: 1px solid var(--light-gray);
             border-top: 3px solid var(--yellow);
             border-radius: 8px;
-            padding: 14px;
+            padding: 0;
             margin-bottom: 0;
             transition: all 0.18s ease;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            overflow: hidden;
         }
 
         .card:hover {
@@ -301,12 +301,95 @@
             justify-content: space-between;
             align-items: center;
             gap: 12px;
+            padding: 14px;
+            cursor: pointer;
+            user-select: none;
+            border-bottom: 1px solid transparent;
+        }
+
+        .card.collapsed .card-header {
+            border-bottom: none;
+        }
+
+        .card.expanded .card-header {
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-header:hover {
+            background: rgba(255, 215, 0, 0.05);
+        }
+
+        .card-title-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .card-type {
+            display: inline-block;
+            background: rgba(255, 215, 0, 0.08);
+            color: var(--yellow);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            align-self: flex-start;
         }
 
         .card-title {
             font-weight: bold;
             color: var(--yellow);
             font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 6px;
+        }
+
+        .card-content {
+            padding: 14px;
+            max-height: 500px;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+
+        .card.collapsed .card-content {
+            display: none;
+        }
+
+        .card.expanded .card-content {
+            display: block;
+        }
+
+        .card-preview {
+            background: var(--black);
+            border: 1px solid var(--border);
+            padding: 10px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-bottom: 10px;
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
         }
 
         .card-actions {
@@ -321,45 +404,18 @@
             border-radius: 6px;
         }
 
-        .card-type {
-            display: inline-block;
-            background: rgba(255, 215, 0, 0.08);
+        .card-toggle {
+            background: none;
+            border: none;
             color: var(--yellow);
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-bottom: 6px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 4px;
+            transition: transform 0.3s ease;
         }
 
-        .card-desc {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-            margin-bottom: 6px;
-        }
-
-        .card-preview {
-            background: var(--black);
-            border: 1px solid var(--border);
-            padding: 10px;
-            border-radius: 6px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            max-height: 220px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
-
-        .card-meta {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px solid var(--border);
-            font-size: 0.8rem;
-            color: var(--text-secondary);
+        .card.expanded .card-toggle {
+            transform: rotate(180deg);
         }
 
         .panel-controls {
@@ -377,31 +433,45 @@
             border-radius: 8px;
         }
 
-        .config-section {
-            padding: 14px;
-            border-top: 1px solid var(--border);
-            background: var(--dark-gray);
+        .panel-header-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
 
-        .config-label {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            margin-bottom: 6px;
-            display: block;
+        .search-filter-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 0 16px;
         }
 
-        .config-input {
-            width: 100%;
+        .search-input {
+            flex: 1;
             background: var(--gray);
             color: var(--text);
             border: 1px solid var(--light-gray);
-            padding: 8px;
+            padding: 8px 12px;
             border-radius: 6px;
             font-size: 0.95rem;
-            margin-bottom: 8px;
         }
 
-        .config-input:focus {
+        .search-input:focus {
+            outline: none;
+            border-color: var(--yellow);
+        }
+
+        .filter-select {
+            background: var(--gray);
+            color: var(--text);
+            border: 1px solid var(--light-gray);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            min-width: 120px;
+        }
+
+        .filter-select:focus {
             outline: none;
             border-color: var(--yellow);
         }
@@ -530,6 +600,46 @@
             to { transform: rotate(360deg); }
         }
 
+        /* Card filters and search styling */
+        .card-filter-info {
+            padding: 8px 16px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--dark-gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .clear-filter-btn {
+            background: none;
+            border: none;
+            color: var(--yellow);
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+
+        .clear-filter-btn:hover {
+            text-decoration: underline;
+        }
+
+        /* Bulk card controls */
+        .bulk-controls {
+            display: flex;
+            gap: 8px;
+            padding: 8px 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--dark-gray);
+        }
+
+        .bulk-controls button {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            min-width: auto;
+        }
+
         /* Responsive adjustments */
         @media (max-width: 900px) {
             body {
@@ -575,11 +685,11 @@
             }
 
             .card {
-                padding: 12px;
+                padding: 0;
             }
 
             .card-preview {
-                max-height: 220px;
+                max-height: 300px;
             }
 
             .header {
@@ -588,6 +698,14 @@
 
             .logo { font-size: 1.05rem; }
             .logo-icon { font-size: 1.25rem; }
+
+            .search-filter-container {
+                flex-direction: column;
+            }
+
+            .bulk-controls {
+                flex-wrap: wrap;
+            }
         }
 
         /* Small touch target awareness */
@@ -640,19 +758,43 @@
                     </div>
                 </div>
             </div>
-
-            <div class="config-section">
-                <label class="config-label">API Endpoint</label>
-                <input type="text" class="config-input" id="apiEndpoint" placeholder="https://your-worker.workers.dev">
-            </div>
+            <!-- REMOVED API endpoint from here - moved to settings only -->
         </div>
 
         <div class="right-panel">
             <div class="panel-header">
                 <div class="panel-title">📦 Generated Cards</div>
-                <div id="loadingStatus"></div>
+                <div class="panel-header-controls">
+                    <span id="cardCount">0 cards</span>
+                    <div id="loadingStatus"></div>
+                </div>
             </div>
 
+            <!-- Search and Filter -->
+            <div class="search-filter-container">
+                <input type="text" class="search-input" id="cardSearch" placeholder="Search cards...">
+                <select class="filter-select" id="cardFilter">
+                    <option value="all">All Types</option>
+                    <option value="code">Code</option>
+                    <option value="document">Document</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <!-- Filter info and bulk controls -->
+            <div class="card-filter-info" id="filterInfo" style="display: none;">
+                <span id="filterText"></span>
+                <button class="clear-filter-btn" onclick="clearFilters()">Clear filters</button>
+            </div>
+
+            <div class="bulk-controls" id="bulkControls" style="display: none;">
+                <button onclick="expandAllCards()" title="Expand all cards">🔽 Expand All</button>
+                <button onclick="collapseAllCards()" title="Collapse all cards">▶️ Collapse All</button>
+                <button onclick="selectAllCards()" title="Select all cards">✓ Select All</button>
+                <button onclick="deleteSelectedCards()" title="Delete selected" style="color: #ff6b6b;">🗑️ Delete Selected</button>
+            </div>
+
+            <!-- Cards Container -->
             <div class="cards-container" id="cardsContainer"></div>
 
             <div class="panel-controls">
@@ -661,6 +803,7 @@
                 <button onclick="triggerFileUpload()" aria-label="Upload file">📎 Upload</button>
                 <button onclick="saveCardsLocal()" aria-label="Save cards">💾 Save</button>
                 <button onclick="loadCardsLocal()" aria-label="Load cards">📂 Load</button>
+                <button onclick="toggleBulkControls()" aria-label="Bulk actions">📋 Bulk</button>
 
                 <!-- hidden file input -->
                 <input type="file" id="fileInput" accept=".txt,.md,.json" style="display:none">
@@ -688,6 +831,7 @@
                 <select class="form-input" id="editType">
                     <option value="code">Code</option>
                     <option value="document">Document</option>
+                    <option value="other">Other</option>
                 </select>
             </div>
             <div class="form-group">
@@ -721,6 +865,14 @@
                     <option value="deepseek-coder">DeepSeek Coder</option>
                     <option value="qwen-coder">Qwen Coder</option>
                     <option value="kat-coder">KAT Coder Pro</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Default Card State</label>
+                <select class="form-input" id="defaultCardState">
+                    <option value="collapsed">Collapsed (save space)</option>
+                    <option value="expanded">Expanded (show content)</option>
                 </select>
             </div>
 
@@ -793,6 +945,8 @@
         let cards = [];
         let currentEditCard = null;
         let sessionStart = Date.now();
+        let selectedCards = new Set();
+        let isBulkMode = false;
 
         // TTS state
         let voices = [];
@@ -800,6 +954,11 @@
         let ttsRate = 1;
         let ttsPitch = 1;
         let currentUtterance = null;
+
+        // Filter state
+        let currentFilter = 'all';
+        let currentSearch = '';
+        let defaultCardState = 'collapsed';
 
         document.addEventListener('DOMContentLoaded', () => {
             loadFromStorage();
@@ -826,20 +985,31 @@
                 document.getElementById('pitchVal').textContent = ttsPitch.toFixed(1);
             });
 
+            // search and filter
+            document.getElementById('cardSearch').addEventListener('input', (e) => {
+                currentSearch = e.target.value.toLowerCase();
+                filterCards();
+            });
+
+            document.getElementById('cardFilter').addEventListener('change', (e) => {
+                currentFilter = e.target.value;
+                filterCards();
+            });
+
             // session timer
             setInterval(() => {
                 const minutes = Math.floor((Date.now() - sessionStart) / 60000);
                 document.getElementById('statTime').textContent = minutes + 'm';
             }, 60000);
 
-            // Load voices (asynchronously)
+            // Load voices
             populateVoiceList();
             if (typeof speechSynthesis !== 'undefined') {
                 speechSynthesis.onvoiceschanged = populateVoiceList;
             }
 
             if (messages.length === 0) {
-                addMessage('assistant', '👋 Welcome! I can:\n• Generate code\n• Create documentation\n• Answer questions\n\nConfigure your API endpoint in the bottom left, then start chatting!');
+                addMessage('assistant', '👋 Welcome! I can:\n• Generate code\n• Create documentation\n• Answer questions\n\nConfigure your API endpoint in Settings (⚙️), then start chatting!\n\n💡 New: Cards are now collapsible to save space.');
             }
         });
 
@@ -859,9 +1029,9 @@
             showLoading(true);
 
             try {
-                const endpoint = document.getElementById('apiEndpoint').value;
+                const endpoint = document.getElementById('settingsEndpoint').value;
                 if (!endpoint) {
-                    addMessage('assistant', '⚠️ Please configure your API endpoint first!');
+                    addMessage('assistant', '⚠️ Please configure your API endpoint in Settings first!');
                     return;
                 }
 
@@ -921,7 +1091,7 @@
             const actions = document.createElement('div');
             actions.className = 'msg-actions';
 
-            // TTS button (toggle)
+            // TTS button
             const ttsBtn = document.createElement('button');
             ttsBtn.title = 'Read message';
             ttsBtn.setAttribute('aria-label', 'Read message');
@@ -935,8 +1105,6 @@
                         rate: ttsRate,
                         pitch: ttsPitch,
                         voiceIndex: selectedVoiceIndex
-                    }, () => {
-                        // on end
                     });
                 }
             };
@@ -976,30 +1144,54 @@
         function createCard(data) {
             const container = document.getElementById('cardsContainer');
             const card = document.createElement('div');
-            card.className = 'card';
+            card.className = `card ${defaultCardState === 'collapsed' ? 'collapsed' : 'expanded'}`;
+            
+            if (data.id) {
+                card.dataset.cardId = data.id;
+            } else {
+                card.dataset.cardId = 'card_' + Date.now() + Math.random().toString(36).substr(2, 9);
+                data.id = card.dataset.cardId;
+            }
 
-            // sanitize preview using textContent
-            const previewText = data.content ? data.content.toString() : '';
-            const preview = previewText.substring(0, 300) + (previewText.length > 300 ? '...' : '');
-
-            // header
+            // header with toggle
             const header = document.createElement('div');
             header.className = 'card-header';
+            header.onclick = (e) => {
+                if (!e.target.closest('button')) {
+                    toggleCard(card);
+                }
+            };
 
-            const left = document.createElement('div');
-            left.style.flex = '1';
+            const titleArea = document.createElement('div');
+            titleArea.className = 'card-title-area';
+
             const typeEl = document.createElement('div');
             typeEl.className = 'card-type';
             typeEl.textContent = (data.type || 'item').toUpperCase();
+
             const titleEl = document.createElement('div');
             titleEl.className = 'card-title';
-            titleEl.textContent = data.title || (data.type || 'Card');
+            titleEl.innerHTML = `<span>${data.title || (data.type || 'Card')}</span>`;
 
-            left.appendChild(typeEl);
-            left.appendChild(titleEl);
+            titleArea.appendChild(typeEl);
+            titleArea.appendChild(titleEl);
 
             const actions = document.createElement('div');
             actions.className = 'card-actions';
+
+            // select checkbox for bulk mode
+            const selectCheckbox = document.createElement('input');
+            selectCheckbox.type = 'checkbox';
+            selectCheckbox.className = 'card-select';
+            selectCheckbox.style.display = isBulkMode ? 'block' : 'none';
+            selectCheckbox.onchange = (e) => {
+                if (e.target.checked) {
+                    selectedCards.add(card.dataset.cardId);
+                } else {
+                    selectedCards.delete(card.dataset.cardId);
+                }
+                updateBulkControls();
+            };
 
             // edit button
             const editBtn = document.createElement('button');
@@ -1035,17 +1227,35 @@
             };
             ttsBtn.setAttribute('aria-label', 'Read card');
 
+            // Toggle button
+            const toggleBtn = document.createElement('button');
+            toggleBtn.className = 'card-toggle';
+            toggleBtn.innerHTML = '🔽';
+            toggleBtn.onclick = (e) => {
+                e.stopPropagation();
+                toggleCard(card);
+            };
+
+            actions.appendChild(selectCheckbox);
             actions.appendChild(editBtn);
             actions.appendChild(copyBtn);
             actions.appendChild(delBtn);
             actions.appendChild(ttsBtn);
+            actions.appendChild(toggleBtn);
 
-            header.appendChild(left);
+            header.appendChild(titleArea);
             header.appendChild(actions);
+
+            // content area
+            const content = document.createElement('div');
+            content.className = 'card-content';
 
             const desc = document.createElement('div');
             desc.className = 'card-desc';
             desc.textContent = data.desc || '';
+
+            const previewText = data.content ? data.content.toString() : '';
+            const preview = previewText.substring(0, 500) + (previewText.length > 500 ? '...' : '');
 
             const previewEl = document.createElement('div');
             previewEl.className = 'card-preview';
@@ -1055,19 +1265,54 @@
             meta.className = 'card-meta';
             meta.innerHTML = `<span>${data.language || data.type || ''}</span><span>${new Date().toLocaleTimeString()}</span>`;
 
+            content.appendChild(desc);
+            content.appendChild(previewEl);
+            content.appendChild(meta);
+
             card.appendChild(header);
-            card.appendChild(desc);
-            card.appendChild(previewEl);
-            card.appendChild(meta);
+            card.appendChild(content);
 
             // store data on element
             card.dataset.cardData = JSON.stringify(data || {});
 
-            container.appendChild(card);
+            // Add to container based on filter
+            if (filterCard(data)) {
+                container.appendChild(card);
+            } else {
+                card.style.display = 'none';
+            }
 
             cards.push(data);
             updateCardCount();
             saveToStorage();
+        }
+
+        function toggleCard(card) {
+            if (card.classList.contains('collapsed')) {
+                card.classList.remove('collapsed');
+                card.classList.add('expanded');
+                card.querySelector('.card-toggle').innerHTML = '🔼';
+            } else {
+                card.classList.remove('expanded');
+                card.classList.add('collapsed');
+                card.querySelector('.card-toggle').innerHTML = '🔽';
+            }
+        }
+
+        function expandAllCards() {
+            document.querySelectorAll('.card').forEach(card => {
+                card.classList.remove('collapsed');
+                card.classList.add('expanded');
+                card.querySelector('.card-toggle').innerHTML = '🔼';
+            });
+        }
+
+        function collapseAllCards() {
+            document.querySelectorAll('.card').forEach(card => {
+                card.classList.remove('expanded');
+                card.classList.add('collapsed');
+                card.querySelector('.card-toggle').innerHTML = '🔽';
+            });
         }
 
         function editCard(btn) {
@@ -1088,21 +1333,25 @@
 
             const prev = JSON.parse(currentEditCard.dataset.cardData || '{}');
             const data = {
+                ...prev,
                 title: document.getElementById('editTitle').value,
                 desc: document.getElementById('editDesc').value,
                 type: document.getElementById('editType').value,
-                content: document.getElementById('editContent').value,
-                language: prev.language || prev.type || ''
+                content: document.getElementById('editContent').value
             };
 
             currentEditCard.dataset.cardData = JSON.stringify(data);
-            currentEditCard.querySelector('.card-title').textContent = data.title;
+            currentEditCard.querySelector('.card-title span').textContent = data.title;
             currentEditCard.querySelector('.card-desc').textContent = data.desc;
-            currentEditCard.querySelector('.card-preview').textContent = data.content.substring(0, 300) + (data.content.length > 300 ? '...' : '');
+            currentEditCard.querySelector('.card-type').textContent = data.type.toUpperCase();
+            
+            const previewText = data.content ? data.content.toString() : '';
+            const preview = previewText.substring(0, 500) + (previewText.length > 500 ? '...' : '');
+            currentEditCard.querySelector('.card-preview').textContent = preview;
 
-            // update cards array - simple strategy: replace first matching by timestamp/content
+            // update cards array
             for (let i = 0; i < cards.length; i++) {
-                if ((cards[i].title === prev.title && cards[i].content === prev.content) || JSON.stringify(cards[i]) === JSON.stringify(prev)) {
+                if (cards[i].id === prev.id || (cards[i].title === prev.title && cards[i].content === prev.content)) {
                     cards[i] = data;
                     break;
                 }
@@ -1111,6 +1360,7 @@
             closeModal();
             saveToStorage();
             updateCardCount();
+            filterCards();
         }
 
         function copyCard(btn) {
@@ -1127,14 +1377,132 @@
         function deleteCard(btn) {
             const card = btn.closest('.card');
             const data = JSON.parse(card.dataset.cardData || '{}');
-            // remove from DOM
-            card.remove();
-            // remove from cards array by matching content/title
-            cards = cards.filter(c => !(c.title === data.title && c.content === data.content));
-            updateCardCount();
-            saveToStorage();
+            
+            if (confirm('Delete this card?')) {
+                card.remove();
+                cards = cards.filter(c => c.id !== data.id);
+                updateCardCount();
+                saveToStorage();
+            }
         }
 
+        /* ----------------------
+           Bulk Operations
+           ---------------------- */
+        function toggleBulkControls() {
+            isBulkMode = !isBulkMode;
+            const bulkControls = document.getElementById('bulkControls');
+            const checkboxes = document.querySelectorAll('.card-select');
+            
+            if (isBulkMode) {
+                bulkControls.style.display = 'flex';
+                checkboxes.forEach(cb => cb.style.display = 'block');
+            } else {
+                bulkControls.style.display = 'none';
+                checkboxes.forEach(cb => cb.style.display = 'none');
+                selectedCards.clear();
+            }
+        }
+
+        function selectAllCards() {
+            const checkboxes = document.querySelectorAll('.card-select');
+            checkboxes.forEach(cb => {
+                cb.checked = true;
+                const card = cb.closest('.card');
+                selectedCards.add(card.dataset.cardId);
+            });
+            updateBulkControls();
+        }
+
+        function deleteSelectedCards() {
+            if (selectedCards.size === 0) return;
+            
+            if (confirm(`Delete ${selectedCards.size} selected cards?`)) {
+                selectedCards.forEach(id => {
+                    const card = document.querySelector(`[data-card-id="${id}"]`);
+                    if (card) card.remove();
+                });
+                
+                cards = cards.filter(c => !selectedCards.has(c.id));
+                selectedCards.clear();
+                updateCardCount();
+                saveToStorage();
+                toggleBulkControls();
+            }
+        }
+
+        function updateBulkControls() {
+            const deleteBtn = document.querySelector('#bulkControls button[onclick="deleteSelectedCards()"]');
+            if (deleteBtn) {
+                deleteBtn.textContent = `🗑️ Delete (${selectedCards.size})`;
+            }
+        }
+
+        /* ----------------------
+           Filtering and Search
+           ---------------------- */
+        function filterCard(cardData) {
+            if (currentFilter !== 'all' && cardData.type !== currentFilter) {
+                return false;
+            }
+            
+            if (currentSearch) {
+                const searchText = currentSearch.toLowerCase();
+                const titleMatch = (cardData.title || '').toLowerCase().includes(searchText);
+                const descMatch = (cardData.desc || '').toLowerCase().includes(searchText);
+                const contentMatch = (cardData.content || '').toLowerCase().includes(searchText);
+                
+                if (!titleMatch && !descMatch && !contentMatch) {
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+
+        function filterCards() {
+            const allCards = document.querySelectorAll('.card');
+            let visibleCount = 0;
+            
+            allCards.forEach(card => {
+                const data = JSON.parse(card.dataset.cardData || '{}');
+                if (filterCard(data)) {
+                    card.style.display = 'flex';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Update filter info
+            const filterInfo = document.getElementById('filterInfo');
+            const filterText = document.getElementById('filterText');
+            
+            if (currentFilter !== 'all' || currentSearch) {
+                let info = `Showing ${visibleCount} of ${allCards.length} cards`;
+                if (currentFilter !== 'all') info += ` • Type: ${currentFilter}`;
+                if (currentSearch) info += ` • Search: "${currentSearch}"`;
+                
+                filterText.textContent = info;
+                filterInfo.style.display = 'flex';
+            } else {
+                filterInfo.style.display = 'none';
+            }
+            
+            updateCardCount();
+        }
+
+        function clearFilters() {
+            document.getElementById('cardSearch').value = '';
+            document.getElementById('cardFilter').value = 'all';
+            currentSearch = '';
+            currentFilter = 'all';
+            filterCards();
+        }
+
+        /* ----------------------
+           UI Helpers
+           ---------------------- */
         function copyLastMessage() {
             if (messages.length > 0) {
                 const last = messages[messages.length - 1].content || '';
@@ -1158,6 +1526,7 @@
                 document.getElementById('cardsContainer').innerHTML = '';
                 messages = [];
                 cards = [];
+                selectedCards.clear();
                 localStorage.clear();
                 updateCardCount();
             }
@@ -1251,14 +1620,15 @@
             try {
                 localStorage.setItem('copilot-cards', JSON.stringify(cards));
                 localStorage.setItem('copilot-messages', JSON.stringify(messages));
-                localStorage.setItem('copilot-endpoint', document.getElementById('apiEndpoint').value);
                 // save settings
                 const settings = {
                     voiceIndex: selectedVoiceIndex,
                     ttsRate,
                     ttsPitch,
                     theme: document.getElementById('themeSelect') ? document.getElementById('themeSelect').value : 'dark',
-                    model: document.getElementById('modelSelect') ? document.getElementById('modelSelect').value : 'auto'
+                    model: document.getElementById('modelSelect') ? document.getElementById('modelSelect').value : 'auto',
+                    endpoint: document.getElementById('settingsEndpoint') ? document.getElementById('settingsEndpoint').value : '',
+                    defaultCardState: document.getElementById('defaultCardState') ? document.getElementById('defaultCardState').value : 'collapsed'
                 };
                 localStorage.setItem('copilot-settings', JSON.stringify(settings));
             } catch (e) {
@@ -1269,10 +1639,8 @@
         function loadFromStorage() {
             const saved = localStorage.getItem('copilot-cards');
             const msgs = localStorage.getItem('copilot-messages');
-            const endpoint = localStorage.getItem('copilot-endpoint');
             const settingsRaw = localStorage.getItem('copilot-settings');
 
-            if (endpoint) document.getElementById('apiEndpoint').value = endpoint;
             if (saved) {
                 try {
                     cards = JSON.parse(saved) || [];
@@ -1291,6 +1659,8 @@
                     selectedVoiceIndex = settings.voiceIndex ?? null;
                     ttsRate = settings.ttsRate ?? 1;
                     ttsPitch = settings.ttsPitch ?? 1;
+                    defaultCardState = settings.defaultCardState || 'collapsed';
+                    
                     if (document.getElementById('ttsRate')) {
                         document.getElementById('ttsRate').value = ttsRate;
                         document.getElementById('rateVal').textContent = ttsRate.toFixed(1);
@@ -1304,6 +1674,12 @@
                     }
                     if (document.getElementById('modelSelect')) {
                         document.getElementById('modelSelect').value = settings.model || 'auto';
+                    }
+                    if (document.getElementById('settingsEndpoint')) {
+                        document.getElementById('settingsEndpoint').value = settings.endpoint || '';
+                    }
+                    if (document.getElementById('defaultCardState')) {
+                        document.getElementById('defaultCardState').value = defaultCardState;
                     }
                 } catch (e) { /* ignore */ }
             }
@@ -1322,12 +1698,20 @@
             });
         }
 
+        function updateCardCount() {
+            const visibleCards = document.querySelectorAll('.card[style*="display: flex"], .card:not([style])');
+            const totalCards = cards.length;
+            document.getElementById('cardCount').textContent = `${visibleCards.length} of ${totalCards} cards`;
+        }
+
+        /* ----------------------
+           Modal Functions
+           ---------------------- */
         function closeModal() {
             document.getElementById('editModal').classList.remove('show');
         }
 
         function showSettings() {
-            document.getElementById('settingsEndpoint').value = document.getElementById('apiEndpoint').value || '';
             document.getElementById('settingsModal').classList.add('show');
         }
 
@@ -1336,12 +1720,15 @@
         }
 
         function saveSettings() {
-            document.getElementById('apiEndpoint').value = document.getElementById('settingsEndpoint').value;
-            // save TTS selections
-            const voiceSelect = document.getElementById('voiceSelect');
-            selectedVoiceIndex = voiceSelect && voiceSelect.selectedIndex >= 0 ? parseInt(voiceSelect.value) : null;
-            ttsRate = parseFloat(document.getElementById('ttsRate').value || 1);
-            ttsPitch = parseFloat(document.getElementById('ttsPitch').value || 1);
+            // Update default card state
+            defaultCardState = document.getElementById('defaultCardState').value;
+            
+            // Update all existing cards to new default state
+            document.querySelectorAll('.card').forEach(card => {
+                card.classList.remove('collapsed', 'expanded');
+                card.classList.add(defaultCardState === 'collapsed' ? 'collapsed' : 'expanded');
+                card.querySelector('.card-toggle').innerHTML = defaultCardState === 'collapsed' ? '🔽' : '🔼';
+            });
 
             saveToStorage();
             closeSettingsModal();
@@ -1349,7 +1736,7 @@
         }
 
         function showStats() {
-            document.getElementById('statCards').textContent = document.querySelectorAll('.card').length;
+            document.getElementById('statCards').textContent = cards.length;
             document.getElementById('statMessages').textContent = messages.length;
             const codeCount = cards.filter(c => c.type === 'code').length;
             document.getElementById('statCode').textContent = codeCount;
@@ -1369,24 +1756,6 @@
             }
         }
 
-        function updateCardCount() {
-            // Reserved for future UI updates; currently stats are updated when modals open
-            // Could update badge counters, etc.
-        }
-
-        /* ----------------------
-           File import helpers
-           ---------------------- */
-        function saveToLocalFiles(fileName, content) {
-            const blob = new Blob([content], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
         /* ----------------------
            TTS: Web Speech API
            ---------------------- */
@@ -1398,7 +1767,6 @@
             voices = speechSynthesis.getVoices() || [];
             const select = document.getElementById('voiceSelect');
             if (!select) return;
-            const prev = select.value;
             select.innerHTML = '';
             voices.forEach((v, i) => {
                 const opt = document.createElement('option');
@@ -1406,13 +1774,11 @@
                 opt.textContent = `${v.name} ${v.lang ? '— ' + v.lang : ''}${v.default ? ' (default)' : ''}`;
                 select.appendChild(opt);
             });
-            // restore previously selected voice index if available
             if (selectedVoiceIndex !== null && selectedVoiceIndex < voices.length) {
                 select.value = selectedVoiceIndex;
             } else if (typeof selectedVoiceIndex === 'number' && voices[selectedVoiceIndex]) {
                 select.value = selectedVoiceIndex;
             } else {
-                // try to pick default voice
                 const d = voices.findIndex(v => v.default);
                 if (d >= 0) select.value = d;
             }
@@ -1450,15 +1816,7 @@
             currentUtterance = null;
         }
 
-        /* ----------------------
-           Misc helpers
-           ---------------------- */
-        function saveToStorageDebounced() {
-            // could implement debounce if needed
-            saveToStorage();
-        }
-
-        // Expose some functions for inline handlers
+        // Expose functions for inline handlers
         window.showSettings = showSettings;
         window.showStats = showStats;
         window.clearAll = clearAll;
@@ -1481,6 +1839,13 @@
         window.speakText = speakText;
         window.stopSpeaking = stopSpeaking;
         window.populateVoiceList = populateVoiceList;
+        window.toggleCard = toggleCard;
+        window.expandAllCards = expandAllCards;
+        window.collapseAllCards = collapseAllCards;
+        window.toggleBulkControls = toggleBulkControls;
+        window.selectAllCards = selectAllCards;
+        window.deleteSelectedCards = deleteSelectedCards;
+        window.clearFilters = clearFilters;
 
     </script>
 </body>
