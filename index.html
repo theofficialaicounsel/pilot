@@ -65,6 +65,7 @@
             font-size: 1.5rem;
             font-weight: 700;
             background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -552,11 +553,11 @@
             padding: 1rem;
             text-align: center;
         }
-
         .stat-value {
             font-size: 1.5rem;
             font-weight: 700;
             background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 0.25rem;
@@ -1063,14 +1064,13 @@
             const now = new Date();
             const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-            messageDiv.innerHTML = `
-                <div class="message-header">
-                    <span>${role === 'user' ? '👤 You' : '🤖 Assistant'}</span>
-                    <span>${timeStr}</span>
-                </div>
-                <div class="message-content">${content.replace(/
-/g, '<br>')}</div>
-            `;
+messageDiv.innerHTML = `
+    <div class="message-header">
+        <span>${role === 'user' ? '👤 You' : '🤖 Assistant'}</span>
+        <span>${timeStr}</span>
+    </div>
+    <div class="message-content">${content.replace(/\n/g, '<br>')}</div>
+`;
 
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
