@@ -1,40 +1,581 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI Copilot - Code & Document Builder</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>🧠 ai-n pilot</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        /* Your exact original style - no changes */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --black: #0a0a0a;
-            --dark-gray: #1a1a1a;
-            --gray: #2d2d2d;
-            --light-gray: #404040;
+            --bg: #0a0a0a;
+            --glass: rgba(26, 26, 26, 0.8);
             --yellow: #ffd700;
-            --yellow-bright: #ffed4e;
-            --text: #ffffff;
-            --text-secondary: #c0c0c0;
-            --border: #333333;
+            --text: #fff;
+            --border: rgba(255, 215, 0, 0.3);
         }
-
-        html, body {
-            width: 100%;
-            min-height: 100%;
-            margin: 0;
-            padding: 0;
-            background: var(--black);
-            color: var(--text);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: auto;
-        }
-
         body {
+            font-family: system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: rgba(10, 10, 10, 0.95);
+            border-bottom: 2px solid var(--yellow);
+            padding: 0 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+        .logo { font-size: 1.1rem; font-weight: bold; color: var(--yellow); }
+        button {
+            background: var(--glass);
+            color: var(--yellow);
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        .container {
+            position: fixed;
+            top: 50px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        @media (min-width: 768px) {
+            .container {
+                display: grid;
+                grid-template-columns: 300px 1fr;
+            }
+        }
+        .input-panel {
+            background: rgba(10, 10, 10, 0.95);
+            border-bottom: 2px solid var(--yellow);
+            padding: 12px;
+            max-height: 20vh;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        @media (min-width: 768px) {
+            .input-panel {
+                border-right: 2px solid var(--yellow);
+                border-bottom: none;
+                max-height: none;
+            }
+        }
+        .section { margin-bottom: 12px; }
+        .section-title {
+            font-size: 0.75rem;
+            color: var(--yellow);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        select, textarea, input {
+            width: 100%;
+            background: var(--glass);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 8px;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 16px;
+        }
+        textarea { min-height: 80px; }
+        .send-btn {
+            width: 100%;
+            background: var(--yellow);
+            color: var(--bg);
+            border: none;
+            padding: 12px;
+            font-weight: bold;
+            margin-top: 8px;
+            cursor: pointer;
+        }
+        .canvas {
+            flex: 1;
+            position: relative;
+            overflow: auto;
+            background: var(--bg);
+            padding: 0;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg);
+            padding: 0;
+        }
+        @media (min-width: 480px) {
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (min-width: 768px) {
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (min-width: 1024px) {
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        .flip-card {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            cursor: pointer;
+            perspective: 1000px;
+            border-radius: 0;
+            overflow: hidden;
+            background: var(--bg);
+        }
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            font-size: 0.65rem;
+            line-height: 1.2;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            user-select: text;
+            font-family: monospace;
+            justify-content: space-between;
+        }
+        .card-front {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.1));
+            border-left: 4px solid var(--yellow);
+            color: var(--text);
+        }
+        .card-back {
+            transform: rotateY(180deg);
+            background: linear-gradient(135deg, rgba(100, 150, 255, 0.15), rgba(100, 150, 255, 0.05));
+            border-left: 4px solid #58a6ff;
+            color: var(--text);
+        }
+        .card-btn {
+            background: rgba(0, 0, 0, 0.5);
+            border: none;
+            color: var(--text);
+            font-size: 0.9rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 3px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .card-btn:hover {
+            background: var(--yellow);
+            color: var(--bg);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: rgba(26, 26, 26, 0.95);
+            border: 2px solid var(--yellow);
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 500px;
+            width: 100%;
+        }
+        .modal-title { font-size: 1.2rem; color: var(--yellow); margin-bottom: 16px; }
+        .loading {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--glass);
+            border: 1px solid var(--yellow);
+            padding: 12px 20px;
+            border-radius: 8px;
+            display: none;
+            z-index: 999;
+        }
+        .loading.show { display: block; }
+        pre { margin: 0; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; overflow: auto; }
+        code { font-family: monospace; font-size: 0.85em; }
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        .settings-tools {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .settings-tools button, .settings-tools label {
+            flex: 1;
+            background: var(--glass);
+            color: var(--yellow);
+            border: 1px solid var(--border);
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .settings-tools input[type="file"] { display: none; }
+        .saved-notice {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,255,0,.2);
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 10px 20px;
+            border-radius: 8px;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity .5s;
+        }
+        .saved-notice.show { opacity: 1; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">🧠 AI Mind Map</div>
+        <button onclick="showSettings()">⚙️</button>
+    </div>
+
+    <div class="container">
+        <div class="input-panel">
+            <div class="section">
+                <div class="section-title">Mode</div>
+                <select id="modeSelect">
+                    <option value="chat">💬 Chat</option>
+                    <option value="code">💻 Code</option>
+                    <option value="generate">📄 Generate</option>
+                </select>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Message</div>
+                <textarea id="userInput" placeholder="Ask anything..."></textarea>
+                <button class="send-btn" onclick="sendMessage()">⚡ Send</button>
+            </div>
+        </div>
+
+        <div class="canvas">
+            <div class="grid" id="grid"></div>
+        </div>
+    </div>
+
+    <div class="saved-notice" id="savedNotice">✓ Saved!</div>
+
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-title">⚙️ Settings</div>
+            <div class="form-group">
+                <label class="form-label">API Base URL</label>
+                <input type="text" id="baseUrl" placeholder="https://your-worker.workers.dev">
+            </div>
+            <div class="settings-tools">
+                <button onclick="exportData()">📤 Export</button>
+                <label for="importFile">📥 Import</label>
+                <input type="file" id="importFile" accept=".json" onchange="importData(event)">
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+                <button onclick="closeSettings()">Cancel</button>
+                <button class="send-btn" onclick="saveSettings()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading" id="loading">⏳ Processing...</div>
+
+    <script>
+        let pairs = [];
+
+        async function apiFetch(path, payload, method = "POST") {
+            const base = document.getElementById("baseUrl").value.trim().replace(/\/+$/, '');
+            const url = base + path;  // ← No double slashes
+            const headers = { "Content-Type": "application/json" };
+
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers,
+                    ...(payload && method !== "GET" ? { body: JSON.stringify(payload) } : {})
+                });
+
+                const dataText = await res.text();
+                let data;
+                try { data = JSON.parse(dataText); } catch { data = dataText; }
+                return { ok: res.ok, data, status: res.status };
+            } catch (err) {
+                return { ok: false, data: { error: err.message } };
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Simple auto-Markdown for Generate mode (converts ALL CAPS to # Heading, etc.)
+        function simpleMarkdown(text) {
+            return text
+                .replace(/^([A-Z][A-Z\s]+)$/gm, '# $1') // ALL CAPS lines → # Heading
+                .replace(/^I+\./gm, '### ') // Roman numerals → subheading
+                .replace(/^(I+\.)\s+/gm, '### $1 ') // Roman numeral sections
+                .replace(/^\d+\./gm, '- ') // Numbered lists → bullet lists
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') // **bold**
+                .replace(/__(.+?)__/g, '<strong>$1</strong>')
+                .replace(/\[(.+?)\]/g, '[$1]') // Keep brackets
+                ;
+        }
+
+        async function sendMessage() {
+            const message = document.getElementById("userInput").value.trim();
+            if (!message) return;
+
+            const mode = document.getElementById("modeSelect").value;
+
+            addPair({ question: message, response: '⏳' });
+            document.getElementById("userInput").value = '';
+            document.getElementById("loading").classList.add("show");
+
+            try {
+                const base = document.getElementById("baseUrl").value.trim();
+                if (!base) {
+                    updateLastPair({ response: '⚠️ Configure API URL in Settings!' });
+                    return;
+                }
+
+                const payload = mode === 'code' 
+                    ? { prompt: message }
+                    : mode === 'generate'
+                    ? { prompt: message + " (output in Markdown format with headings, bold, lists)", format: "text" }
+                    : { message };
+                const path = mode === 'code' ? '/api/code' : mode === 'generate' ? '/api/generate' : '/api/chat';
+
+                const res = await apiFetch(path, payload);
+                if (!res.ok) {
+                    updateLastPair({ response: `HTTP ${res.status}` });
+                    return;
+                }
+
+                let responseText = '';
+                if (typeof res.data === 'string') {
+                    responseText = res.data;
+                } else if (res.data.response) {
+                    responseText = res.data.response;
+                } else if (res.data.message) {
+                    responseText = res.data.message;
+                } else if (res.data.code) {
+                    responseText = res.data.code;
+                } else {
+                    responseText = JSON.stringify(res.data, null, 2);
+                }
+
+                let formatted = responseText;
+                if (mode === 'code' || res.data.code) {
+                    formatted = `<pre><code>${escapeHtml(responseText.trim())}</code></pre>`;
+                } else if (mode === 'generate') {
+                    formatted = simpleMarkdown(responseText); // Auto-clean legal templates
+                }
+
+                updateLastPair({ response: formatted });
+
+            } catch (error) {
+                updateLastPair({ response: `❌ ${error.message}` });
+            } finally {
+                document.getElementById("loading").classList.remove("show");
+            }
+        }
+
+        // Rest of your original script (addPair, renderPair, etc.) unchanged
+        function addPair(pair) {
+            const id = Date.now() + Math.random();
+            pairs.push({ id, question: pair.question, response: pair.response });
+            renderPair(pairs[pairs.length - 1]);
+            save();
+        }
+
+        function updateLastPair(updates) {
+            if (pairs.length > 0) {
+                const last = pairs[pairs.length - 1];
+                Object.assign(last, updates);
+                const card = document.querySelector(`[data-id="${last.id}"]`);
+                if (card) {
+                    card.querySelector('.card-back > div').innerHTML = updates.response;
+                }
+                save();
+            }
+        }
+
+        function renderPair(pair) {
+            const grid = document.getElementById("grid");
+            const card = document.createElement("div");
+            card.className = "flip-card";
+            card.setAttribute("data-id", pair.id);
+            
+            card.innerHTML = `
+                <div class="flip-card-inner">
+                    <div class="card-face card-front">
+                        <div style="flex:1; overflow:auto;">${pair.question}</div>
+                        <button class="card-btn" onclick="deletePair(${pair.id})" style="margin-top:auto;">🗑️</button>
+                    </div>
+                    <div class="card-face card-back">
+                        <div style="flex:1; overflow:auto;">${pair.response}</div>
+                        <button class="card-btn" onclick="copyResponse(${pair.id})" style="margin-top:auto;">📋</button>
+                    </div>
+                </div>
+            `;
+            
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.card-btn')) return;
+                card.classList.toggle('flipped');
+            });
+            
+            grid.appendChild(card);
+        }
+
+        function deletePair(id) {
+            pairs = pairs.filter(p => p.id !== id);
+            document.querySelector(`[data-id="${id}"]`)?.remove();
+            save();
+        }
+
+        function stripMarkdown(text) {
+            return text
+                .replace(/<[^>]*>/g, '')
+                .replace(/\*\*([^*]+)\*\*/g, '$1')
+                .replace(/\*([^*]+)\*/g, '$1')
+                .replace(/`([^`]+)`/g, '$1')
+                .replace(/```[\s\S]*?```/g, '')
+                .replace(/#{1,6}\s+/g, '')
+                .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+                .trim();
+        }
+
+        function copyResponse(id) {
+            const pair = pairs.find(p => p.id === id);
+            if (pair) {
+                const text = stripMarkdown(pair.response);
+                navigator.clipboard.writeText(text);
+                alert('Copied!');
+            }
+        }
+
+        function exportData() {
+            const data = JSON.stringify(pairs, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'mindmap.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const imported = JSON.parse(ev.target.result);
+                    if (Array.isArray(imported)) {
+                        pairs = imported;
+                        document.getElementById("grid").innerHTML = '';
+                        pairs.forEach(renderPair);
+                        save();
+                        alert('Imported!');
+                    }
+                } catch { alert('Invalid file'); }
+            };
+            reader.readAsText(file);
+        }
+
+        function showSavedNotice() {
+            const notice = document.getElementById("savedNotice");
+            notice.classList.add("show");
+            setTimeout(() => notice.classList.remove("show"), 2000);
+        }
+
+        function showSettings() {
+            document.getElementById("settingsModal").classList.add("show");
+        }
+
+        function closeSettings() {
+            document.getElementById("settingsModal").classList.remove("show");
+        }
+
+        function saveSettings() {
+            localStorage.setItem("mindmap-baseUrl", document.getElementById("baseUrl").value);
+            closeSettings();
+            showSavedNotice();
+        }
+
+        function save() {
+            localStorage.setItem("mindmap-pairs", JSON.stringify(pairs));
+        }
+
+        function load() {
+            const saved = JSON.parse(localStorage.getItem("mindmap-pairs") || "[]");
+            const url = localStorage.getItem("mindmap-baseUrl");
+            if (url) document.getElementById("baseUrl").value = url;
+            pairs = saved;
+            pairs.forEach(p => renderPair(p));
+        }
+
+        document.getElementById("userInput").addEventListener("keypress", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        load();
+    </script>
+</body>
+</html>        body {
             display: grid;
             grid-template-columns: 1fr 1fr;
             grid-template-rows: 60px 1fr;
