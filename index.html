@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
-        :root{--bg:#0a0a0a;--glass:rgba(26,26,26,0.8);--yellow:#ffd700;--text:#fff;--border:rgba(255,215,0,0.3)}
+        :root{--bg:#0a0a0a;--glass:rgba(26,26,26,0.8);--yellow:#ffd700;--text:#fff;--border:rgba(255,215,0,0.3);--red:#ff4444}
         body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
         .header{position:fixed;top:0;left:0;right:0;height:50px;background:rgba(10,10,10,0.95);border-bottom:2px solid var(--yellow);padding:0 12px;display:flex;justify-content:space-between;align-items:center;z-index:1000}
         .logo{font-size:1.1rem;font-weight:bold;color:var(--yellow)}
@@ -20,18 +20,21 @@
         textarea{min-height:80px}
         .send-btn{width:100%;background:var(--yellow);color:var(--bg);border:none;padding:12px;font-weight:bold;margin-top:8px;cursor:pointer}
         .canvas{flex:1;overflow:hidden}
-        .grid{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:0;width:100%;height:100%;overflow-y:auto}
-        .flip-card{position:relative;width:100%;height:100%;min-height:0;cursor:pointer;perspective:1000px;overflow:hidden;background:var(--bg)}
-        .flip-card-inner{position:relative;width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d}
+        .grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(250px, 1fr));grid-auto-rows:minmax(180px, auto);gap:8px;padding:8px;width:100%;height:100%;overflow-y:auto} /* Adjusted grid for better responsiveness */
+        .flip-card{position:relative;width:100%;height:100%;min-height:0;cursor:pointer;perspective:1000px;overflow:hidden;background:var(--bg);user-select:none; border-radius:8px;}
+        .flip-card-inner{position:relative;width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d; border-radius:8px;}
         .flip-card.flipped .flip-card-inner{transform:rotateY(180deg)}
-        .card-face{position:absolute;width:100%;height:100%;backface-visibility:hidden;display:flex;flex-direction:column;background:var(--glass);backdrop-filter:blur(10px);border:2px solid var(--border);padding:8px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.5);font-size:.65rem;line-height:1.2;font-family:monospace}
+        .card-face{position:absolute;width:100%;height:100%;backface-visibility:hidden;display:flex;flex-direction:column;background:var(--glass);backdrop-filter:blur(10px);border:2px solid var(--border);padding:8px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.5);font-size:.65rem;line-height:1.2;font-family:monospace; border-radius:8px;}
         .card-front{background:linear-gradient(135deg,rgba(255,215,0,.2),rgba(255,215,0,.1));border-left:4px solid var(--yellow)}
         .card-back{transform:rotateY(180deg);background:linear-gradient(135deg,rgba(100,150,255,.15),rgba(100,150,255,.05));border-left:4px solid #58a6ff}
-        .response-content{flex:1;overflow:auto}
-        .card-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
-        .card-btn{background:rgba(0,0,0,.5);border:none;color:var(--text);font-size:.85rem;cursor:pointer;padding:4px 8px;border-radius:4px}
+        .response-content{flex:1;overflow:auto; white-space: pre-wrap; /* Preserve whitespace and wrap long lines */}
+        .card-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;justify-content:flex-end}
+        .card-btn{background:rgba(0,0,0,.5);border:none;color:var(--text);font-size:1.2rem;cursor:pointer;padding:6px 8px;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center}
         .card-btn:hover{background:var(--yellow);color:var(--bg)}
-        .selected{border:3px solid #58a6ff !important}
+        .card-btn.delete{color:var(--red)}
+        .card-btn.copy{color:var(--text)}
+        .card-btn.send{color:var(--yellow)}
+        .selected{border:4px solid #58a6ff !important}
         .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:2000;align-items:center;justify-content:center;padding:20px}
         .modal.show{display:flex}
         .modal-content{background:rgba(26,26,26,.95);border:2px solid var(--yellow);border-radius:12px;padding:20px;max-width:500px;width:100%}
@@ -40,9 +43,14 @@
         .loading.show{display:block}
         .saved-notice{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,255,0,.2);color:#0f0;border:1px solid #0f0;padding:10px 20px;border-radius:8px;z-index:999;opacity:0;transition:opacity .5s}
         .saved-notice.show{opacity:1}
-        .settings-tools{display:flex;gap:10px;margin-top:20px}
-        .settings-tools button,.settings-tools label{flex:1;background:var(--glass);color:var(--yellow);border:1px solid var(--border);padding:10px;border-radius:6px;cursor:pointer;text-align:center}
-        .settings-tools input[type=file]{display:none}
+        .longpress-menu{position:absolute;background:rgba(0,0,0,.9);border:2px solid var(--yellow);border-radius:12px;padding:12px;z-index:9999;display:none;flex-direction:column;gap:8px}
+        .longpress-menu button{width:100%;text-align:left}
+        /* Styles for specific elements inside response-content if needed for markdown */
+        .response-content h1, .response-content h2, .response-content h3 { font-size: 0.8rem; margin-top: 0.5em; margin-bottom: 0.2em; }
+        .response-content p { margin-bottom: 0.6em; }
+        .response-content code { background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 3px; }
+        .response-content pre { background: #1a1a1a; padding: 8px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; }
+        .response-content pre code { background: none; padding: 0; border-radius: 0; }
     </style>
 </head>
 <body>
@@ -63,7 +71,7 @@
             </div>
             <div class="section">
                 <div class="section-title">Message</div>
-                <textarea id="userInput" placeholder="Ask anything... Use --- to split into new tiles"></textarea>
+                <textarea id="userInput" placeholder="Ask anything..."></textarea>
                 <button class="send-btn" onclick="sendMessage()">Send</button>
             </div>
         </div>
@@ -71,6 +79,7 @@
     </div>
 
     <div class="saved-notice" id="savedNotice">Saved!</div>
+    <div class="longpress-menu" id="longpressMenu"></div>
 
     <div class="modal" id="settingsModal">
         <div class="modal-content">
@@ -91,144 +100,521 @@
     <div class="loading" id="loading">Processing...</div>
 
     <script>
-        let pairs = [];
-        let sessionId = "main-" + Date.now();
-        const history = [];
-        let selectedTiles = new Set();
+        // --- Global Variables ---
+        let pairs = [];                // Stores all the tiles (question/response pairs)
+        let history = [];              // Stores conversation history (for client-side reference, NOT sent to worker currently)
+        let sessionId = "main-" + Date.now(); // Unique session ID for this client session
+        let selectedTiles = new Set(); // Stores IDs of selected tiles for actions like merge/delete
+        let longPressTimer;            // Timer for detecting long presses on tiles
+        let accumulatedAIResponse = ''; // Accumulates the raw text chunks from the AI stream
+        let currentTileId = null;      // ID of the tile currently being updated by streaming
+        let textDecoder = new TextDecoder('utf-8'); // Reusable TextDecoder
+        
+        // --- DOM Element References ---
+        const gridElement = document.getElementById("grid");
+        const userInputElement = document.getElementById("userInput");
+        const modeSelectElement = document.getElementById("modeSelect");
+        const baseUrlInput = document.getElementById("baseUrl");
+        const settingsModal = document.getElementById("settingsModal");
+        const savedNotice = document.getElementById("savedNotice");
+        const longpressMenu = document.getElementById("longpressMenu");
+        const loadingIndicator = document.getElementById("loading");
 
-        async function apiFetch(path, payload) {
-            const base = document.getElementById("baseUrl").value.trim().replace(/\/+$/, '');
-            const url = base + path;
-            try {
-                const res = await fetch(url, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                return res.body.getReader();
-            } catch {return null}
+        // --- Helper Functions ---
+
+        // Get API Base URL from input, sanitizing trailing slashes
+        function getBaseUrl() {
+            return baseUrlInput.value.trim().replace(/\/+$/, '');
         }
 
-        async function sendMessage() {
-            const input = document.getElementById("userInput").value.trim();
-            if (!input) return;
-            const mode = document.getElementById("modeSelect").value;
+        // Update the UI for a specific tile (used for streaming updates and final rendering)
+        function updateTileContent(tileId, contentHTML) {
+            const tileElement = gridElement.querySelector(`[data-id="${tileId}"]`);
+            if (!tileElement) return; // Tile might have been deleted
 
-            addPair({question:input, response:'Processing...'});
-            document.getElementById("userInput").value = '';
-            document.getElementById("loading").classList.add("show");
-
-            try {
-                const base = document.getElementById("baseUrl").value.trim();
-                if (!base) {updateLastPair({response:'Set API URL!'}); return}
-
-                const messages = [...history, {role:"user", content:input}];
-                const payload = mode==='code' ? {prompt:input,messages,sessionId} 
-                             : mode==='generate' ? {prompt:input,format:"text",messages,sessionId}
-                             : {message:input,messages,sessionId};
-                const path = mode==='code' ? '/api/code' : mode==='generate' ? '/api/generate' : '/api/chat';
-
-                const reader = await apiFetch(path, payload);
-                if (!reader) {updateLastPair({response:'Failed'}); return}
-
-                let fullResponse = '';
-                const decoder = new TextDecoder();
-
-                while (true) {
-                    const {done, value} = await reader.read();
-                    if (done) break;
-                    const chunk = decoder.decode(value, {stream: true});
-                    fullResponse += chunk;
-                    updateLastPair({response: marked.parse(fullResponse)});
-                }
-
-                // Split on ---
-                const parts = fullResponse.split(/\n?---\n?/);
-                if (parts.length > 1) {
-                    updateLastPair({response: marked.parse(parts[0].trim())});
-                    for (let i = 1; i < parts.length; i++) {
-                        addPair({question:`Part ${i+1}`, response: marked.parse(parts[i].trim())});
-                    }
-                }
-
-                history.push({role:"assistant", content:fullResponse});
-
-            } catch {updateLastPair({response:'Request failed'})}
-            finally {document.getElementById("loading").classList.remove("show")}
-        }
-
-        function addPair(p){
-            const id=Date.now()+Math.random();
-            pairs.push({id,question:p.question,response:p.response||'',sessionId:p.sessionId||sessionId});
-            renderPair(pairs[pairs.length-1]);
-            save();
-        }
-        function updateLastPair(u){
-            if(pairs.length>0){
-                const last = pairs[pairs.length-1];
-                Object.assign(last,u);
-                const c=document.querySelector(`[data-id="${last.id}"]`);
-                if(c) c.querySelector('.response-content').innerHTML = u.response;
-                save();
+            const responseContentDiv = tileElement.querySelector('.response-content');
+            if (responseContentDiv) {
+                responseContentDiv.innerHTML = contentHTML; // Set the final rendered markdown or error message
             }
         }
-        function renderPair(p){
-            const g=document.getElementById("grid");
-            const c=document.createElement("div");c.className="flip-card";c.dataset.id=p.id;
-            c.innerHTML=`
+
+        // Add a new tile to the grid and the pairs array
+        function addPair(p) {
+            const id = Date.now() + Math.random(); // Unique ID for this tile
+            pairs.push({ id, question: p.question, response: p.response || '', sessionId: p.sessionId || sessionId });
+            renderPair(pairs[pairs.length - 1]); // Render the new tile in the DOM
+            save(); // Save current state
+            return id; // Return the new tile's ID
+        }
+
+        // Render a single tile in the grid
+        function renderPair(p) {
+            let responseHTMLPlaceholder = 'Waiting for AI...';
+            // If the pair already has a response (e.g., from loading data), render it.
+            if (p.response && p.response !== '...' && p.response !== 'Failed' && p.response !== 'Set API URL!') {
+                // Use marked.parse for initial rendering of saved/loaded data
+                responseHTMLPlaceholder = marked.parse(p.response); 
+            } else if (p.response === '...') {
+                responseHTMLPlaceholder = '...'; // Placeholder for active streaming
+            } else if (p.response === 'Failed') {
+                responseHTMLPlaceholder = '<p style="color:red;">Request failed</p>';
+            } else if (p.response === 'Set API URL!') {
+                responseHTMLPlaceholder = '<p style="color:red;">Set API URL!</p>';
+            }
+
+            const c = document.createElement("div");
+            c.className = "flip-card";
+            c.dataset.id = p.id; // Assign unique ID for selection and targeting
+
+            c.innerHTML = `
                 <div class="flip-card-inner">
-                    <div class="card-face card-front"><div style="flex:1;overflow:auto">${p.question}</div>
+                    <div class="card-face card-front">
+                        <div style="flex:1;overflow:auto;padding:4px;">${escapeHTML(p.question)}</div> <!-- Escape question to prevent XSS -->
                         <div class="card-actions">
-                            <button class="card-btn" onclick="deletePair(${p.id})">Delete</button>
-                            <button class="card-btn" onclick="toggleSelect(${p.id})">Select</button>
-                            <button class="card-btn" onclick="sendTileToAI(${p.id})">Send to AI</button>
+                            <button class="card-btn delete" onclick="event.stopPropagation();deletePair(${p.id})">×</button>
+                            <button class="card-btn" onclick="event.stopPropagation();copyResponse(${p.id})">📋</button>
+                            <button class="card-btn" onclick="event.stopPropagation();sendTileToAI(${p.id})">AI</button>
                         </div>
                     </div>
-                    <div class="card-face card-back"><div class="response-content">${p.response}</div>
-                        <button class="card-btn" onclick="copyResponse(${p.id})">Copy</button>
+                    <div class="card-face card-back">
+                        <div class="response-content">${responseHTMLPlaceholder}</div>
+                        <button class="card-btn" onclick="event.stopPropagation();copyResponse(${p.id})">📋</button>
                     </div>
                 </div>`;
-            c.onclick=e=>{if(e.target.closest('.card-btn'))return;c.classList.toggle('flipped')};
-            g.appendChild(c);
+            
+            // Event listeners for card interaction (flip, long-press)
+            c.onclick = e => { if (e.target.closest('.card-btn')) return; c.classList.toggle('flipped') };
+            c.onmousedown = e => { longPressTimer = setTimeout(() => { showLongPressMenu(e, p.id) }, 600) };
+            c.onmouseup = c.onmouseleave = () => { clearTimeout(longPressTimer) };
+            c.ontouchstart = e => { longPressTimer = setTimeout(() => { showLongPressMenu(e, p.id) }, 600) };
+            c.ontouchend = c.ontouchmove = () => { clearTimeout(longPressTimer) };
+
+            gridElement.appendChild(c);
         }
-        function toggleSelect(id){
-            const card = document.querySelector(`[data-id="${id}"]`);
-            card.classList.toggle('selected');
-            if(selectedTiles.has(id)) selectedTiles.delete(id);
-            else selectedTiles.add(id);
+
+        // Helper to extract AI content chunk from parsed SSE event data
+        function extractAiContent(eventData) {
+            if (eventData?.choices?.[0]?.delta?.content) {
+                return eventData.choices[0].delta.content;
+            }
+            return null;
         }
+
+        // Process the Server-Sent Events stream from the Worker
+        async function processSSEStream(reader, tileId, mode) {
+            let buffer = ''; // Buffer for incomplete SSE messages
+            accumulatedAIResponse = ''; // Reset for this stream
+            const isCodeRequest = mode === 'code'; // Flag for potential code-specific rendering
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) {
+                    console.log("Stream finished.");
+                    break;
+                }
+                buffer += textDecoder.decode(value, { stream: true });
+
+                // Split buffer by SSE message delimiters (\n\n)
+                let messages = buffer.split('\n\n');
+                buffer = messages.pop() || ''; // Keep the last, possibly incomplete message
+
+                for (const message of messages) {
+                    if (message.startsWith('data: ')) {
+                        const jsonDataString = message.substring('data: '.length);
+                        try {
+                            const eventData = JSON.parse(jsonDataString);
+
+                            // Extract user-facing content
+                            const contentChunk = extractAiContent(eventData);
+
+                            if (contentChunk !== null) {
+                                accumulatedAIResponse += contentChunk; // Accumulate raw text
+                                
+                                // Update the UI incrementally with plain text as it arrives.
+                                // This provides real-time feedback.
+                                const tileElement = gridElement.querySelector(`[data-id="${tileId}"]`);
+                                if (tileElement) {
+                                    const responseContentDiv = tileElement.querySelector('.response-content');
+                                    if (responseContentDiv) {
+                                        responseContentDiv.textContent += contentChunk; // Append plain text
+                                    }
+                                }
+                            } else if (eventData.usage) { 
+                                // This chunk contains usage data, signaling end of AI text generation.
+                                console.log("Received usage data/end marker.");
+                                // The full AI response is now in `accumulatedAIResponse`.
+                                break; // Exit inner loop. Outer loop will check buffer for [DONE] or finish.
+                            }
+
+                        } catch (e) {
+                            console.error("Failed to parse SSE message data:", e);
+                            console.error("Problematic message:", message);
+                        }
+                    } else if (message.trim() === '[DONE]') {
+                        console.log("Received [DONE] SSE marker.");
+                        break; // Exit inner loop
+                    }
+                }
+                // If [DONE] is in the buffer, ensure outer loop breaks
+                if (buffer.includes('[DONE]')) break;
+            }
+
+            // After the stream ends, render the final response (e.g., as Markdown)
+            const tileElement = gridElement.querySelector(`[data-id="${tileId}"]`);
+            if (tileElement) {
+                const responseContentDiv = tileElement.querySelector('.response-content');
+                if (responseContentDiv) {
+                    // Apply marked.parse only once to the complete accumulated response for proper markdown rendering.
+                    responseContentDiv.innerHTML = marked.parse(accumulatedAIResponse);
+                }
+            }
+            
+            return accumulatedAIResponse; // Return the final assembled AI response text
+        }
+
+        // Make the API call to the Worker and return the stream reader
+        async function apiFetch(path, payload) {
+            const base = getBaseUrl();
+            if (!base) {
+                throw new Error('API Base URL not set.');
+            }
+            const url = base + path;
+            try {
+                const res = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        // Add Authorization header if you have an API key for the worker
+                        // 'Authorization': `Bearer YOUR_WORKER_AUTH_TOKEN` 
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    // Try to parse JSON error from worker, otherwise use status text
+                    const errorPayload = await res.json().catch(() => ({ error: `HTTP Error ${res.status}` }));
+                    throw new Error(errorPayload.error || `Request failed with status ${res.status}`);
+                }
+                
+                if (!res.body) {
+                    throw new Error("Worker returned an empty response body.");
+                }
+                
+                // Return the reader for processing the stream
+                return { reader: res.body.getReader() };
+
+            } catch (error) {
+                console.error("API Fetch Error:", error);
+                throw error; // Re-throw to be caught by sendMessage
+            }
+        }
+
+        // Send message to the AI Worker and handle streaming response
+        async function sendMessage() {
+            const input = userInputElement.value.trim();
+            if (!input) return;
+            const mode = modeSelectElement.value;
+
+            userInputElement.value = ''; // Clear input immediately
+            loadingIndicator.classList.add("show"); // Show loading indicator
+
+            try {
+                // Construct context string from client's `history` if it exists.
+                // This is for the `context.additional` field expected by the Worker.
+                let contextAdditional = '';
+                if (history && history.length > 0) {
+                    contextAdditional = history.map(turn => `${turn.role === 'user' ? 'User' : 'Assistant'}: ${turn.content}`).join('\n');
+                }
+
+                // Prepare payload based on mode
+                const payload = {
+                    sessionId: sessionId,
+                    context: {
+                        additional: contextAdditional // Pass formatted history as additional context
+                    }
+                };
+                
+                if (mode === 'chat') {
+                    payload.message = input; // For chat mode
+                } else if (mode === 'generate') {
+                    payload.prompt = input;
+                    payload.format = "text"; // Specify format for /api/generate endpoint
+                } else if (mode === 'code') {
+                    payload.prompt = input; // For code mode
+                    // Add language or other options if UI supports them
+                }
+                
+                const path = mode === 'code' ? '/api/code' : mode === 'generate' ? '/api/generate' : '/api/chat';
+
+                // 1. Create a new tile for the AI's response and get its ID
+                currentTileId = addPair({ question: input, response: '...' }); // '...' indicates streaming in progress
+
+                // 2. Make the API call and get the stream reader
+                const { reader } = await apiFetch(path, payload);
+
+                // 3. Process the SSE stream, updating the tile incrementally and getting the final response text
+                const finalAiResponseText = await processSSEStream(reader, currentTileId, mode);
+                
+                // 4. Update the `pairs` array with the final response (raw text) after streaming is done
+                const tile = pairs.find(p => p.id === currentTileId);
+                if (tile) {
+                    tile.response = finalAiResponseText; // Store raw text; DOM has markdown
+                }
+                save(); // Save state after successful completion
+
+            } catch (error) {
+                console.error("Send Message Error:", error);
+                // Display error message in the tile if it exists
+                if (currentTileId) {
+                    updateTileContent(currentTileId, `<p style="color:red;">Error: ${escapeHTML(error.message || 'Unknown error')}</p>`);
+                    // Update the pair data with the error state
+                    const tile = pairs.find(p => p.id === currentTileId);
+                    if (tile) tile.response = `<p style="color:red;">Error: ${escapeHTML(error.message || 'Unknown error')}</p>`;
+                } else {
+                    // If an error occurred before a tile was created (e.g., API URL missing)
+                    alert(`Error: ${error.message}`);
+                }
+            } finally {
+                loadingIndicator.classList.remove("show"); // Hide loading indicator
+            }
+        }
+
+        // --- Tile Interaction Functions ---
+
+        function showLongPressMenu(e, id) {
+            e.stopPropagation(); // Prevent click listener from triggering flip
+            const menu = longpressMenu;
+            
+            // Position menu dynamically
+            const pageX = e.touches ? e.touches[0].pageX : e.pageX;
+            const pageY = e.touches ? e.touches[0].pageY : e.pageY;
+            menu.style.left = pageX + "px";
+            menu.style.top = pageY + "px";
+
+            // Build menu content
+            const isSelected = selectedTiles.has(id);
+            const mergeButton = selectedTiles.size > 1 ? `<button onclick="mergeSelected();hideMenu()">Merge Selected</button>` : '';
+            
+            menu.innerHTML = `
+                <button onclick="deletePair(${id});hideMenu()">Delete</button>
+                <button onclick="sendTileToAI(${id});hideMenu()">Send to AI</button>
+                <button onclick="splitTile(${id});hideMenu()">Split</button>
+                <button onclick="toggleSelect(${id});hideMenu()"> ${isSelected ? 'Deselect' : 'Select'} </button>
+                ${mergeButton}
+            `;
+            menu.style.display = "flex";
+        }
+
+        function hideMenu(){ longpressMenu.style.display="none"; }
+        
+        function deletePair(id){
+            pairs = pairs.filter(p=>p.id!==id);
+            document.querySelector(`[data-id="${id}"]`)?.remove();
+            selectedTiles.delete(id); // Remove from selection if deleted
+            save();
+        }
+
+        function copyResponse(id){
+            const tileElement = gridElement.querySelector(`[data-id="${id}"]`);
+            if (tileElement) {
+                const responseContentDiv = tileElement.querySelector('.response-content');
+                if (responseContentDiv) {
+                    // Copy the *displayed text content*, not the raw HTML or markdown source.
+                    // This ensures clean text copy.
+                    navigator.clipboard.writeText(responseContentDiv.textContent || '').then(() => {
+                        alert('Copied to clipboard!');
+                    }).catch(err => {
+                        console.error('Failed to copy: ', err);
+                        alert('Failed to copy.');
+                    });
+                }
+            }
+        }
+
         function sendTileToAI(id){
             const tile = pairs.find(p=>p.id===id);
             if(!tile) return;
-            document.getElementById("userInput").value = tile.question + "\n\n" + (tile.response.replace(/<[^>]*>/g,'').slice(0,500));
+            // Construct a prompt that includes the question and the *plain text* of the original response.
+            // This helps in having a context for the AI.
+            const responseText = tile.response ? tile.response.replace(/<[^>]*>|<!--.*?-->/g,'') : ''; // Remove HTML tags and comments
+            userInputElement.value = `${tile.question}\n\n---\n\n${responseText.slice(0, 500)}`; // Slice to prevent overly long prompts
+            // Optionally scroll to input or focus
+            userInputElement.focus();
         }
-        function mergeSelected(){
-            if(selectedTiles.size<2) return alert("Select at least 2 tiles");
-            const selected = pairs.filter(p=>selectedTiles.has(p.id));
-            const combined = selected.map(p=>`\( {p.question}\n\n \){p.response.replace(/<[^>]*>/g,'')}`).join('\n\n---\n\n');
-            addPair({question:"Merged", response:marked.parse(combined)});
-            selectedTiles.clear();
-            document.querySelectorAll('.selected').forEach(el=>el.classList.remove('selected'));
-        }
-        function deletePair(id){pairs=pairs.filter(p=>p.id!==id);document.querySelector(`[data-id="${id}"]`)?.remove();save()}
-        function copyResponse(id){const p=pairs.find(x=>x.id===id);if(p){const t=document.createElement('div');t.innerHTML=p.response;navigator.clipboard.writeText(t.textContent||'');alert('Copied!')}}
-        function exportData(){const b=new Blob([JSON.stringify({pairs,history},null,2)],{type:"application/json"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download="mindmap.json";a.click();URL.revokeObjectURL(u)}
-        function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=x=>{try{const d=JSON.parse(x.target.result);pairs=d.pairs||[];history.length=0;history.push(...(d.history||[]));document.getElementById("grid").innerHTML='';pairs.forEach(renderPair);save();alert('Imported!')}catch{alert('Bad file')}};r.readAsText(f)}
-        function showSavedNotice(){const n=document.getElementById("savedNotice");n.classList.add("show");setTimeout(()=>n.classList.remove("show"),2000)}
-        function showSettings(){document.getElementById("settingsModal").classList.add("show")}
-        function closeSettings(){document.getElementById("settingsModal").classList.remove("show")}
-        function saveSettings(){localStorage.setItem("mindmap-baseUrl",document.getElementById("baseUrl").value.trim());closeSettings();showSavedNotice()}
-        function save(){localStorage.setItem("mindmap-data",JSON.stringify({pairs,history}))}
-        function load(){
-            const s=localStorage.getItem("mindmap-data");
-            if(s){
-                const d=JSON.parse(s);
-                pairs=d.pairs||[];
-                history.push(...(d.history||[]));
-                pairs.forEach(renderPair);
+        
+        function splitTile(id){
+            const tile = pairs.find(p=>p.id===id);
+            if(!tile || !tile.response) return;
+
+            const responseElement = gridElement.querySelector(`[data-id="${id}"] .response-content`);
+            const responseText = responseElement.textContent.trim(); // Get the plain text from the displayed content.
+
+            // Split based on common markdown separators (like ---, ##, etc.) or newlines.
+            // This is a heuristic and might need refinement. For now, split by '---' if response contains markdown.
+            let parts = responseText.split(/\n---\n/); // Basic split by horizontal rule
+
+            if (parts.length > 1) {
+                // Update the original tile with the first part
+                const newResponseHTML = marked.parse(parts[0].trim());
+                updateTileContent(id, newResponseHTML);
+                // Update the pair's text data
+                const originalTile = pairs.find(p => p.id === id);
+                if(originalTile) originalTile.response = parts[0].trim();
+
+                // Add new tiles for the subsequent parts
+                for (let i = 1; i < parts.length; i++) {
+                    addPair({ question: `Split from: ${tile.question}`, response: parts[i].trim() });
+                }
+                save();
+            } else {
+                alert("Tile content doesn't seem to have separable parts.");
             }
-            const u=localStorage.getItem("mindmap-baseUrl");
-            if(u)document.getElementById("baseUrl").value=u;
         }
-        document.getElementById("userInput").addEventListener("keypress",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage()}})
-        load();
+
+        function toggleSelect(id){
+            const card = gridElement.querySelector(`[data-id="${id}"]`);
+            if (card) {
+                card.classList.toggle('selected');
+                if(selectedTiles.has(id)) {
+                    selectedTiles.delete(id);
+                } else {
+                    selectedTiles.add(id);
+                }
+                // Re-render menu if it's open to show/hide merge button
+                if (longpressMenu.style.display === "flex") {
+                   const currentId = card.dataset.id; // Assuming the menu is shown for this card
+                   const currentEvent = { pageX: parseFloat(longpressMenu.style.left), pageY: parseFloat(longpressMenu.style.top) };
+                   showLongPressMenu(currentEvent, currentId);
+                }
+            }
+        }
+
+        function mergeSelected(){
+            if(selectedTiles.size<2) return alert("Select at least 2 tiles to merge.");
+            
+            const selectedTilesData = pairs.filter(p => selectedTiles.has(p.id));
+            if (!selectedTilesData.length) return; // Should not happen if selectedTiles.size > 1
+
+            // Combine questions and responses. Use a clear separator.
+            // For simplicity, combine as "Question1 \n---\n Response1 \n=====\n Question2 \n---\n Response2"
+            const combinedContent = selectedTilesData
+                .map(p => `${p.question}\n\n---\n\n${p.response}`) // Use raw response text from pairs
+                .join('\n=====\n'); // Separator between merged tiles
+
+            // Add a new tile with the merged content
+            const mergedTileId = addPair({ question: "Merged Tiles", response: combinedContent });
+            
+            // Optionally, clear selection and delete original tiles
+            selectedTiles.clear();
+            document.querySelectorAll('.flip-card.selected').forEach(el => el.classList.remove('selected'));
+            selectedTilesData.forEach(tile => deletePair(tile.id)); // Delete original tiles
+            
+            save();
+        }
+
+        // Export mind map data (pairs and history) to a JSON file
+        function exportData(){
+            const dataToExport = {
+              pairs: pairs,
+              history: history // Also export client-side history if relevant
+            };
+            const blob = new Blob([JSON.stringify(dataToExport, null, 2)], {type:"application/json"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `mindmap-export-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Import mind map data from a JSON file
+        function importData(event){
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = x => {
+                try {
+                    const data = JSON.parse(x.target.result);
+                    pairs = data.pairs || [];
+                    history = data.history || []; // Load history too
+                    
+                    // Clear current grid and re-render loaded data
+                    gridElement.innerHTML = '';
+                    pairs.forEach(renderPair);
+                    save(); // Save newly loaded data
+                    alert('Mind Map imported successfully!');
+                    // Close settings modal after import
+                    closeSettings(); 
+                } catch(err) {
+                    alert('Error importing file. Please ensure it is a valid JSON file.');
+                    console.error("Import error:", err);
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        // Show temporary "Saved!" message
+        function showSavedNotice(){
+            savedNotice.classList.add("show");
+            setTimeout(() => savedNotice.classList.remove("show"), 2000);
+        }
+
+        // --- Settings Modal ---
+        function showSettings(){ settingsModal.classList.add("show"); }
+        function closeSettings(){ settingsModal.classList.remove("show"); }
+        function saveSettings(){
+            localStorage.setItem("mindmap-baseUrl", baseUrlInput.value.trim());
+            closeSettings();
+            showSavedNotice();
+        }
+        
+        // --- Initialization Functions ---
+        function save(){ localStorage.setItem("mindmap-data", JSON.stringify({pairs, history})); }
+
+        function load(){
+            const savedData = localStorage.getItem("mindmap-data");
+            if(savedData){
+                try {
+                    const data = JSON.parse(savedData);
+                    pairs = data.pairs || [];
+                    history = data.history || []; // Load history too
+                    
+                    pairs.forEach(renderPair); // Render loaded tiles
+                } catch(err) {
+                    console.error("Error loading data from localStorage:", err);
+                    // Clear corrupted data if any to prevent further issues
+                    pairs = []; history = [];
+                    localStorage.removeItem("mindmap-data");
+                }
+            }
+            const savedBaseUrl = localStorage.getItem("mindmap-baseUrl");
+            if(savedBaseUrl) {
+                baseUrlInput.value = savedBaseUrl;
+            }
+        }
+
+        // Utility function to escape HTML for displaying user input safely
+        function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
+
+        // --- Event Listeners ---
+        // Handle Enter key press in user input for sending messages
+        userInputElement.addEventListener("keypress", e => {
+            if (e.key === "Enter" && !e.shiftKey) { // Shift+Enter for new line
+                e.preventDefault(); // Prevent default form submission or newline
+                sendMessage();
+            }
+        });
+        // Hide context menu when clicking anywhere else on the page
+        document.addEventListener("click", () => { hideMenu(); });
+        // Also ensure selection is cleared on general click, or maybe not?
+        // For now, longpress menu hiding only.
+
+        // --- Initial Load ---
+        load(); // Load saved data and settings on page load
     </script>
 </body>
 </html>
