@@ -6,61 +6,561 @@
     <title>AI Mind Map</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        :root{--bg:#0a0a0a;--glass:rgba(26,26,26,0.8);--yellow:#ffd700;--text:#fff;--border:rgba(255,215,0,0.3);--red:#ff4444}
-        body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
-        .header{position:fixed;top:0;left:0;right:0;height:50px;background:rgba(10,10,10,0.95);border-bottom:2px solid var(--yellow);padding:0 12px;display:flex;justify-content:space-between;align-items:center;z-index:1000}
-        .logo{font-size:1.1rem;font-weight:bold;color:var(--yellow)}
-        button{background:var(--glass);color:var(--yellow);border:1px solid var(--border);padding:8px 12px;border-radius:6px;cursor:pointer}
-        .container{position:fixed;top:50px;left:0;right:0;bottom:0;display:flex;flex-direction:column}
-        .input-panel{background:rgba(10,10,10,0.95);border-bottom:2px solid var(--yellow);padding:12px;flex-shrink:0}
-        .section{margin-bottom:12px}
-        .section-title{font-size:.75rem;color:var(--yellow);margin-bottom:8px;text-transform:uppercase}
-        select,textarea,input{width:100%;background:var(--glass);color:var(--text);border:1px solid var(--border);padding:8px;border-radius:6px;font-size:16px}
-        textarea{min-height:80px}
-        .send-btn{width:100%;background:var(--yellow);color:var(--bg);border:none;padding:12px;font-weight:bold;margin-top:8px;cursor:pointer}
-        .canvas{flex:1;overflow:hidden}
-        .grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(250px, 1fr));grid-auto-rows:minmax(180px, auto);gap:8px;padding:8px;width:100%;height:100%;overflow-y:auto} /* Adjusted grid for better responsiveness */
-        .flip-card{position:relative;width:100%;height:100%;min-height:0;cursor:pointer;perspective:1000px;overflow:hidden;background:var(--bg);user-select:none; border-radius:8px;}
-        .flip-card-inner{position:relative;width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d; border-radius:8px;}
-        .flip-card.flipped .flip-card-inner{transform:rotateY(180deg)}
-        .card-face{position:absolute;width:100%;height:100%;backface-visibility:hidden;display:flex;flex-direction:column;background:var(--glass);backdrop-filter:blur(10px);border:2px solid var(--border);padding:8px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.5);font-size:.65rem;line-height:1.2;font-family:monospace; border-radius:8px;}
-        .card-front{background:linear-gradient(135deg,rgba(255,215,0,.2),rgba(255,215,0,.1));border-left:4px solid var(--yellow)}
-        .card-back{transform:rotateY(180deg);background:linear-gradient(135deg,rgba(100,150,255,.15),rgba(100,150,255,.05));border-left:4px solid #58a6ff}
-        .response-content{flex:1;overflow:auto; white-space: pre-wrap; /* Preserve whitespace and wrap long lines */}
-        .card-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;justify-content:flex-end}
-        .card-btn{background:rgba(0,0,0,.5);border:none;color:var(--text);font-size:1.2rem;cursor:pointer;padding:6px 8px;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center}
-        .card-btn:hover{background:var(--yellow);color:var(--bg)}
-        .card-btn.delete{color:var(--red)}
-        .card-btn.copy{color:var(--text)}
-        .card-btn.send{color:var(--yellow)}
-        .selected{border:4px solid #58a6ff !important}
-        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:2000;align-items:center;justify-content:center;padding:20px}
-        .modal.show{display:flex}
-        .modal-content{background:rgba(26,26,26,.95);border:2px solid var(--yellow);border-radius:12px;padding:20px;max-width:500px;width:100%}
-        .modal-title{font-size:1.2rem;color:var(--yellow);margin-bottom:16px}
-        .loading{position:fixed;bottom:20px;right:20px;background:var(--glass);border:1px solid var(--yellow);padding:12px 20px;border-radius:8px;display:none;z-index:999}
-        .loading.show{display:block}
-        .saved-notice{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,255,0,.2);color:#0f0;border:1px solid #0f0;padding:10px 20px;border-radius:8px;z-index:999;opacity:0;transition:opacity .5s}
-        .saved-notice.show{opacity:1}
-        .longpress-menu{position:absolute;background:rgba(0,0,0,.9);border:2px solid var(--yellow);border-radius:12px;padding:12px;z-index:9999;display:none;flex-direction:column;gap:8px}
-        .longpress-menu button{width:100%;text-align:left}
-        /* Styles for specific elements inside response-content if needed for markdown */
-        .response-content h1, .response-content h2, .response-content h3 { font-size: 0.8rem; margin-top: 0.5em; margin-bottom: 0.2em; }
-        .response-content p { margin-bottom: 0.6em; }
-        .response-content code { background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 3px; }
-        .response-content pre { background: #1a1a1a; padding: 8px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; }
-        .response-content pre code { background: none; padding: 0; border-radius: 0; }
+        /* --- Global Styles --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #0a0a0a; /* Dark background */
+            --glass: rgba(26, 26, 26, 0.8); /* Semi-transparent background for panels */
+            --yellow: #ffd700; /* Primary accent color */
+            --text: #fff; /* Primary text color */
+            --border: rgba(255, 215, 0, 0.3); /* Border color */
+            --red: #ff4444; /* Danger color */
+            --blue: #58a6ff; /* Secondary accent color */
+            --hover-overlay: rgba(255, 215, 0, 0.1); /* Hover effect */
+        }
+        body {
+            font-family: 'system-ui', 'Segoe UI', 'Roboto', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden; /* Prevent body scroll */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Header --- */
+        .header {
+            height: 50px;
+            background: rgba(10, 10, 10, 0.95);
+            border-bottom: 2px solid var(--yellow);
+            padding: 0 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0; /* Prevent header from shrinking */
+            z-index: 1000;
+        }
+        .logo { font-size: 1.1rem; font-weight: bold; color: var(--yellow); cursor: pointer; }
+        
+        /* --- Buttons --- */
+        button {
+            background: var(--glass);
+            color: var(--yellow);
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, transform 0.1s;
+            font-family: inherit; /* Inherit font */
+            display: inline-flex; /* Align content */
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        button:hover {
+            background: var(--yellow);
+            color: var(--bg);
+        }
+        .send-btn {
+            background: var(--yellow);
+            color: var(--bg);
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 12px 15px; /* Slightly larger padding */
+        }
+        .send-btn:hover {
+            background: var(--yellow); /* Keep yellow on hover */
+            color: var(--bg);
+            filter: brightness(1.1);
+        }
+
+        /* --- Main Container --- */
+        .main-container {
+            flex: 1; /* Take remaining space below header */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Prevent scrolling inside this container */
+        }
+        
+        /* --- Input Panel --- */
+        .input-panel {
+            background: rgba(10, 10, 10, 0.95);
+            padding: 12px;
+            flex-shrink: 0; /* Prevent input panel from shrinking */
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto; /* Allow scrolling if content overflows */
+        }
+        .section { margin-bottom: 12px; }
+        .section-title {
+            font-size: 0.75rem;
+            color: var(--yellow);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        select, textarea, input {
+            width: 100%;
+            background: var(--glass);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 1rem; /* Slightly larger font */
+            font-family: inherit; /* Use body font */
+            margin-bottom: 8px; /* Space between input fields */
+        }
+        textarea { min-height: 80px; resize: vertical; } /* Allow vertical resizing */
+        textarea:focus, input:focus { outline: none; border-color: var(--yellow); box-shadow: 0 0 0 2px rgba(255,215,0,0.2); }
+
+        /* --- Resizeable Divider --- */
+        .resize-divider {
+            height: 8px; /* Thickness of the draggable bar */
+            background: var(--yellow); /* Visible color */
+            cursor: ns-resize; /* Indicate draggable */
+            flex-shrink: 0; /* Prevent shrinking */
+            z-index: 1001; /* Above header/cards */
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            box-sizing: border-box; /* Include borders in height*/
+            transition: background 0.2s;
+        }
+        .resize-divider:hover { background: var(--yellow); }
+
+        /* --- Canvas Area --- */
+        .canvas {
+            flex: 1; /* Canvas takes all remaining space */
+            overflow-y: auto; /* Scrollbar for the grid if needed */
+            background: var(--bg); /* Ensure canvas background is correct */
+            padding: 8px; /* Padding around the grid */
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Responsive columns */
+            grid-auto-rows: minmax(180px, auto); /* Auto rows, min height */
+            gap: 8px; /* Space between grid items */
+            width: 100%;
+            height: 100%; /* Full height within canvas */
+        }
+
+        /* --- Flip Card --- */
+        .flip-card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 0; /* Allow shrinking */
+            cursor: pointer;
+            perspective: 1000px;
+            overflow: hidden;
+            background: var(--bg);
+            user-select: none;
+            border-radius: 8px;
+            border: 2px solid var(--border); /* Default border */
+            transition: border-color 0.2s, border-width 0.2s;
+        }
+        .flip-card:hover {
+             border-color: var(--yellow); /* Highlight on hover */
+             border-width: 2px;
+             box-shadow: 0 0 15px var(--yellow); /* Subtle glow */
+        }
+        .flip-card.selected {
+             border: 4px solid var(--blue) !important; /* Highlight selected */
+             box-shadow: 0 0 25px var(--blue);
+        }
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform .6s;
+            transform-style: preserve-3d;
+            border-radius: 8px; /* Match parent */
+        }
+        /* Flip animation applied by JS */
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: none; /* Border handled by flip-card */
+            padding: 12px;
+            font-size: 0.75rem; /* Adjusted for better readability */
+            line-height: 1.4;
+            overflow: hidden; /* Prevent content overflow */
+            box-shadow: 0 4px 20px rgba(0,0,0,.5);
+            border-radius: 8px; /* Match parent */
+        }
+        .card-front {
+            background: linear-gradient(135deg,rgba(255,215,0,.1),rgba(255,215,0,.05)); /* Softer yellow */
+            border-left: 4px solid var(--yellow);
+        }
+        .card-front div:first-child { /* Styling for question text */
+            flex: 1;
+            overflow: auto; /* Scroll if question is long */
+            white-space: pre-wrap; /* Preserve whitespace */
+            word-wrap: break-word;
+            padding-right: 4px; /* Scrollbar padding */
+        }
+        .card-back {
+            transform: rotateY(180deg);
+            background: linear-gradient(135deg,rgba(100,150,255,.1),rgba(100,150,255,.05)); /* Blue gradient */
+            border-left: 4px solid var(--blue);
+        }
+        .response-content {
+            flex: 1;
+            overflow: auto;
+            white-space: pre-wrap; /* Preserve whitespace and wrap long lines */
+            word-wrap: break-word; /* Break long words */
+            font-family: monospace; /* Monospace for code/structured output */
+            padding-right: 4px; /* Small scrollbar padding */
+        }
+        /* Markdown rendering adjustments */
+        .response-content h1, .card-face h1 { font-size: 0.9rem; margin-top: 0.8em; margin-bottom: 0.3em; color: var(--yellow); }
+        .response-content h2, .card-face h2 { font-size: 0.85rem; margin-top: 0.7em; margin-bottom: 0.25em; }
+        .response-content h3, .card-face h3 { font-size: 0.8rem; margin-top: 0.6em; margin-bottom: 0.2em; }
+        .response-content p { margin-bottom: 0.7em; }
+        .response-content strong { color: var(--yellow); }
+        .response-content code { background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 3px; font-size: 0.9em; }
+        .response-content pre { background: #1a1a1a; padding: 12px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; font-size: 0.9em; border: 1px solid var(--border); }
+        .response-content pre code { background: none; padding: 0; border-radius: 0; font-size: inherit; }
+        .response-content ul, .response-content ol { margin-left: 25px; margin-bottom: 0.8em; }
+        .response-content li { margin-bottom: 0.4em; }
+        .response-content blockquote { border-left: 3px solid var(--blue); padding-left: 1em; color: var(--text); opacity: 0.8; margin-left: 0; }
+
+        .card-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            padding-top: 6px; /* Space from content */
+            border-top: 1px solid var(--border); /* Separator for actions */
+        }
+        
+        /* Micro-tile buttons with icons */
+        .card-btn {
+            background: rgba(0,0,0,.5);
+            border: none;
+            color: var(--text);
+            font-size: 1.1rem; /* Slightly larger icons */
+            cursor: pointer;
+            padding: 6px 8px;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: inline-flex; /* Use inline-flex for alignment */
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, color 0.2s, transform 0.1s;
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+        .card-btn:hover {
+            background: var(--yellow);
+            color: var(--bg);
+            transform: scale(1.05);
+        }
+        /* Specific button styles */
+        .card-btn.delete { color: var(--red); }
+        .card-btn.copy { color: var(--text); }
+        .card-btn.followup { color: var(--yellow); } /* Renamed from 'send' */
+        .card-btn.fullscreen { color: var(--text); }
+        .card-btn.edit { color: var(--text); }
+        .card-btn.share { color: var(--text); } /* New */
+
+
+        /* --- Modals --- */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            inset: 0; /* Cover the whole screen */
+            background: rgba(0, 0, 0, 0.95); /* Dark background overlay */
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto; /* Enable scrolling for modal content */
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: var(--glass);
+            border: 2px solid var(--yellow);
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 600px; /* Slightly larger modal width */
+            width: 100%;
+            max-height: 90vh; /* Max height for modal */
+            overflow-y: auto; /* Scrollable content inside modal */
+            display: flex;
+            flex-direction: column;
+            color: var(--text);
+            font-family: inherit;
+        }
+        .modal-title {
+            font-size: 1.4rem; /* Larger title */
+            color: var(--yellow);
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        
+        /* --- Edit Modal Specific Styles --- */
+        .edit-modal-content textarea {
+            min-height: 150px; /* Taller text areas for editing */
+            margin-bottom: 10px;
+        }
+        .edit-modal-content .modal-row {
+            margin-bottom: 15px;
+        }
+        .edit-modal-content .preview-toggle {
+            font-size: 0.8rem;
+            color: var(--yellow);
+            cursor: pointer;
+            text-decoration: underline;
+            margin-left: 10px;
+            background: none; border: none; padding: 0;
+        }
+        .edit-modal-content .preview-toggle:hover {
+            color: var(--text);
+            text-decoration: none;
+        }
+        .edit-modal-content .markdown-preview {
+            background: var(--glass); /* Match modal background */
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 8px;
+            min-height: 100px; /* Min height for preview */
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: monospace;
+            font-size: 0.9rem;
+             /* Styles from .response-content are inherited here */
+        }
+
+        /* --- Loading Indicator --- */
+        .loading {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--glass);
+            border: 1px solid var(--yellow);
+            padding: 12px 20px;
+            border-radius: 8px;
+            display: none;
+            z-index: 999;
+            font-weight: bold;
+            animation: pulse 1.5s infinite;
+        }
+        .loading.show { display: block; }
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+
+        /* --- Saved Notice --- */
+        .saved-notice {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 255, 0, 0.2);
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 10px 20px;
+            border-radius: 8px;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        .saved-notice.show { opacity: 1; }
+
+        /* --- Long Press Menu --- */
+        .longpress-menu {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid var(--yellow);
+            border-radius: 12px;
+            padding: 12px;
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.7);
+        }
+        .longpress-menu button {
+            width: 100%;
+            text-align: left;
+            background: transparent; /* Make menu buttons transparent */
+            border: none;
+            padding: 8px 12px;
+            color: var(--text);
+            font-size: 1rem;
+            display: flex; /* Ensure alignment */
+            align-items: center;
+            gap: 8px; /* Space for potential icon */
+        }
+        .longpress-menu button:hover {
+            background: var(--hover-overlay); /* Subtle hover */
+            color: var(--yellow);
+        }
+        .longpress-menu button .menu-icon { /* Style for icons in menu */
+            font-size: 1.1rem;
+            margin-right: 5px;
+        }
+
+        /* --- Fullscreen Modal (Giant Card View) --- */
+        .fullscreen-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            inset: 0;
+            background: var(--bg); /* Dark background */
+            z-index: 3000; /* Above everything */
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow: hidden; /* Prevent scrolling here, scroll inside card */
+            flex-direction: column;
+            border: 4px solid var(--yellow); /* Border for the giant card */
+            box-shadow: 0 0 50px rgba(255,215,0,0.3);
+            border-radius: 12px;
+            transition: filter 0.3s ease-in-out; /* Smooth transition if needed */
+        }
+        .fullscreen-overlay.show { display: flex; }
+        .fullscreen-main-content { /* Wrapper for the card's inner workings */
+            width: 100%;
+            height: 100%;
+            max-width: 90vw; /* Max width */
+            max-height: 90vh; /* Max height */
+            perspective: 1000px;
+            display: flex;
+            flex-direction: column; /* Center the inner card structure */
+            align-items: center;
+            justify-content: center;
+        }
+        .fullscreen-card-inner { /* Mimics flip-card-inner */
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform .8s ease-in-out; /* Slower, smoother flip */
+            transform-style: preserve-3d;
+            border-radius: 8px; /* Match parent */
+        }
+        .fullscreen-card-inner.flipped { transform: rotateY(180deg); }
+
+        .fullscreen-card-face { /* Mimics card-face */
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: none; /* Border is on fullscreen-overlay */
+            padding: 20px; /* More padding for fullscreen */
+            font-size: 0.9rem; /* Slightly larger font for fullscreen */
+            line-height: 1.5;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,.5); /* Inner shadow */
+            border-radius: 8px; /* Match parent */
+        }
+        .fullscreen-card-face.card-front {
+            background: linear-gradient(135deg,rgba(255,215,0,.15),rgba(255,215,0,.08));
+            border-left: 4px solid var(--yellow);
+        }
+        .fullscreen-card-face.card-back {
+            transform: rotateY(180deg);
+            background: linear-gradient(135deg,rgba(100,150,255,.15),rgba(100,150,255,.08));
+            border-left: 4px solid var(--blue);
+        }
+
+        .fullscreen-question-text {
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: var(--yellow);
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0; /* Prevent question from shrinking */
+        }
+        .fullscreen-response-content {
+            flex: 1; /* Takes remaining space */
+            overflow-y: auto; /* Scrollable response content */
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: monospace; /* Inherit monospace */
+            padding-right: 8px; /* Scrollbar padding */
+        }
+        /* Inherit Markdown styles for fullscreen view */
+        .fullscreen-response-content h1, .fullscreen-card-face h1 { font-size: 1.2rem; }
+        .fullscreen-response-content h2, .fullscreen-card-face h2 { font-size: 1.1rem; }
+        .fullscreen-response-content h3, .fullscreen-card-face h3 { font-size: 1.0rem; }
+        
+        .fullscreen-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+            justify-content: flex-end;
+            z-index: 3001; /* Ensure actions are clickable above content */
+            background: rgba(10,10,10, 0.9); /* Slightly transparent background */
+            margin-left: -20px; margin-right: -20px; /* Extend to modal edges */
+            padding-left: 20px; padding-right: 20px;
+            padding-bottom: 20px; /* Space at bottom */
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+        .fullscreen-card-btn { /* Style for buttons within fullscreen */
+            background: var(--glass);
+            color: var(--text);
+            border: 1px solid var(--border);
+            font-size: 1.2rem;
+            padding: 10px 12px;
+            border-radius: 8px; /* Rounded buttons */
+            width: 40px; height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease-in-out;
+        }
+        .fullscreen-card-btn:hover {
+            background: var(--yellow);
+            color: var(--bg);
+            transform: scale(1.1);
+            border-color: var(--yellow);
+        }
+        .fullscreen-card-btn.delete { color: var(--red); border-color: var(--red); }
+        .fullscreen-card-btn.delete:hover { background: var(--red); color: var(--bg); }
+        .fullscreen-card-btn.copy { color: var(--text); }
+        .fullscreen-card-btn.followup { color: var(--yellow); }
+        .fullscreen-card-btn.edit { color: var(--text); }
+        .fullscreen-card-btn.share { color: var(--text); }
+        .fullscreen-card-btn.close { color: var(--text); font-size: 1.5rem; }
+        .fullscreen-card-btn.close:hover { background: var(--red); border-color: var(--red); }
+
+
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="logo">AI Mind Map</div>
+        <div class="logo" onclick="window.location.reload()">AI Mind Map</div>
         <button onclick="showSettings()">Settings</button>
     </div>
 
-    <div class="container">
-        <div class="input-panel">
+    <div class="main-container">
+        <div class="input-panel" id="inputPanel">
             <div class="section">
                 <div class="section-title">Mode</div>
                 <select id="modeSelect">
@@ -70,29 +570,92 @@
                 </select>
             </div>
             <div class="section">
-                <div class="section-title">Message</div>
+                <div class="section-title">Message/Prompt</div>
                 <textarea id="userInput" placeholder="Ask anything..."></textarea>
                 <button class="send-btn" onclick="sendMessage()">Send</button>
             </div>
         </div>
-        <div class="canvas"><div class="grid" id="grid"></div></div>
+        
+        <div class="resize-divider" id="resizeDivider"></div> <!-- Draggable Divider -->
+
+        <div class="canvas" id="canvas">
+            <div class="grid" id="grid"></div>
+        </div>
     </div>
 
+    <!-- Modals -->
     <div class="saved-notice" id="savedNotice">Saved!</div>
     <div class="longpress-menu" id="longpressMenu"></div>
 
     <div class="modal" id="settingsModal">
         <div class="modal-content">
             <div class="modal-title">Settings</div>
-            <div class="section"><div class="section-title">API Base URL</div><input type="text" id="baseUrl" placeholder="https://your-worker.workers.dev"></div>
-            <div class="settings-tools">
-                <button onclick="exportData()">Export Mind Map</button>
-                <label for="importFile">Import Mind Map</label>
-                <input type="file" id="importFile" accept=".json" onchange="importData(event)">
+            <div class="section">
+                <div class="section-title">API Base URL</div>
+                <input type="text" id="baseUrl" placeholder="https://your-worker.workers.dev">
             </div>
-            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+            <div class="section">
+                <div class="section-title">Current Session ID</div>
+                <input type="text" id="sessionIdInput" readonly>
+            </div>
+            <div class="settings-tools" style="display: flex; gap: 10px; margin-top: 15px;">
+                <button onclick="exportData()" style="padding: 8px 12px;"><span class="menu-icon">💾</span> Export Mind Map</button>
+                <label for="importFile" class="send-btn" style="padding: 8px 12px; margin-left: auto;">Import Mind Map</label>
+                <input type="file" id="importFile" accept=".json" onchange="importData(event)" style="display: none;">
+            </div>
+            <div class="modal-actions">
                 <button onclick="closeSettings()">Cancel</button>
                 <button class="send-btn" onclick="saveSettings()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT MODAL -->
+    <div class="modal" id="editModal">
+        <div class="modal-content edit-modal-content">
+            <div class="modal-title">Edit Tile <span id="editTileIdDisplay"></span></div>
+            <div class="modal-row">
+                <div class="section-title">Question / Intro</div>
+                <textarea id="editQuestion" placeholder="Enter the initial question or prompt for this tile..."></textarea>
+            </div>
+            <div class="modal-row">
+                <div class="section-title">Response Markdown <span class="preview-toggle" id="editTogglePreview">Preview</span></div>
+                <textarea id="editResponse" placeholder="Enter the AI's response in Markdown..."></textarea>
+                <div class="markdown-preview" id="editPreview"></div>
+            </div>
+            <div class="modal-actions">
+                <button onclick="closeEditModal()">Cancel</button>
+                <button class="send-btn" onclick="saveEditedTile()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FULLSCREEN MODAL (Giant Card View) -->
+    <div class="fullscreen-overlay" id="fullscreenOverlay">
+        <div class="fullscreen-main-content">
+            <div class="fullscreen-card-inner">
+                <div class="card-face card-front fullscreen-card-face">
+                    <div class="fullscreen-question-text"></div>
+                    <div class="fullscreen-response-content"></div> <!-- Content will be rendered here -->
+                    <div class="fullscreen-actions">
+                        <button class="fullscreen-card-btn edit" title="Edit" onclick="handleFullscreenAction('edit')">✏️</button>
+                        <button class="fullscreen-card-btn share" title="Share" onclick="handleFullscreenAction('share')">↗️</button>
+                        <button class="fullscreen-card-btn followup" title="Follow Up" onclick="handleFullscreenAction('followup')">↪️</button>
+                        <button class="fullscreen-card-btn delete" title="Delete" onclick="handleFullscreenAction('delete')">🗑️</button>
+                        <button class="fullscreen-card-btn close" title="Close Fullscreen" onclick="hideFullscreen()">&times;</button>
+                    </div>
+                </div>
+                <div class="card-face card-back fullscreen-card-face">
+                    <div class="fullscreen-question-text"></div> <!-- Back also shows question for context -->
+                    <div class="fullscreen-response-content"></div> <!-- Response content -->
+                    <div class="fullscreen-actions">
+                        <button class="fullscreen-card-btn edit" title="Edit" onclick="handleFullscreenAction('edit')">✏️</button>
+                        <button class="fullscreen-card-btn share" title="Share" onclick="handleFullscreenAction('share')">↗️</button>
+                        <button class="fullscreen-card-btn followup" title="Follow Up" onclick="handleFullscreenAction('followup')">↪️</button>
+                        <button class="fullscreen-card-btn delete" title="Delete" onclick="handleFullscreenAction('delete')">🗑️</button>
+                         <button class="fullscreen-card-btn close" title="Close Fullscreen" onclick="hideFullscreen()">&times;</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -101,41 +664,94 @@
 
     <script>
         // --- Global Variables ---
-        let pairs = [];                // Stores all the tiles (question/response pairs)
-        let history = [];              // Stores conversation history (for client-side reference, NOT sent to worker currently)
+        let pairs = [];                // Stores all the tiles [{id, question, response, sessionId}, ...]
+        let history = [];              // Stores conversation history (for client-side reference)
         let sessionId = "main-" + Date.now(); // Unique session ID for this client session
-        let selectedTiles = new Set(); // Stores IDs of selected tiles for actions like merge/delete
-        let longPressTimer;            // Timer for detecting long presses on tiles
-        let accumulatedAIResponse = ''; // Accumulates the raw text chunks from the AI stream
-        let currentTileId = null;      // ID of the tile currently being updated by streaming
+        let selectedTiles = new Set(); // Stores IDs of selected tiles
+        let longPressTimer;            // Timer state
+        let accumulatedAIResponse = ''; // Accumulates AI response parts during streaming
+        let currentTileIdForStreaming = null; // ID of the tile currently being updated by streaming
         let textDecoder = new TextDecoder('utf-8'); // Reusable TextDecoder
         
+        // Divider resizing state
+        let isResizing = false;
+        let startY, startHeightInputPanel;
+
         // --- DOM Element References ---
         const gridElement = document.getElementById("grid");
         const userInputElement = document.getElementById("userInput");
         const modeSelectElement = document.getElementById("modeSelect");
         const baseUrlInput = document.getElementById("baseUrl");
+        const sessionIdInput = document.getElementById("sessionIdInput");
         const settingsModal = document.getElementById("settingsModal");
         const savedNotice = document.getElementById("savedNotice");
         const longpressMenu = document.getElementById("longpressMenu");
         const loadingIndicator = document.getElementById("loading");
+        const dragDivider = document.getElementById("resizeDivider");
+        const inputPanelElement = document.getElementById("inputPanel");
+        const canvasElement = document.getElementById("canvas");
+        const editModal = document.getElementById("editModal");
+        const editQuestionTextarea = document.getElementById("editQuestion");
+        const editResponseTextarea = document.getElementById("editResponse");
+        const editPreviewDiv = document.getElementById("editPreview");
+        const editTogglePreviewSpan = document.getElementById("editTogglePreview");
+        const fullscreenOverlay = document.getElementById("fullscreenOverlay");
+        const fullscreenCardInner = fullscreenOverlay.querySelector('.fullscreen-card-inner');
+        const fullscreenQuestionDivs = fullscreenOverlay.querySelectorAll('.fullscreen-card-face.card-front .fullscreen-question-text, .fullscreen-card-face.card-back .fullscreen-question-text'); // Both front and back can show question
+        const fullscreenResponseDivs = fullscreenOverlay.querySelectorAll('.fullscreen-card-face .fullscreen-response-content'); // Response content on both sides
+        const editTileIdDisplaySpan = document.getElementById("editTileIdDisplay");
+
+        // --- Local Storage Keys ---
+        const STORAGE_DATA_KEY = "mindmap-data";
+        const STORAGE_BASEURL_KEY = "mindmap-baseUrl";
+        const STORAGE_DIVIDER_HEIGHT_KEY = "mindmap-divider-height";
+
+        // --- Icon Definitions ---
+        const ICONS = {
+            delete: "🗑️", // Trash can icon
+            copy: "📋",   // Clipboard icon
+            followup: "↪️", // Follow up/continue icon
+            fullscreen: "⛶", // Square with up arrow (or similar)
+            edit: "✏️",   // Pencil icon
+            share: "↗️",   // Share icon (arrow pointing up-right)
+            settings: "⚙️", // Gear icon for settings button
+            close: "×",    // Close X symbol
+            save: "💾",    // Floppy disk for save
+            import: "📤",   // Upload icon for import
+            // Add more as needed
+        };
 
         // --- Helper Functions ---
 
         // Get API Base URL from input, sanitizing trailing slashes
-        function getBaseUrl() {
-            return baseUrlInput.value.trim().replace(/\/+$/, '');
-        }
+        function getBaseUrl() { return baseUrlInput.value.trim().replace(/\/+$/, ''); }
 
-        // Update the UI for a specific tile (used for streaming updates and final rendering)
-        function updateTileContent(tileId, contentHTML) {
+        // Update the UI for a specific tile's response content
+        function updateTileResponseContent(tileId, contentHTML, isStreamingText = false) {
             const tileElement = gridElement.querySelector(`[data-id="${tileId}"]`);
-            if (!tileElement) return; // Tile might have been deleted
+            if (!tileElement) return; 
 
             const responseContentDiv = tileElement.querySelector('.response-content');
             if (responseContentDiv) {
-                responseContentDiv.innerHTML = contentHTML; // Set the final rendered markdown or error message
+                if (isStreamingText) {
+                    // For streaming, append plain text to show characters appearing
+                    responseContentDiv.textContent += contentHTML; 
+                } else {
+                    // For final render, use innerHTML to render markdown
+                    responseContentDiv.innerHTML = contentHTML;
+                }
             }
+        }
+
+        // Update the tile's question display
+        function updateTileQuestionContent(tileId, questionText) {
+             const tileElement = gridElement.querySelector(`[data-id="${tileId}"]`);
+             if (!tileElement) return;
+             // The question is in the first div inside card-front
+             const questionDiv = tileElement.querySelector('.card-front > div:first-child'); 
+             if (questionDiv) {
+                 questionDiv.textContent = questionText; // Display as plain text
+             }
         }
 
         // Add a new tile to the grid and the pairs array
@@ -150,10 +766,8 @@
         // Render a single tile in the grid
         function renderPair(p) {
             let responseHTMLPlaceholder = 'Waiting for AI...';
-            // If the pair already has a response (e.g., from loading data), render it.
             if (p.response && p.response !== '...' && p.response !== 'Failed' && p.response !== 'Set API URL!') {
-                // Use marked.parse for initial rendering of saved/loaded data
-                responseHTMLPlaceholder = marked.parse(p.response); 
+                responseHTMLPlaceholder = marked.parse(p.response); // Render saved markdown
             } else if (p.response === '...') {
                 responseHTMLPlaceholder = '...'; // Placeholder for active streaming
             } else if (p.response === 'Failed') {
@@ -164,26 +778,35 @@
 
             const c = document.createElement("div");
             c.className = "flip-card";
-            c.dataset.id = p.id; // Assign unique ID for selection and targeting
+            c.dataset.id = p.id; 
 
             c.innerHTML = `
                 <div class="flip-card-inner">
                     <div class="card-face card-front">
                         <div style="flex:1;overflow:auto;padding:4px;">${escapeHTML(p.question)}</div> <!-- Escape question to prevent XSS -->
                         <div class="card-actions">
-                            <button class="card-btn delete" onclick="event.stopPropagation();deletePair(${p.id})">×</button>
-                            <button class="card-btn" onclick="event.stopPropagation();copyResponse(${p.id})">📋</button>
-                            <button class="card-btn" onclick="event.stopPropagation();sendTileToAI(${p.id})">AI</button>
+                            <button class="card-btn fullscreen" title="Fullscreen" onclick="event.stopPropagation();showFullscreen(${p.id})">${ICONS.fullscreen}</button> 
+                            <button class="card-btn edit" title="Edit" onclick="event.stopPropagation();showEditModal(${p.id})">${ICONS.edit}</button> 
+                            <button class="card-btn delete" title="Delete" onclick="event.stopPropagation();deletePair(${p.id})">${ICONS.delete}</button>
+                            <button class="card-btn copy" title="Copy Response" onclick="event.stopPropagation();copyResponse(${p.id})">${ICONS.copy}</button>
+                            <button class="card-btn followup" title="Follow Up / Continue" onclick="event.stopPropagation();sendTileToAI(${p.id})">${ICONS.followup}</button>
                         </div>
                     </div>
                     <div class="card-face card-back">
                         <div class="response-content">${responseHTMLPlaceholder}</div>
-                        <button class="card-btn" onclick="event.stopPropagation();copyResponse(${p.id})">📋</button>
+                        <div class="card-actions"> <!-- Actions aligned to back face too -->
+                            <button class="card-btn fullscreen" title="Fullscreen" onclick="event.stopPropagation();showFullscreen(${p.id})">${ICONS.fullscreen}</button>
+                            <button class="card-btn edit" title="Edit" onclick="event.stopPropagation();showEditModal(${p.id})">${ICONS.edit}</button>
+                            <button class="card-btn copy" title="Copy Response" onclick="event.stopPropagation();copyResponse(${p.id})">${ICONS.copy}</button>
+                        </div>
                     </div>
                 </div>`;
             
             // Event listeners for card interaction (flip, long-press)
-            c.onclick = e => { if (e.target.closest('.card-btn')) return; c.classList.toggle('flipped') };
+            c.onclick = e => { 
+                if (e.target.closest('.card-btn') || e.target.closest('.card-actions')) return; // Ignore clicks on buttons/actions
+                c.classList.toggle('flipped'); 
+            };
             c.onmousedown = e => { longPressTimer = setTimeout(() => { showLongPressMenu(e, p.id) }, 600) };
             c.onmouseup = c.onmouseleave = () => { clearTimeout(longPressTimer) };
             c.ontouchstart = e => { longPressTimer = setTimeout(() => { showLongPressMenu(e, p.id) }, 600) };
@@ -204,79 +827,79 @@
         async function processSSEStream(reader, tileId, mode) {
             let buffer = ''; // Buffer for incomplete SSE messages
             accumulatedAIResponse = ''; // Reset for this stream
-            const isCodeRequest = mode === 'code'; // Flag for potential code-specific rendering
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) {
-                    console.log("Stream finished.");
-                    break;
-                }
-                buffer += textDecoder.decode(value, { stream: true });
-
-                // Split buffer by SSE message delimiters (\n\n)
-                let messages = buffer.split('\n\n');
-                buffer = messages.pop() || ''; // Keep the last, possibly incomplete message
-
-                for (const message of messages) {
-                    if (message.startsWith('data: ')) {
-                        const jsonDataString = message.substring('data: '.length);
-                        try {
-                            const eventData = JSON.parse(jsonDataString);
-
-                            // Extract user-facing content
-                            const contentChunk = extractAiContent(eventData);
-
-                            if (contentChunk !== null) {
-                                accumulatedAIResponse += contentChunk; // Accumulate raw text
-                                
-                                // Update the UI incrementally with plain text as it arrives.
-                                // This provides real-time feedback.
-                                const tileElement = gridElement.querySelector(`[data-id="${tileId}"]`);
-                                if (tileElement) {
-                                    const responseContentDiv = tileElement.querySelector('.response-content');
-                                    if (responseContentDiv) {
-                                        responseContentDiv.textContent += contentChunk; // Append plain text
-                                    }
-                                }
-                            } else if (eventData.usage) { 
-                                // This chunk contains usage data, signaling end of AI text generation.
-                                console.log("Received usage data/end marker.");
-                                // The full AI response is now in `accumulatedAIResponse`.
-                                break; // Exit inner loop. Outer loop will check buffer for [DONE] or finish.
-                            }
-
-                        } catch (e) {
-                            console.error("Failed to parse SSE message data:", e);
-                            console.error("Problematic message:", message);
-                        }
-                    } else if (message.trim() === '[DONE]') {
-                        console.log("Received [DONE] SSE marker.");
-                        break; // Exit inner loop
+            
+            try {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) {
+                        console.log("Stream finished.");
+                        break;
                     }
-                }
-                // If [DONE] is in the buffer, ensure outer loop breaks
-                if (buffer.includes('[DONE]')) break;
-            }
+                    buffer += textDecoder.decode(value, { stream: true });
 
-            // After the stream ends, render the final response (e.g., as Markdown)
-            const tileElement = gridElement.querySelector(`[data-id="${tileId}"]`);
-            if (tileElement) {
-                const responseContentDiv = tileElement.querySelector('.response-content');
-                if (responseContentDiv) {
-                    // Apply marked.parse only once to the complete accumulated response for proper markdown rendering.
-                    responseContentDiv.innerHTML = marked.parse(accumulatedAIResponse);
+                    // Split buffer by SSE message delimiters (\n\n)
+                    let messages = buffer.split('\n\n');
+                    buffer = messages.pop() || ''; // Keep the last, possibly incomplete message
+
+                    for (const message of messages) {
+                        if (message.startsWith('data: ')) {
+                            const jsonDataString = message.substring('data: '.length);
+                            try {
+                                const eventData = JSON.JSON.parse(jsonDataString);
+
+                                // Extract user-facing content
+                                const contentChunk = extractAiContent(eventData);
+
+                                if (contentChunk !== null) {
+                                    accumulatedAIResponse += contentChunk; // Accumulate raw text
+                                    
+                                    // Update the UI incrementally by appending plain text
+                                    updateTileResponseContent(tileId, contentChunk, true);
+
+                                } else if (eventData.usage) { 
+                                    // This chunk contains usage data, signaling end of AI text generation.
+                                    console.log("Received usage data/end marker.");
+                                    break; // Exit inner loop. Outer loop will check buffer for [DONE] or finish.
+                                }
+
+                            } catch (e) {
+                                console.error("Failed to parse SSE message data:", e);
+                                console.error("Problematic message:", message);
+                            }
+                        } else if (message.trim() === '[DONE]') {
+                            console.log("Received [DONE] SSE marker.");
+                            break; // Exit inner loop
+                        }
+                    }
+                    // If [DONE] is in the buffer, ensure outer loop breaks
+                    if (buffer.includes('[DONE]')) break;
+                }
+            } catch(error) {
+                 console.error("Error reading stream:", error);
+                 // Display error in the tile if available
+                 if (tileId) {
+                     updateTileResponseContent(tileId, `<p style="color:red;">Stream error: ${escapeHTML(error.message || 'Unknown')}</p>`, false);
+                 }
+            } finally {
+                // After the stream ends (or breaks due to error), render the final response (e.g., as Markdown)
+                if (tileId) {
+                    const tile = pairs.find(p => p.id === tileId);
+                    // Only re-render if it wasn't an error tile and has actual content
+                    if (tile && tile.response !== '...' && !tile.response.startsWith('Error:')) {
+                        const finalMarkdown = marked.parse(accumulatedAIResponse);
+                        updateTileResponseContent(tileId, finalMarkdown, false); // Final markdown render
+                    }
                 }
             }
             
             return accumulatedAIResponse; // Return the final assembled AI response text
         }
 
-        // Make the API call to the Worker and return the stream reader
+        // Make the API call to the Worker and return the stream reader and other info
         async function apiFetch(path, payload) {
             const base = getBaseUrl();
             if (!base) {
-                throw new Error('API Base URL not set.');
+                throw new Error('API Base URL not set. Please go to Settings.');
             }
             const url = base + path;
             try {
@@ -292,7 +915,7 @@
 
                 if (!res.ok) {
                     // Try to parse JSON error from worker, otherwise use status text
-                    const errorPayload = await res.json().catch(() => ({ error: `HTTP Error ${res.status}` }));
+                    const errorPayload = await res.json().catch(() => ({ error: `HTTP Error ${res.status} - ${res.statusText}` }));
                     throw new Error(errorPayload.error || `Request failed with status ${res.status}`);
                 }
                 
@@ -328,7 +951,7 @@
 
                 // Prepare payload based on mode
                 const payload = {
-                    sessionId: sessionId,
+                    sessionId: sessionId, // Pass current session ID
                     context: {
                         additional: contextAdditional // Pass formatted history as additional context
                     }
@@ -338,7 +961,7 @@
                     payload.message = input; // For chat mode
                 } else if (mode === 'generate') {
                     payload.prompt = input;
-                    payload.format = "text"; // Specify format for /api/generate endpoint
+                    payload.format = "text"; // Specify format for /api/generate endpoint (Worker returns text/event-stream)
                 } else if (mode === 'code') {
                     payload.prompt = input; // For code mode
                     // Add language or other options if UI supports them
@@ -347,41 +970,42 @@
                 const path = mode === 'code' ? '/api/code' : mode === 'generate' ? '/api/generate' : '/api/chat';
 
                 // 1. Create a new tile for the AI's response and get its ID
-                currentTileId = addPair({ question: input, response: '...' }); // '...' indicates streaming in progress
+                currentTileIdForStreaming = addPair({ question: input, response: '...' }); // '...' indicates streaming in progress
 
                 // 2. Make the API call and get the stream reader
                 const { reader } = await apiFetch(path, payload);
 
                 // 3. Process the SSE stream, updating the tile incrementally and getting the final response text
-                const finalAiResponseText = await processSSEStream(reader, currentTileId, mode);
+                const finalAiResponseText = await processSSEStream(reader, currentTileIdForStreaming, mode);
                 
-                // 4. Update the `pairs` array with the final response (raw text) after streaming is done
-                const tile = pairs.find(p => p.id === currentTileId);
-                if (tile) {
-                    tile.response = finalAiResponseText; // Store raw text; DOM has markdown
+                // 4. Update the `pairs` array with the final response (raw markdown text) after streaming is done
+                const tileIndex = pairs.findIndex(p => p.id === currentTileIdForStreaming);
+                if (tileIndex !== -1) {
+                    pairs[tileIndex].response = finalAiResponseText; // Store raw markdown str
                 }
                 save(); // Save state after successful completion
 
             } catch (error) {
                 console.error("Send Message Error:", error);
                 // Display error message in the tile if it exists
-                if (currentTileId) {
-                    updateTileContent(currentTileId, `<p style="color:red;">Error: ${escapeHTML(error.message || 'Unknown error')}</p>`);
+                if (currentTileIdForStreaming) {
+                    updateTileResponseContent(currentTileIdForStreaming, `<p style="color:red;">Error: ${escapeHTML(error.message || 'Unknown error')}</p>`, false);
                     // Update the pair data with the error state
-                    const tile = pairs.find(p => p.id === currentTileId);
-                    if (tile) tile.response = `<p style="color:red;">Error: ${escapeHTML(error.message || 'Unknown error')}</p>`;
+                    const tileIndex = pairs.findIndex(p => p.id === currentTileIdForStreaming);
+                    if (tileIndex !== -1) pairs[tileIndex].response = `Error: ${escapeHTML(error.message || 'Unknown error')}`;
                 } else {
                     // If an error occurred before a tile was created (e.g., API URL missing)
                     alert(`Error: ${error.message}`);
                 }
             } finally {
                 loadingIndicator.classList.remove("show"); // Hide loading indicator
+                currentTileIdForStreaming = null; // Reset streaming tile ID
             }
         }
 
         // --- Tile Interaction Functions ---
 
-        function showLongPressMenu(e, id) {
+        function showLongPressMenu(e, id){
             e.stopPropagation(); // Prevent click listener from triggering flip
             const menu = longpressMenu;
             
@@ -391,18 +1015,22 @@
             menu.style.left = pageX + "px";
             menu.style.top = pageY + "px";
 
-            // Build menu content
+            // Build menu content dynamically based on selection state
             const isSelected = selectedTiles.has(id);
-            const mergeButton = selectedTiles.size > 1 ? `<button onclick="mergeSelected();hideMenu()">Merge Selected</button>` : '';
+            const mergeButtonHtml = selectedTiles.size > 1 ? `<button onclick="mergeSelected();hideMenu()"> <span class="menu-icon">${ICONS.copy}</span> Merge Selected</button>` : ''; // Using copy icon for merge as it's combining data
             
             menu.innerHTML = `
-                <button onclick="deletePair(${id});hideMenu()">Delete</button>
-                <button onclick="sendTileToAI(${id});hideMenu()">Send to AI</button>
-                <button onclick="splitTile(${id});hideMenu()">Split</button>
-                <button onclick="toggleSelect(${id});hideMenu()"> ${isSelected ? 'Deselect' : 'Select'} </button>
-                ${mergeButton}
+                <button onclick="deletePair(${id});hideMenu()"> <span class="menu-icon">${ICONS.delete}</span> Delete</button>
+                <button onclick="sendTileToAI(${id});hideMenu()"> <span class="menu-icon">${ICONS.followup}</span> Follow Up</button>
+                <button onclick="splitTile(${id});hideMenu()"> <span class="menu-icon">✂️</span> Split</button>
+                <button onclick="toggleSelect(${id});hideMenu()"> <span class="menu-icon">${isSelected ? '🚫' : '✅'}</span> ${isSelected ? 'Deselect' : 'Select'} </button>
+                <button onclick="showFullscreen(${id});hideMenu()"> <span class="menu-icon">${ICONS.fullscreen}</span> Fullscreen</button>
+                <button onclick="showEditModal(${id});hideMenu()"> <span class="menu-icon">${ICONS.edit}</span> Edit</button>
+                <button onclick="copyTileLink(${id});hideMenu()"> <span class="menu-icon">${ICONS.share}</span> Share/Copy Link</button>
+                ${mergeButtonHtml}
             `;
             menu.style.display = "flex";
+            updateMergeButtonVisibility(); // Ensure menu reflects current selection state
         }
 
         function hideMenu(){ longpressMenu.style.display="none"; }
@@ -420,9 +1048,8 @@
                 const responseContentDiv = tileElement.querySelector('.response-content');
                 if (responseContentDiv) {
                     // Copy the *displayed text content*, not the raw HTML or markdown source.
-                    // This ensures clean text copy.
                     navigator.clipboard.writeText(responseContentDiv.textContent || '').then(() => {
-                        alert('Copied to clipboard!');
+                        alert('Response copied to clipboard!');
                     }).catch(err => {
                         console.error('Failed to copy: ', err);
                         alert('Failed to copy.');
@@ -431,32 +1058,48 @@
             }
         }
 
+        // "Follow Up" from a tile - populates input with question and response, acting as continuation
         function sendTileToAI(id){
             const tile = pairs.find(p=>p.id===id);
             if(!tile) return;
-            // Construct a prompt that includes the question and the *plain text* of the original response.
-            // This helps in having a context for the AI.
-            const responseText = tile.response ? tile.response.replace(/<[^>]*>|<!--.*?-->/g,'') : ''; // Remove HTML tags and comments
-            userInputElement.value = `${tile.question}\n\n---\n\n${responseText.slice(0, 500)}`; // Slice to prevent overly long prompts
-            // Optionally scroll to input or focus
-            userInputElement.focus();
+            
+            // Get the plain text response content for the prompt
+            const responseElement = gridElement.querySelector(`[data-id="${id}"] .response-content`);
+            let responseText = '';
+            if (responseElement) {
+                responseText = responseElement.textContent.trim(); // Best to get displayed text
+            } else {
+                // Fallback to raw text if element not found, strip HTML from markdown source
+                responseText = tile.response.replace(/<[^>]*>|<!--.*?-->/g,'').trim();
+            }
+
+            // Construct the prompt: Question, separator, cleaned response, followed by input
+            userInputElement.value = `${tile.question}\n\n---\n\n${responseText.slice(0, 500)}`; // Limit pasted response to 500 chars for prompt length
+            userInputElement.focus(); // Focus on input
         }
         
+        // Split a tile's response into multiple new tiles
         function splitTile(id){
             const tile = pairs.find(p=>p.id===id);
-            if(!tile || !tile.response) return;
+            if(!tile || !tile.response) {
+                alert("Cannot split tile without a response or if it's not yet generated.");
+                return;
+            }
 
             const responseElement = gridElement.querySelector(`[data-id="${id}"] .response-content`);
-            const responseText = responseElement.textContent.trim(); // Get the plain text from the displayed content.
+            // Use the plain text content for splitting logic
+            const responseText = responseElement.textContent.trim(); 
 
-            // Split based on common markdown separators (like ---, ##, etc.) or newlines.
-            // This is a heuristic and might need refinement. For now, split by '---' if response contains markdown.
+            // Heuristics for splitting: by markdown horizontal rules (---) or multiple newlines followed by headings.
             let parts = responseText.split(/\n---\n/); // Basic split by horizontal rule
+            if (parts.length === 1) { // If no '---', try splitting by double newlines + potential heading
+                 parts = responseText.split(/\n\n(?=#{1,6}\s)/); // Split before markdown headings
+            }
 
             if (parts.length > 1) {
                 // Update the original tile with the first part
                 const newResponseHTML = marked.parse(parts[0].trim());
-                updateTileContent(id, newResponseHTML);
+                updateTileResponseContent(id, newResponseHTML, false); // Render markdown
                 // Update the pair's text data
                 const originalTile = pairs.find(p => p.id === id);
                 if(originalTile) originalTile.response = parts[0].trim();
@@ -467,10 +1110,11 @@
                 }
                 save();
             } else {
-                alert("Tile content doesn't seem to have separable parts.");
+                alert("Tile content doesn't seem to have separable parts for splitting.");
             }
         }
 
+        // Toggle selection state for a tile
         function toggleSelect(id){
             const card = gridElement.querySelector(`[data-id="${id}"]`);
             if (card) {
@@ -480,23 +1124,32 @@
                 } else {
                     selectedTiles.add(id);
                 }
-                // Re-render menu if it's open to show/hide merge button
-                if (longpressMenu.style.display === "flex") {
-                   const currentId = card.dataset.id; // Assuming the menu is shown for this card
-                   const currentEvent = { pageX: parseFloat(longpressMenu.style.left), pageY: parseFloat(longpressMenu.style.top) };
-                   showLongPressMenu(currentEvent, currentId);
-                }
+            }
+             updateMergeButtonVisibility();
+            // If menu is open, refresh it to update selection status and merge button
+            if (longpressMenu.style.display === 'flex') {
+                const currentId = id; // The ID for which the menu was opened
+                const currentEvent = { pageX: parseFloat(longpressMenu.style.left), pageY: parseFloat(longpressMenu.style.top) };
+                showLongPressMenu(currentEvent, currentId); // Re-show menu to refresh its content
             }
         }
 
+        // Update visibility of Merge Selected button in longpress menu
+        function updateMergeButtonVisibility() {
+            const mergeButtonInMenu = longpressMenu.querySelector('button[onclick*="mergeSelected"]');
+            if (mergeButtonInMenu) {
+                mergeButtonInMenu.style.display = selectedTiles.size > 1 ? 'flex' : 'none'; // Use flex to align properly
+            }
+        }
+
+        // Merge selected tiles into a new tile
         function mergeSelected(){
-            if(selectedTiles.size<2) return alert("Select at least 2 tiles to merge.");
+            if(selectedTiles.size < 2) return alert("Select at least 2 tiles to merge.");
             
             const selectedTilesData = pairs.filter(p => selectedTiles.has(p.id));
-            if (!selectedTilesData.length) return; // Should not happen if selectedTiles.size > 1
+            if (selectedTilesData.length < 2) return;
 
-            // Combine questions and responses. Use a clear separator.
-            // For simplicity, combine as "Question1 \n---\n Response1 \n=====\n Question2 \n---\n Response2"
+            // Combine questions and responses. Use clear separators.
             const combinedContent = selectedTilesData
                 .map(p => `${p.question}\n\n---\n\n${p.response}`) // Use raw response text from pairs
                 .join('\n=====\n'); // Separator between merged tiles
@@ -504,50 +1157,211 @@
             // Add a new tile with the merged content
             const mergedTileId = addPair({ question: "Merged Tiles", response: combinedContent });
             
-            // Optionally, clear selection and delete original tiles
+            // Clear selection, remove selected highlights, and delete original selected tiles
             selectedTiles.clear();
             document.querySelectorAll('.flip-card.selected').forEach(el => el.classList.remove('selected'));
             selectedTilesData.forEach(tile => deletePair(tile.id)); // Delete original tiles
             
             save();
+            hideMenu(); // Hide menu after action
         }
 
-        // Export mind map data (pairs and history) to a JSON file
+        // --- Edit Modal Logic ---
+        let editingTileId = null; // Track which tile is currently being edited
+        let isPreviewMode = false; // Track if preview is active
+
+        function showEditModal(tileId) {
+            editingTileId = tileId;
+            const tile = pairs.find(p => p.id === tileId);
+            if (!tile) return;
+
+            editQuestionTextarea.value = tile.question;
+            editResponseTextarea.value = tile.response; // This is raw markdown
+            
+            editTileIdDisplaySpan.textContent = `#${String(tileId).slice(-6)}`; // Show a snippet of the ID
+
+            // Reset preview state
+            isPreviewMode = false;
+            editTogglePreviewSpan.textContent = "Preview";
+            editResponseTextarea.style.display = "block";
+            editPreviewDiv.style.display = "none";
+            editPreviewDiv.innerHTML = ''; // Clear preview content
+            
+            editModal.classList.add("show");
+        }
+
+        function closeEditModal() {
+            editModal.classList.remove("show");
+            editingTileId = null;
+        }
+
+        function toggleEditPreview() {
+            isPreviewMode = !isPreviewMode;
+            const currentResponseMarkdown = editResponseTextarea.value;
+            if (isPreviewMode) {
+                // Update preview content
+                editPreviewDiv.innerHTML = marked.parse(currentResponseMarkdown);
+                editResponseTextarea.style.display = "none";
+                editPreviewDiv.style.display = "block";
+                editTogglePreviewSpan.textContent = "Edit";
+            } else {
+                editResponseTextarea.style.display = "block";
+                editPreviewDiv.style.display = "none";
+                editTogglePreviewSpan.textContent = "Preview";
+            }
+        }
+
+        function saveEditedTile() {
+            if (editingTileId === null) return closeEditModal();
+
+            const tileIndex = pairs.findIndex(p => p.id === editingTileId);
+            if (tileIndex === -1) return closeEditModal();
+
+            const newQuestion = editQuestionTextarea.value.trim();
+            const newResponseMarkdown = editResponseTextarea.value.trim(); // Store raw markdown
+
+            // Update the pairs array
+            pairs[tileIndex].question = newQuestion;
+            pairs[tileIndex].response = newResponseMarkdown;
+
+            // Update the tile in the DOM
+            updateTileQuestionContent(editingTileId, newQuestion);
+            const renderedResponseHTML = marked.parse(newResponseMarkdown);
+            updateTileResponseContent(editingTileId, renderedResponseHTML, false); // Render markdown
+
+            save();
+            showSavedNotice();
+            closeEditModal();
+        }
+
+        // --- Fullscreen Modal Logic (Giant Card View) ---
+        let currentFullscreenTileId = null; // Track the tile currently in fullscreen
+
+        function showFullscreen(tileId) {
+            const tile = pairs.find(p => p.id === tileId);
+            const tileElement = gridElement.querySelector(`[data-id="${tileId}"]`);
+            if (!tile || !tileElement) return;
+
+            currentFullscreenTileId = tileId; // Set current tile ID
+
+            // Find the question text
+            const questionDiv = tileElement.querySelector('.card-front div:first-child');
+            const questionText = questionDiv ? questionDiv.textContent : tile.question;
+
+            // Find the response content (using raw markdown source for fullscreen rendering)
+            const rawResponseMarkdown = tile.response; // Use the stored raw markdown
+            
+            // Update the fullscreen view
+            fullscreenQuestionDivs.forEach(el => el.textContent = questionText); // Set plain text question
+            fullscreenResponseDivs.forEach(el => el.innerHTML = marked.parse(rawResponseMarkdown)); // Render markdown response
+
+            // Determine which side of the original card was last viewed
+            const wasFlipped = tileElement.classList.contains('flipped');
+            if (wasFlipped) {
+                fullscreenCardInner.classList.add('flipped'); // Ensure fullscreen card is also flipped
+            } else {
+                fullscreenCardInner.classList.remove('flipped');
+            }
+
+            fullscreenOverlay.classList.add("show");
+        }
+
+        function hideFullscreen() {
+            fullscreenOverlay.classList.remove("show");
+            // Optionally reset state or animation
+            fullscreenCardInner.classList.remove('flipped'); // Reset flip state
+            fullscreenQuestionDivs.forEach(el => el.textContent = ''); // Clear content
+            fullscreenResponseDivs.forEach(el => el.innerHTML = '');
+            currentFullscreenTileId = null;
+        }
+
+        // Handle actions from within the fullscreen view (edit, share, followup, delete, close)
+        function handleFullscreenAction(action) {
+            if (currentFullscreenTileId === null) return hideFullscreen();
+
+            switch(action) {
+                case 'edit':
+                    showEditModal(currentFullscreenTileId);
+                    hideFullscreen(); // Close fullscreen to focus on edit modal
+                    break;
+                case 'share':
+                    copyTileLink(currentFullscreenTileId); // Reuse copy link functionality
+                    break;
+                case 'followup':
+                    sendTileToAI(currentFullscreenTileId); // Reuse follow up logic
+                    hideFullscreen(); // Close fullscreen
+                    break;
+                case 'delete':
+                    deletePair(currentFullscreenTileId);
+                    hideFullscreen();
+                    break;
+                case 'close':
+                default:
+                    hideFullscreen();
+                    break;
+            }
+        }
+
+        // Copy a link to the current tile (or its content)
+        function copyTileLink(tileId) {
+            const tile = pairs.find(p => p.id === tileId);
+            if (!tile) return;
+
+            // For now, just copy the raw response text. Advanced sharing would involve permalinks.
+            const responseText = tile.response.replace(/<[^>]*>|<!--.*?-->/g,'').trim(); // Clean markdown to text
+            
+            navigator.clipboard.writeText(responseText || '').then(() => {
+                alert('Response text copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert('Failed to copy.');
+            });
+        }
+
+        // --- Export/Import ---
         function exportData(){
             const dataToExport = {
               pairs: pairs,
-              history: history // Also export client-side history if relevant
+              history: history, // Also export client-side history if relevant
+              sessionId: sessionId // Export session ID for potential re-init
             };
             const blob = new Blob([JSON.stringify(dataToExport, null, 2)], {type:"application/json"});
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `mindmap-export-${new Date().toISOString().split('T')[0]}.json`;
+            // Add timestamp to filename
+            a.download = `mindmap-export-${new Date().toISOString().split('T')[0]}.json`; 
             a.click();
             URL.revokeObjectURL(url);
         }
 
-        // Import mind map data from a JSON file
         function importData(event){
             const file = event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
             reader.onload = x => {
                 try {
-                    const data = JSON.parse(x.target.result);
+                    const data = JSON.JSON.parse(x.target.result);
                     pairs = data.pairs || [];
-                    history = data.history || []; // Load history too
-                    
+                    history = data.history || []; 
+                    sessionId = data.sessionId || `main-${Date.now()}`; // Load or generate new session ID
+
                     // Clear current grid and re-render loaded data
                     gridElement.innerHTML = '';
                     pairs.forEach(renderPair);
                     save(); // Save newly loaded data
                     alert('Mind Map imported successfully!');
+                    
+                    // Update the session ID display
+                    sessionIdInput.value = sessionId;
+                    
                     // Close settings modal after import
                     closeSettings(); 
                 } catch(err) {
                     alert('Error importing file. Please ensure it is a valid JSON file.');
                     console.error("Import error:", err);
+                } finally {
+                    event.target.value = ''; // Reset file input
                 }
             };
             reader.readAsText(file);
@@ -560,44 +1374,123 @@
         }
 
         // --- Settings Modal ---
-        function showSettings(){ settingsModal.classList.add("show"); }
+        function showSettings(){ 
+            settingsModal.classList.add("show");
+            // Populate session ID input
+            sessionIdInput.value = sessionId;
+        }
         function closeSettings(){ settingsModal.classList.remove("show"); }
         function saveSettings(){
-            localStorage.setItem("mindmap-baseUrl", baseUrlInput.value.trim());
+            localStorage.setItem(STORAGE_BASEURL_KEY, baseUrlInput.value.trim());
+            // Can't change session ID here easily, it's generated on load for simplicity
             closeSettings();
             showSavedNotice();
         }
         
-        // --- Initialization Functions ---
-        function save(){ localStorage.setItem("mindmap-data", JSON.stringify({pairs, history})); }
+        // --- Divider Resizing ---
+        dragDivider.addEventListener('mousedown', (e) => {
+            e.preventDefault(); // Prevent default drag behavior
+            isResizing = true;
+            startY = e.clientY; // Initial mouse Y position
+            startHeightInputPanel = inputPanelElement.offsetHeight; // Initial height of input panel
 
-        function load(){
-            const savedData = localStorage.getItem("mindmap-data");
-            if(savedData){
-                try {
-                    const data = JSON.parse(savedData);
-                    pairs = data.pairs || [];
-                    history = data.history || []; // Load history too
-                    
-                    pairs.forEach(renderPair); // Render loaded tiles
-                } catch(err) {
-                    console.error("Error loading data from localStorage:", err);
-                    // Clear corrupted data if any to prevent further issues
-                    pairs = []; history = [];
-                    localStorage.removeItem("mindmap-data");
-                }
-            }
-            const savedBaseUrl = localStorage.getItem("mindmap-baseUrl");
-            if(savedBaseUrl) {
-                baseUrlInput.value = savedBaseUrl;
+            // Add event listeners to the document for moving the mouse
+            document.addEventListener('mousemove', onDividerDrag);
+            document.addEventListener('mouseup', onDividerDragEnd);
+            
+            // Change cursor to indicate resizing
+            document.body.style.cursor = 'ns-resize';
+            dragDivider.style.cursor = 'ns-resize';
+        });
+
+        function onDividerDrag(e) {
+            if (!isResizing) return;
+
+            const deltaY = e.clientY - startY; // How much the mouse has moved
+            const newHeight = startHeightInputPanel + deltaY;
+
+            // Prevent resizing beyond reasonable limits
+            const minHeight = 80; // Minimum input panel height
+            const maxHeight = window.innerHeight * 0.8; // Max input panel height (e.g., 80% of screen)
+
+            // Ensure newHeight is within bounds and update IF within bounds
+            if (newHeight >= minHeight && newHeight <= maxHeight) {
+                inputPanelElement.style.height = `${newHeight}px`;
+                // Canvas height adjusts automatically due to flex: 1
+                saveDividerHeight(newHeight);
             }
         }
 
-        // Utility function to escape HTML for displaying user input safely
+        function onDividerDragEnd() {
+            if (!isResizing) return;
+            isResizing = false;
+            // Reset cursor styles
+            document.body.style.cursor = '';
+            dragDivider.style.cursor = 'ns-resize';
+            
+            // Remove event listeners from the document
+            document.removeEventListener('mousemove', onDividerDrag);
+            document.removeEventListener('mouseup', onDividerDragEnd);
+        }
+
+        // Persist divider height to localStorage
+        function saveDividerHeight(height) {
+            localStorage.setItem(STORAGE_DIVIDER_HEIGHT_KEY, height);
+        }
+
+        function loadDividerHeight() {
+            const savedHeight = localStorage.getItem(STORAGE_DIVIDER_HEIGHT_KEY);
+            if (savedHeight) {
+                // Ensure the height is within valid bounds
+                const height = Math.max(80, Math.min(parseFloat(savedHeight), window.innerHeight * 0.8));
+                inputPanelElement.style.height = `${height}px`;
+            } else {
+                // Set a default height if none is saved
+                inputPanelElement.style.height = `200px`; // Default initial height
+            }
+        }
+
+
+        // --- Utility Functions ---
+        // Escape HTML to prevent XSS when displaying user inputs or content indirectly
         function escapeHTML(str) {
             const div = document.createElement('div');
             div.appendChild(document.createTextNode(str));
             return div.innerHTML;
+        }
+
+        // --- Initialization ---
+        function save(){ 
+            localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify({pairs, history, sessionId})); 
+        } 
+
+        function load(){
+            const savedDataJson = localStorage.getItem(STORAGE_DATA_KEY);
+            if(savedDataJson){
+                try {
+                    const data = JSON.parse(savedDataJson);
+                    pairs = data.pairs || [];
+                    history = data.history || []; 
+                    sessionId = data.sessionId || `main-${Date.now()}`; // Load or generate new session ID
+
+                    pairs.forEach(renderPair); // Render loaded tiles
+                } catch(err) {
+                    console.error("Error loading data from localStorage:", err);
+                    // Clear corrupted data if any to prevent further issues
+                    pairs = []; history = []; sessionId = `main-${Date.now()}`;
+                    localStorage.removeItem(STORAGE_DATA_KEY);
+                }
+            }
+            // Load base URL
+            const savedBaseUrl = localStorage.getItem(STORAGE_BASEURL_KEY);
+            if(savedBaseUrl) {
+                baseUrlInput.value = savedBaseUrl;
+            }
+            // Load initial divider height
+            loadDividerHeight();
+            
+            // Update session ID display
+            sessionIdInput.value = sessionId;
         }
 
         // --- Event Listeners ---
@@ -608,10 +1501,39 @@
                 sendMessage();
             }
         });
-        // Hide context menu when clicking anywhere else on the page
-        document.addEventListener("click", () => { hideMenu(); });
-        // Also ensure selection is cleared on general click, or maybe not?
-        // For now, longpress menu hiding only.
+        
+        // Hide context menu/modals/fullscreen when clicking outside them
+        document.addEventListener("click", (e) => { 
+            if (!longpressMenu.contains(e.target) && longpressMenu.style.display === 'flex') {
+                hideMenu();
+            }
+            if (!editModal.contains(e.target) && editModal.classList.contains('show')) {
+                closeEditModal();
+            }
+            if (!fullscreenOverlay.contains(e.target) && fullscreenOverlay.classList.contains('show')) {
+                // Only hide if clicked outside the card content itself
+                if (!e.target.closest('.fullscreen-card-inner')) {
+                    hideFullscreen();
+                }
+            }
+             // Clear selection if clicking on general page background, not a card or button
+            if (e.target === document.body || e.target.closest('.canvas') === canvasElement) {
+                if (selectedTiles.size > 0) { 
+                    document.querySelectorAll('.flip-card.selected').forEach(el => el.classList.remove('selected'));
+                    selectedTiles.clear();
+                    updateMergeButtonVisibility();
+                }
+            }
+        });
+        // Prevent clicks *within* the grid from closing menus if menu is over them
+        gridElement.addEventListener("click", (e) => {
+            if (longpressMenu.style.display === 'flex' && longpressMenu.contains(e.target)) {
+                e.stopPropagation(); // Prevent document click listener from hiding menu
+            }
+        });
+
+        // For edit modal preview toggle
+        editTogglePreviewSpan.addEventListener('click', toggleEditPreview);
 
         // --- Initial Load ---
         load(); // Load saved data and settings on page load
