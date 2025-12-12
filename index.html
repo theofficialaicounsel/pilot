@@ -845,7 +845,7 @@
                         if (message.startsWith('data: ')) {
                             const jsonDataString = message.substring('data: '.length);
                             try {
-                                const eventData = JSON.JSON.parse(jsonDataString);
+                                const eventData = JSON.parse(jsonDataString);
 
                                 // Extract user-facing content
                                 const contentChunk = extractAiContent(eventData);
@@ -1341,7 +1341,7 @@
             const reader = new FileReader();
             reader.onload = x => {
                 try {
-                    const data = JSON.JSON.parse(x.target.result);
+                    const data = JSON.parse(x.target.result);
                     pairs = data.pairs || [];
                     history = data.history || []; 
                     sessionId = data.sessionId || `main-${Date.now()}`; // Load or generate new session ID
