@@ -3,219 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>🧠 AI Mind Map</title>
+    <title>AI Mind Map</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --bg: #0a0a0a;
-            --glass: rgba(26, 26, 26, 0.8);
-            --yellow: #ffd700;
-            --text: #fff;
-            --border: rgba(255, 215, 0, 0.3);
-        }
-        body {
-            font-family: system-ui, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            height: 100vh;
-            overflow: hidden;
-            touch-action: manipulation;
-        }
-        .header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 50px;
-            background: rgba(10, 10, 10, 0.95);
-            border-bottom: 2px solid var(--yellow);
-            padding: 0 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 1000;
-        }
-        .logo { font-size: 1.1rem; font-weight: bold; color: var(--yellow); }
-        button {
-            background: var(--glass);
-            color: var(--yellow);
-            border: 1px solid var(--border);
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            touch-action: manipulation;
-        }
-        .container {
-            position: fixed;
-            top: 50px;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: flex;
-            flex-direction: column;
-        }
-        .input-panel {
-            background: rgba(10, 10, 10, 0.95);
-            border-bottom: 2px solid var(--yellow);
-            padding: 12px;
-            flex-shrink: 0;
-            resize: vertical;
-            min-height: 100px;
-            max-height: 50vh;
-            overflow: auto;
-        }
-        .section { margin-bottom: 12px; }
-        .section-title {
-            font-size: 0.75rem;
-            color: var(--yellow);
-            margin-bottom: 8px;
-            text-transform: uppercase;
-        }
-        select, textarea, input {
-            width: 100%;
-            background: var(--glass);
-            color: var(--text);
-            border: 1px solid var(--border);
-            padding: 8px;
-            border-radius: 6px;
-            font-family: inherit;
-            font-size: 16px;
-        }
-        textarea { min-height: 80px; }
-        .send-btn {
-            width: 100%;
-            background: var(--yellow);
-            color: var(--bg);
-            border: none;
-            padding: 12px;
-            font-weight: bold;
-            margin-top: 8px;
-            cursor: pointer;
-        }
-        .canvas {
-            flex: 1;
-            overflow: hidden;
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: repeat(2, 1fr);
-            gap: 0;
-            width: 100%;
-            height: 100%;
-            overflow-y: auto;
-        }
-        .grid-view-2 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); }
-        .grid-view-1 { grid-template-columns: 1fr; grid-template-rows: repeat(2, 1fr); }
-        .grid-view-single { grid-template-columns: 1fr; grid-template-rows: 1fr; }
-        .grid-view-full { grid-template-columns: 1fr; grid-template-rows: 1fr; overflow: hidden; }
-        .flip-card {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            min-height: 0;
-            cursor: pointer;
-            perspective: 1000px;
-            overflow: hidden;
-            background: var(--bg);
-        }
-        .flip-card-inner {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            transition: transform 0.6s;
-            transform-style: preserve-3d;
-        }
-        .flip-card.flipped .flip-card-inner {
-            transform: rotateY(180deg);
-        }
-        .card-face {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            display: flex;
-            flex-direction: column;
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            border: 2px solid var(--border);
-            padding: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-            font-size: 0.65rem;
-            line-height: 1.2;
-            font-family: monospace;
-        }
-        .card-front {
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.1));
-            border-left: 4px solid var(--yellow);
-        }
-        .card-back {
-            transform: rotateY(180deg);
-            background: linear-gradient(135deg, rgba(100, 150, 255, 0.15), rgba(100, 150, 255, 0.05));
-            border-left: 4px solid #58a6ff;
-        }
-        .response-content {
-            flex: 1;
-            overflow: auto;
-        }
-        .card-btn {
-            background: rgba(0, 0, 0, 0.5);
-            border: none;
-            color: var(--text);
-            font-size: 0.9rem;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 3px;
-            margin-top: 8px;
-        }
-        .card-btn:hover {
-            background: var(--yellow);
-            color: var(--bg);
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .modal.show { display: flex; }
-        .modal-content {
-            background: rgba(26, 26, 26, 0.95);
-            border: 2px solid var(--yellow);
-            border-radius: 12px;
-            padding: 20px;
-            max-width: 500px;
-            width: 100%;
-        }
-        .modal-title { font-size: 1.2rem; color: var(--yellow); margin-bottom: 16px; }
-        .loading {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--glass);
-            border: 1px solid var(--yellow);
-            padding: 12px 20px;
-            border-radius: 8px;
-            display: none;
-            z-index: 999;
-        }
-        .loading.show { display: block; }
-        .saved-notice { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0, 255, 0, 0.2); color: #0f0; border: 1px solid #0f0; padding: 10px 20px; border-radius: 8px; z-index: 999; opacity: 0; transition: opacity .5s; }
-        .saved-notice.show { opacity: 1; }
-        .settings-tools { display: flex; gap: 10px; margin-top: 20px; }
-        .settings-tools button, .settings-tools label { flex: 1; background: var(--glass); color: var(--yellow); border: 1px solid var(--border); padding: 10px; border-radius: 6px; cursor: pointer; text-align: center; }
-        .settings-tools input[type="file"] { display: none; }
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--bg:#0a0a0a;--glass:rgba(26,26,26,0.8);--yellow:#ffd700;--text:#fff;--border:rgba(255,215,0,0.3)}
+        body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+        .header{position:fixed;top:0;left:0;right:0;height:50px;background:rgba(10,10,10,0.95);border-bottom:2px solid var(--yellow);padding:0 12px;display:flex;justify-content:space-between;align-items:center;z-index:1000}
+        .logo{font-size:1.1rem;font-weight:bold;color:var(--yellow)}
+        button{background:var(--glass);color:var(--yellow);border:1px solid var(--border);padding:8px 12px;border-radius:6px;cursor:pointer}
+        .container{position:fixed;top:50px;left:0;right:0;bottom:0;display:flex;flex-direction:column}
+        .input-panel{background:rgba(10,10,10,0.95);border-bottom:2px solid var(--yellow);padding:12px;flex-shrink:0}
+        .section{margin-bottom:12px}
+        .section-title{font-size:.75rem;color:var(--yellow);margin-bottom:8px;text-transform:uppercase}
+        select,textarea,input{width:100%;background:var(--glass);color:var(--text);border:1px solid var(--border);padding:8px;border-radius:6px;font-size:16px}
+        textarea{min-height:80px}
+        .send-btn{width:100%;background:var(--yellow);color:var(--bg);border:none;padding:12px;font-weight:bold;margin-top:8px;cursor:pointer}
+        .canvas{flex:1;overflow:hidden}
+        .grid{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:0;width:100%;height:100%;overflow-y:auto}
+        .flip-card{position:relative;width:100%;height:100%;min-height:0;cursor:pointer;perspective:1000px;overflow:hidden;background:var(--bg)}
+        .flip-card-inner{position:relative;width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d}
+        .flip-card.flipped .flip-card-inner{transform:rotateY(180deg)}
+        .card-face{position:absolute;width:100%;height:100%;backface-visibility:hidden;display:flex;flex-direction:column;background:var(--glass);backdrop-filter:blur(10px);border:2px solid var(--border);padding:8px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.5);font-size:.65rem;line-height:1.2;font-family:monospace}
+        .card-front{background:linear-gradient(135deg,rgba(255,215,0,.2),rgba(255,215,0,.1));border-left:4px solid var(--yellow)}
+        .card-back{transform:rotateY(180deg);background:linear-gradient(135deg,rgba(100,150,255,.15),rgba(100,150,255,.05));border-left:4px solid #58a6ff}
+        .response-content{flex:1;overflow:auto}
+        .card-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+        .card-btn{background:rgba(0,0,0,.5);border:none;color:var(--text);font-size:.85rem;cursor:pointer;padding:4px 8px;border-radius:4px}
+        .card-btn:hover{background:var(--yellow);color:var(--bg)}
+        .selected{border:3px solid #58a6ff !important}
+        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:2000;align-items:center;justify-content:center;padding:20px}
+        .modal.show{display:flex}
+        .modal-content{background:rgba(26,26,26,.95);border:2px solid var(--yellow);border-radius:12px;padding:20px;max-width:500px;width:100%}
+        .modal-title{font-size:1.2rem;color:var(--yellow);margin-bottom:16px}
+        .loading{position:fixed;bottom:20px;right:20px;background:var(--glass);border:1px solid var(--yellow);padding:12px 20px;border-radius:8px;display:none;z-index:999}
+        .loading.show{display:block}
+        .saved-notice{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,255,0,.2);color:#0f0;border:1px solid #0f0;padding:10px 20px;border-radius:8px;z-index:999;opacity:0;transition:opacity .5s}
+        .saved-notice.show{opacity:1}
+        .settings-tools{display:flex;gap:10px;margin-top:20px}
+        .settings-tools button,.settings-tools label{flex:1;background:var(--glass);color:var(--yellow);border:1px solid var(--border);padding:10px;border-radius:6px;cursor:pointer;text-align:center}
+        .settings-tools input[type=file]{display:none}
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="logo">🧠 AI Mind Map</div>
-        <button onclick="showSettings()">⚙️</button>
+        <div class="logo">AI Mind Map</div>
+        <button onclick="showSettings()">Settings</button>
     </div>
 
     <div class="container">
@@ -223,279 +56,178 @@
             <div class="section">
                 <div class="section-title">Mode</div>
                 <select id="modeSelect">
-                    <option value="chat">💬 Chat</option>
-                    <option value="code">💻 Code</option>
-                    <option value="generate">📄 Generate</option>
+                    <option value="chat">Chat</option>
+                    <option value="code">Code</option>
+                    <option value="generate">Generate</option>
                 </select>
             </div>
-
             <div class="section">
                 <div class="section-title">Message</div>
-                <textarea id="userInput" placeholder="Ask anything..."></textarea>
-                <button class="send-btn" onclick="sendMessage()">⚡ Send</button>
+                <textarea id="userInput" placeholder="Ask anything... Use --- to split into new tiles"></textarea>
+                <button class="send-btn" onclick="sendMessage()">Send</button>
             </div>
         </div>
-
-        <div class="canvas">
-            <div class="grid" id="grid"></div>
-        </div>
+        <div class="canvas"><div class="grid" id="grid"></div></div>
     </div>
 
-    <div class="saved-notice" id="savedNotice">✓ Saved!</div>
+    <div class="saved-notice" id="savedNotice">Saved!</div>
 
     <div class="modal" id="settingsModal">
         <div class="modal-content">
-            <div class="modal-title">⚙️ Settings</div>
-            <div class="form-group">
-                <label class="form-label">API Base URL</label>
-                <input type="text" id="baseUrl" placeholder="https://your-worker.workers.dev">
-            </div>
+            <div class="modal-title">Settings</div>
+            <div class="section"><div class="section-title">API Base URL</div><input type="text" id="baseUrl" placeholder="https://your-worker.workers.dev"></div>
             <div class="settings-tools">
-                <button onclick="exportData()">📤 Export Mind Map</button>
-                <label for="importFile">📥 Import Mind Map</label>
+                <button onclick="exportData()">Export Mind Map</button>
+                <label for="importFile">Import Mind Map</label>
                 <input type="file" id="importFile" accept=".json" onchange="importData(event)">
             </div>
-            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
                 <button onclick="closeSettings()">Cancel</button>
                 <button class="send-btn" onclick="saveSettings()">Save</button>
             </div>
         </div>
     </div>
 
-    <div class="loading" id="loading">⏳ Processing...</div>
+    <div class="loading" id="loading">Processing...</div>
 
     <script>
         let pairs = [];
-        let sessionId = Date.now().toString(); // Global session for context
+        let sessionId = "main-" + Date.now();
         const history = [];
+        let selectedTiles = new Set();
 
         async function apiFetch(path, payload) {
             const base = document.getElementById("baseUrl").value.trim().replace(/\/+$/, '');
             const url = base + path;
-            const headers = { "Content-Type": "application/json" };
-
             try {
-                const res = await fetch(url, {
-                    method: "POST",
-                    headers,
-                    body: JSON.stringify(payload)
-                });
-
+                const res = await fetch(url, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                const reader = res.body.getReader();
-                return reader;
-            } catch (err) {
-                return null;
-            }
+                return res.body.getReader();
+            } catch {return null}
         }
 
         async function sendMessage() {
-            const message = document.getElementById("userInput").value.trim();
-            if (!message) return;
-
+            const input = document.getElementById("userInput").value.trim();
+            if (!input) return;
             const mode = document.getElementById("modeSelect").value;
 
-            addPair({ question: message, response: '⏳' });
+            addPair({question:input, response:'Processing...'});
             document.getElementById("userInput").value = '';
             document.getElementById("loading").classList.add("show");
 
             try {
                 const base = document.getElementById("baseUrl").value.trim();
-                if (!base) {
-                    updateLastPair({ response: '⚠️ Configure API URL in Settings!' });
-                    return;
-                }
+                if (!base) {updateLastPair({response:'Set API URL!'}); return}
 
-                const messages = [...history, { role: "user", content: message }];
-                const payload = mode === 'code' 
-                    ? { prompt: message, messages, sessionId }
-                    : mode === 'generate'
-                    ? { prompt: message, format: "text", messages, sessionId }
-                    : { message, messages, sessionId };
-                const path = mode === 'code' ? '/api/code' : mode === 'generate' ? '/api/generate' : '/api/chat';
+                const messages = [...history, {role:"user", content:input}];
+                const payload = mode==='code' ? {prompt:input,messages,sessionId} 
+                             : mode==='generate' ? {prompt:input,format:"text",messages,sessionId}
+                             : {message:input,messages,sessionId};
+                const path = mode==='code' ? '/api/code' : mode==='generate' ? '/api/generate' : '/api/chat';
 
                 const reader = await apiFetch(path, payload);
-                if (!reader) {
-                    updateLastPair({ response: '❌ Failed to fetch' });
-                    return;
-                }
+                if (!reader) {updateLastPair({response:'Failed'}); return}
 
-                let responseText = '';
+                let fullResponse = '';
                 const decoder = new TextDecoder();
+
                 while (true) {
-                    const { done, value } = await reader.read();
+                    const {done, value} = await reader.read();
                     if (done) break;
-                    responseText += decoder.decode(value, { stream: true });
-                    updateLastPair({ response: responseText });
+                    const chunk = decoder.decode(value, {stream: true});
+                    fullResponse += chunk;
+                    updateLastPair({response: marked.parse(fullResponse)});
                 }
 
-                const lines = responseText.split('\n---\n');
-                if (lines.length > 1) {
-                    for (let i = 1; i < lines.length; i++) {
-                        addPair({ question: `Split ${i+1}`, response: lines[i].trim() });
+                // Split on ---
+                const parts = fullResponse.split(/\n?---\n?/);
+                if (parts.length > 1) {
+                    updateLastPair({response: marked.parse(parts[0].trim())});
+                    for (let i = 1; i < parts.length; i++) {
+                        addPair({question:`Part ${i+1}`, response: marked.parse(parts[i].trim())});
                     }
-                    updateLastPair({ response: lines[0].trim() });
                 }
 
-                history.push({ role: "assistant", content: responseText });
+                history.push({role:"assistant", content:fullResponse});
 
-            } catch (error) {
-                updateLastPair({ response: `❌ ${error.message}` });
-            } finally {
-                document.getElementById("loading").classList.remove("show");
-            }
+            } catch {updateLastPair({response:'Request failed'})}
+            finally {document.getElementById("loading").classList.remove("show")}
         }
 
-        function addPair(pair) {
-            const id = Date.now() + Math.random();
-            pairs.push({
-                id,
-                question: pair.question,
-                response: pair.response
-            });
-            renderPair(pairs[pairs.length - 1]);
+        function addPair(p){
+            const id=Date.now()+Math.random();
+            pairs.push({id,question:p.question,response:p.response||'',sessionId:p.sessionId||sessionId});
+            renderPair(pairs[pairs.length-1]);
             save();
         }
-
-        function updateLastPair(updates) {
-            if (pairs.length > 0) {
-                const last = pairs[pairs.length - 1];
-                Object.assign(last, updates);
-                const card = document.querySelector(`[data-id="${last.id}"]`);
-                if (card) {
-                    card.querySelector('.response-content').innerHTML = updates.response;
-                }
+        function updateLastPair(u){
+            if(pairs.length>0){
+                const last = pairs[pairs.length-1];
+                Object.assign(last,u);
+                const c=document.querySelector(`[data-id="${last.id}"]`);
+                if(c) c.querySelector('.response-content').innerHTML = u.response;
                 save();
             }
         }
-
-        function renderPair(pair) {
-            const grid = document.getElementById("grid");
-            const card = document.createElement("div");
-            card.className = "flip-card";
-            card.setAttribute("data-id", pair.id);
-            
-            card.innerHTML = `
+        function renderPair(p){
+            const g=document.getElementById("grid");
+            const c=document.createElement("div");c.className="flip-card";c.dataset.id=p.id;
+            c.innerHTML=`
                 <div class="flip-card-inner">
-                    <div class="card-face card-front">
-                        <div style="flex:1; overflow:auto;">${pair.question}</div>
-                        <button class="card-btn" onclick="deletePair(${pair.id})" style="margin-top:auto;">🗑️</button>
+                    <div class="card-face card-front"><div style="flex:1;overflow:auto">${p.question}</div>
+                        <div class="card-actions">
+                            <button class="card-btn" onclick="deletePair(${p.id})">Delete</button>
+                            <button class="card-btn" onclick="toggleSelect(${p.id})">Select</button>
+                            <button class="card-btn" onclick="sendTileToAI(${p.id})">Send to AI</button>
+                        </div>
                     </div>
-                    <div class="card-face card-back">
-                        <div class="response-content">${pair.response}</div>
-                        <button class="card-btn" onclick="copyResponse(${pair.id})" style="margin-top:auto;">📋</button>
+                    <div class="card-face card-back"><div class="response-content">${p.response}</div>
+                        <button class="card-btn" onclick="copyResponse(${p.id})">Copy</button>
                     </div>
-                </div>
-            `;
-            
-            card.addEventListener('click', (e) => {
-                if (e.target.closest('.card-btn')) return;
-                card.classList.toggle('flipped');
-            });
-            
-            grid.appendChild(card);
+                </div>`;
+            c.onclick=e=>{if(e.target.closest('.card-btn'))return;c.classList.toggle('flipped')};
+            g.appendChild(c);
         }
-
-        function deletePair(id) {
-            pairs = pairs.filter(p => p.id !== id);
-            document.querySelector(`[data-id="${id}"]`)?.remove();
-            save();
+        function toggleSelect(id){
+            const card = document.querySelector(`[data-id="${id}"]`);
+            card.classList.toggle('selected');
+            if(selectedTiles.has(id)) selectedTiles.delete(id);
+            else selectedTiles.add(id);
         }
-
-        function stripMarkdown(text) {
-            return text
-                .replace(/<[^>]*>/g, '')
-                .replace(/\*\*([^*]+)\*\*/g, '$1')
-                .replace(/\*([^*]+)\*/g, '$1')
-                .replace(/`([^`]+)`/g, '$1')
-                .replace(/```[\s\S]*?```/g, '')
-                .replace(/#{1,6}\s+/g, '')
-                .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-                .trim();
+        function sendTileToAI(id){
+            const tile = pairs.find(p=>p.id===id);
+            if(!tile) return;
+            document.getElementById("userInput").value = tile.question + "\n\n" + (tile.response.replace(/<[^>]*>/g,'').slice(0,500));
         }
-
-        function copyResponse(id) {
-            const pair = pairs.find(p => p.id === id);
-            if (pair) {
-                const text = stripMarkdown(pair.response);
-                navigator.clipboard.writeText(text);
-                alert('Copied!');
+        function mergeSelected(){
+            if(selectedTiles.size<2) return alert("Select at least 2 tiles");
+            const selected = pairs.filter(p=>selectedTiles.has(p.id));
+            const combined = selected.map(p=>`\( {p.question}\n\n \){p.response.replace(/<[^>]*>/g,'')}`).join('\n\n---\n\n');
+            addPair({question:"Merged", response:marked.parse(combined)});
+            selectedTiles.clear();
+            document.querySelectorAll('.selected').forEach(el=>el.classList.remove('selected'));
+        }
+        function deletePair(id){pairs=pairs.filter(p=>p.id!==id);document.querySelector(`[data-id="${id}"]`)?.remove();save()}
+        function copyResponse(id){const p=pairs.find(x=>x.id===id);if(p){const t=document.createElement('div');t.innerHTML=p.response;navigator.clipboard.writeText(t.textContent||'');alert('Copied!')}}
+        function exportData(){const b=new Blob([JSON.stringify({pairs,history},null,2)],{type:"application/json"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download="mindmap.json";a.click();URL.revokeObjectURL(u)}
+        function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=x=>{try{const d=JSON.parse(x.target.result);pairs=d.pairs||[];history.length=0;history.push(...(d.history||[]));document.getElementById("grid").innerHTML='';pairs.forEach(renderPair);save();alert('Imported!')}catch{alert('Bad file')}};r.readAsText(f)}
+        function showSavedNotice(){const n=document.getElementById("savedNotice");n.classList.add("show");setTimeout(()=>n.classList.remove("show"),2000)}
+        function showSettings(){document.getElementById("settingsModal").classList.add("show")}
+        function closeSettings(){document.getElementById("settingsModal").classList.remove("show")}
+        function saveSettings(){localStorage.setItem("mindmap-baseUrl",document.getElementById("baseUrl").value.trim());closeSettings();showSavedNotice()}
+        function save(){localStorage.setItem("mindmap-data",JSON.stringify({pairs,history}))}
+        function load(){
+            const s=localStorage.getItem("mindmap-data");
+            if(s){
+                const d=JSON.parse(s);
+                pairs=d.pairs||[];
+                history.push(...(d.history||[]));
+                pairs.forEach(renderPair);
             }
+            const u=localStorage.getItem("mindmap-baseUrl");
+            if(u)document.getElementById("baseUrl").value=u;
         }
-
-        function exportData() {
-            const data = JSON.stringify(pairs, null, 2);
-            const blob = new Blob([data], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'mindmap.json';
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function importData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const imported = JSON.parse(e.target.result);
-                    if (Array.isArray(imported)) {
-                        pairs = imported;
-                        document.getElementById("grid").innerHTML = '';
-                        pairs.forEach(renderPair);
-                        save();
-                        alert('Imported successfully!');
-                    } else {
-                        alert('Invalid file');
-                    }
-                } catch {
-                    alert('Error reading file');
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        function showSavedNotice() {
-            const notice = document.getElementById("savedNotice");
-            notice.classList.add("show");
-            setTimeout(() => notice.classList.remove("show"), 2000);
-        }
-
-        function showSettings() {
-            document.getElementById("settingsModal").classList.add("show");
-        }
-
-        function closeSettings() {
-            document.getElementById("settingsModal").classList.remove("show");
-        }
-
-        function saveSettings() {
-            localStorage.setItem("mindmap-baseUrl", document.getElementById("baseUrl").value.trim());
-            closeSettings();
-            showSavedNotice();
-        }
-
-        function save() {
-            localStorage.setItem("mindmap-pairs", JSON.stringify(pairs));
-        }
-
-        function load() {
-            const saved = JSON.parse(localStorage.getItem("mindmap-pairs") || "[]");
-            const url = localStorage.getItem("mindmap-baseUrl");
-            if (url) document.getElementById("baseUrl").value = url;
-            pairs = saved;
-            pairs.forEach(renderPair);
-        }
-
-        document.getElementById("userInput").addEventListener("keypress", (e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-
+        document.getElementById("userInput").addEventListener("keypress",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage()}})
         load();
     </script>
 </body>
