@@ -3,282 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>🧠 ai-n pilot</title>
+    <title>AI Mind Map</title>
     <style>
-        /* Your exact original style - no changes */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --bg: #0a0a0a;
-            --glass: rgba(26, 26, 26, 0.8);
-            --yellow: #ffd700;
-            --text: #fff;
-            --border: rgba(255, 215, 0, 0.3);
-        }
-        body {
-            font-family: system-ui, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            height: 100vh;
-            overflow: hidden;
-            touch-action: manipulation;
-        }
-        .header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 50px;
-            background: rgba(10, 10, 10, 0.95);
-            border-bottom: 2px solid var(--yellow);
-            padding: 0 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 1000;
-        }
-        .logo { font-size: 1.1rem; font-weight: bold; color: var(--yellow); }
-        button {
-            background: var(--glass);
-            color: var(--yellow);
-            border: 1px solid var(--border);
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            touch-action: manipulation;
-        }
-        .container {
-            position: fixed;
-            top: 50px;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: flex;
-            flex-direction: column;
-        }
-        @media (min-width: 768px) {
-            .container {
-                display: grid;
-                grid-template-columns: 300px 1fr;
-            }
-        }
-        .input-panel {
-            background: rgba(10, 10, 10, 0.95);
-            border-bottom: 2px solid var(--yellow);
-            padding: 12px;
-            max-height: 20vh;
-            overflow-y: auto;
-            flex-shrink: 0;
-        }
-        @media (min-width: 768px) {
-            .input-panel {
-                border-right: 2px solid var(--yellow);
-                border-bottom: none;
-                max-height: none;
-            }
-        }
-        .section { margin-bottom: 12px; }
-        .section-title {
-            font-size: 0.75rem;
-            color: var(--yellow);
-            margin-bottom: 8px;
-            text-transform: uppercase;
-        }
-        select, textarea, input {
-            width: 100%;
-            background: var(--glass);
-            color: var(--text);
-            border: 1px solid var(--border);
-            padding: 8px;
-            border-radius: 6px;
-            font-family: inherit;
-            font-size: 16px;
-        }
-        textarea { min-height: 80px; }
-        .send-btn {
-            width: 100%;
-            background: var(--yellow);
-            color: var(--bg);
-            border: none;
-            padding: 12px;
-            font-weight: bold;
-            margin-top: 8px;
-            cursor: pointer;
-        }
-        .canvas {
-            flex: 1;
-            position: relative;
-            overflow: auto;
-            background: var(--bg);
-            padding: 0;
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--bg);
-            padding: 0;
-        }
-        @media (min-width: 480px) {
-            .grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        @media (min-width: 768px) {
-            .grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        @media (min-width: 1024px) {
-            .grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        .flip-card {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 1;
-            cursor: pointer;
-            perspective: 1000px;
-            border-radius: 0;
-            overflow: hidden;
-            background: var(--bg);
-        }
-        .flip-card-inner {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            transition: transform 0.6s;
-            transform-style: preserve-3d;
-        }
-        .flip-card.flipped .flip-card-inner {
-            transform: rotateY(180deg);
-        }
-        .card-face {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            display: flex;
-            flex-direction: column;
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            border: 2px solid var(--border);
-            border-radius: 8px;
-            padding: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-            font-size: 0.65rem;
-            line-height: 1.2;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            user-select: text;
-            font-family: monospace;
-            justify-content: space-between;
-        }
-        .card-front {
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.1));
-            border-left: 4px solid var(--yellow);
-            color: var(--text);
-        }
-        .card-back {
-            transform: rotateY(180deg);
-            background: linear-gradient(135deg, rgba(100, 150, 255, 0.15), rgba(100, 150, 255, 0.05));
-            border-left: 4px solid #58a6ff;
-            color: var(--text);
-        }
-        .card-btn {
-            background: rgba(0, 0, 0, 0.5);
-            border: none;
-            color: var(--text);
-            font-size: 0.9rem;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 3px;
-            transition: all 0.2s;
-            flex-shrink: 0;
-        }
-        .card-btn:hover {
-            background: var(--yellow);
-            color: var(--bg);
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .modal.show { display: flex; }
-        .modal-content {
-            background: rgba(26, 26, 26, 0.95);
-            border: 2px solid var(--yellow);
-            border-radius: 12px;
-            padding: 20px;
-            max-width: 500px;
-            width: 100%;
-        }
-        .modal-title { font-size: 1.2rem; color: var(--yellow); margin-bottom: 16px; }
-        .loading {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--glass);
-            border: 1px solid var(--yellow);
-            padding: 12px 20px;
-            border-radius: 8px;
-            display: none;
-            z-index: 999;
-        }
-        .loading.show { display: block; }
-        pre { margin: 0; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; overflow: auto; }
-        code { font-family: monospace; font-size: 0.85em; }
-        @media (max-width: 768px) {
-            .grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        .settings-tools {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        .settings-tools button, .settings-tools label {
-            flex: 1;
-            background: var(--glass);
-            color: var(--yellow);
-            border: 1px solid var(--border);
-            padding: 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            text-align: center;
-        }
-        .settings-tools input[type="file"] { display: none; }
-        .saved-notice {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,255,0,.2);
-            color: #0f0;
-            border: 1px solid #0f0;
-            padding: 10px 20px;
-            border-radius: 8px;
-            z-index: 999;
-            opacity: 0;
-            transition: opacity .5s;
-        }
-        .saved-notice.show { opacity: 1; }
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--bg:#0a0a0a;--glass:rgba(26,26,26,0.8);--yellow:#ffd700;--text:#fff;--border:rgba(255,215,0,0.3)}
+        body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+        .header{position:fixed;top:0;left:0;right:0;height:50px;background:rgba(10,10,10,0.95);border-bottom:2px solid var(--yellow);padding:0 12px;display:flex;justify-content:space-between;align-items:center;z-index:1000}
+        .logo{font-size:1.1rem;font-weight:bold;color:var(--yellow)}
+        button{background:var(--glass);color:var(--yellow);border:1px solid var(--border);padding:8px 12px;border-radius:6px;cursor:pointer}
+        .container{position:fixed;top:50px;left:0;right:0;bottom:0;display:flex;flex-direction:column}
+        .input-panel{background:rgba(10,10,10,0.95);border-bottom:2px solid var(--yellow);padding:12px;flex-shrink:0}
+        .section{margin-bottom:12px}
+        .section-title{font-size:.75rem;color:var(--yellow);margin-bottom:8px;text-transform:uppercase}
+        select,textarea,input{width:100%;background:var(--glass);color:var(--text);border:1px solid var(--border);padding:8px;border-radius:6px;font-size:16px}
+        textarea{min-height:80px}
+        .send-btn{width:100%;background:var(--yellow);color:var(--bg);border:none;padding:12px;font-weight:bold;margin-top:8px;cursor:pointer}
+        .file-btn{margin-top:8px;background:var(--glass);color:var(--yellow);border:1px solid var(--border);padding:10px;border-radius:6px;text-align:center;cursor:pointer}
+        .canvas{flex:1;overflow:hidden}
+        .grid{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:0;width:100%;height:100%;overflow-y:auto}
+        .flip-card{position:relative;width:100%;height:100%;min-height:0;cursor:pointer;perspective:1000px;overflow:hidden;background:var(--bg)}
+        .flip-card-inner{position:relative;width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d}
+        .flip-card.flipped .flip-card-inner{transform:rotateY(180deg)}
+        .card-face{position:absolute;width:100%;height:100%;backface-visibility:hidden;display:flex;flex-direction:column;background:var(--glass);backdrop-filter:blur(10px);border:2px solid var(--border);padding:8px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.5);font-size:.65rem;line-height:1.2;font-family:monospace}
+        .card-front{background:linear-gradient(135deg,rgba(255,215,0,.2),rgba(255,215,0,.1));border-left:4px solid var(--yellow)}
+        .card-back{transform:rotateY(180deg);background:linear-gradient(135deg,rgba(100,150,255,.15),rgba(100,150,255,.05));border-left:4px solid #58a6ff}
+        .response-content{flex:1;overflow:auto;display:flex;flex-direction:column;justify-content:center;align-items:center}
+        .response-content img,.response-content video{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}
+        .card-btn{background:rgba(0,0,0,.5);border:none;color:var(--text);font-size:.9rem;cursor:pointer;padding:4px 8px;border-radius:3px;margin:4px}
+        .card-btn:hover{background:var(--yellow);color:var(--bg)}
+        .card-actions{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:2000;align-items:center;justify-content:center;padding:20px}
+        .modal.show{display:flex}
+        .modal-content{background:rgba(26,26,26,.95);border:2px solid var(--yellow);border-radius:12px;padding:20px;max-width:500px;width:100%}
+        .modal-title{font-size:1.2rem;color:var(--yellow);margin-bottom:16px}
+        .loading{position:fixed;bottom:20px;right:20px;background:var(--glass);border:1px solid var(--yellow);padding:12px 20px;border-radius:8px;display:none;z-index:999}
+        .loading.show{display:block}
+        .saved-notice{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,255,0,.2);color:#0f0;border:1px solid #0f0;padding:10px 20px;border-radius:8px;z-index:999;opacity:0;transition:opacity .5s}
+        .saved-notice.show{opacity:1}
+        .settings-tools{display:flex;gap:10px;margin-top:20px}
+        .settings-tools button,.settings-tools label{flex:1;background:var(--glass);color:var(--yellow);border:1px solid var(--border);padding:10px;border-radius:6px;cursor:pointer;text-align:center}
+        .settings-tools input[type=file]{display:none}
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="logo">🧠 AI Mind Map</div>
-        <button onclick="showSettings()">⚙️</button>
+        <div class="logo">AI Mind Map</div>
+        <button onclick="showSettings()">Settings</button>
     </div>
 
     <div class="container">
@@ -286,2108 +56,224 @@
             <div class="section">
                 <div class="section-title">Mode</div>
                 <select id="modeSelect">
-                    <option value="chat">💬 Chat</option>
-                    <option value="code">💻 Code</option>
-                    <option value="generate">📄 Generate</option>
+                    <option value="chat">Chat</option>
+                    <option value="code">Code</option>
+                    <option value="generate">Generate</option>
                 </select>
             </div>
-
             <div class="section">
-                <div class="section-title">Message</div>
-                <textarea id="userInput" placeholder="Ask anything..."></textarea>
-                <button class="send-btn" onclick="sendMessage()">⚡ Send</button>
+                <div class="section-title">Message / URL / File</div>
+                <textarea id="userInput" placeholder="Ask AI, paste URL, or use button below..."></textarea>
+                <div class="file-btn" onclick="document.getElementById('fileInput').click()">Upload Image/Video</div>
+                <input type="file" id="fileInput" accept="image/*,video/*" style="display:none" onchange="handleFile(event)">
+                <button class="send-btn" onclick="sendMessage()">Send</button>
             </div>
         </div>
-
-        <div class="canvas">
-            <div class="grid" id="grid"></div>
-        </div>
+        <div class="canvas"><div class="grid" id="grid"></div></div>
     </div>
 
-    <div class="saved-notice" id="savedNotice">✓ Saved!</div>
+    <div class="saved-notice" id="savedNotice">Saved!</div>
 
     <div class="modal" id="settingsModal">
         <div class="modal-content">
-            <div class="modal-title">⚙️ Settings</div>
-            <div class="form-group">
-                <label class="form-label">API Base URL</label>
-                <input type="text" id="baseUrl" placeholder="https://your-worker.workers.dev">
-            </div>
+            <div class="modal-title">Settings</div>
+            <div class="section"><div class="section-title">API Base URL</div><input type="text" id="baseUrl" placeholder="https://your-worker.workers.dev"></div>
             <div class="settings-tools">
-                <button onclick="exportData()">📤 Export</button>
-                <label for="importFile">📥 Import</label>
+                <button onclick="exportData()">Export Mind Map</button>
+                <label for="importFile">Import Mind Map</label>
                 <input type="file" id="importFile" accept=".json" onchange="importData(event)">
             </div>
-            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
                 <button onclick="closeSettings()">Cancel</button>
                 <button class="send-btn" onclick="saveSettings()">Save</button>
             </div>
         </div>
     </div>
 
-    <div class="loading" id="loading">⏳ Processing...</div>
+    <div class="loading" id="loading">Processing...</div>
 
     <script>
         let pairs = [];
+        const sessionHistory = {};
 
-        async function apiFetch(path, payload, method = "POST") {
+        async function apiFetch(path, payload) {
             const base = document.getElementById("baseUrl").value.trim().replace(/\/+$/, '');
-            const url = base + path;  // ← No double slashes
-            const headers = { "Content-Type": "application/json" };
-
+            const url = base + path;
             try {
-                const res = await fetch(url, {
-                    method,
-                    headers,
-                    ...(payload && method !== "GET" ? { body: JSON.stringify(payload) } : {})
-                });
-
-                const dataText = await res.text();
+                const res = await fetch(url, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+                const text = await res.text();
                 let data;
-                try { data = JSON.parse(dataText); } catch { data = dataText; }
-                return { ok: res.ok, data, status: res.status };
-            } catch (err) {
-                return { ok: false, data: { error: err.message } };
-            }
+                try {data = JSON.parse(text)} catch {data = text}
+                return {ok:res.ok, data};
+            } catch {return {ok:false, data:{error:"Network error"}}}
         }
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+        function isMediaUrl(str) {return /\.(jpg|jpeg|png|gif|webp|mp4|webm|mov|mkv|avi)(\?.*)?$/i.test(str.trim())}
+        function createMediaTile(src) {
+            const isVideo = src.match(/\.(mp4|webm|mov|mkv|avi)/i);
+            return isVideo
+                ? `<video controls autoplay loop muted playsinline><source src="${src}"></video>`
+                : `<img src="${src}" alt="Media">`;
         }
 
-        // Simple auto-Markdown for Generate mode (converts ALL CAPS to # Heading, etc.)
-        function simpleMarkdown(text) {
-            return text
-                .replace(/^([A-Z][A-Z\s]+)$/gm, '# $1') // ALL CAPS lines → # Heading
-                .replace(/^I+\./gm, '### ') // Roman numerals → subheading
-                .replace(/^(I+\.)\s+/gm, '### $1 ') // Roman numeral sections
-                .replace(/^\d+\./gm, '- ') // Numbered lists → bullet lists
-                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') // **bold**
-                .replace(/__(.+?)__/g, '<strong>$1</strong>')
-                .replace(/\[(.+?)\]/g, '[$1]') // Keep brackets
-                ;
-        }
-
-        async function sendMessage() {
-            const message = document.getElementById("userInput").value.trim();
-            if (!message) return;
-
-            const mode = document.getElementById("modeSelect").value;
-
-            addPair({ question: message, response: '⏳' });
-            document.getElementById("userInput").value = '';
-            document.getElementById("loading").classList.add("show");
-
-            try {
-                const base = document.getElementById("baseUrl").value.trim();
-                if (!base) {
-                    updateLastPair({ response: '⚠️ Configure API URL in Settings!' });
-                    return;
-                }
-
-                const payload = mode === 'code' 
-                    ? { prompt: message }
-                    : mode === 'generate'
-                    ? { prompt: message + " (output in Markdown format with headings, bold, lists)", format: "text" }
-                    : { message };
-                const path = mode === 'code' ? '/api/code' : mode === 'generate' ? '/api/generate' : '/api/chat';
-
-                const res = await apiFetch(path, payload);
-                if (!res.ok) {
-                    updateLastPair({ response: `HTTP ${res.status}` });
-                    return;
-                }
-
-                let responseText = '';
-                if (typeof res.data === 'string') {
-                    responseText = res.data;
-                } else if (res.data.response) {
-                    responseText = res.data.response;
-                } else if (res.data.message) {
-                    responseText = res.data.message;
-                } else if (res.data.code) {
-                    responseText = res.data.code;
-                } else {
-                    responseText = JSON.stringify(res.data, null, 2);
-                }
-
-                let formatted = responseText;
-                if (mode === 'code' || res.data.code) {
-                    formatted = `<pre><code>${escapeHtml(responseText.trim())}</code></pre>`;
-                } else if (mode === 'generate') {
-                    formatted = simpleMarkdown(responseText); // Auto-clean legal templates
-                }
-
-                updateLastPair({ response: formatted });
-
-            } catch (error) {
-                updateLastPair({ response: `❌ ${error.message}` });
-            } finally {
-                document.getElementById("loading").classList.remove("show");
-            }
-        }
-
-        // Rest of your original script (addPair, renderPair, etc.) unchanged
-        function addPair(pair) {
-            const id = Date.now() + Math.random();
-            pairs.push({ id, question: pair.question, response: pair.response });
-            renderPair(pairs[pairs.length - 1]);
-            save();
-        }
-
-        function updateLastPair(updates) {
-            if (pairs.length > 0) {
-                const last = pairs[pairs.length - 1];
-                Object.assign(last, updates);
-                const card = document.querySelector(`[data-id="${last.id}"]`);
-                if (card) {
-                    card.querySelector('.card-back > div').innerHTML = updates.response;
-                }
-                save();
-            }
-        }
-
-        function renderPair(pair) {
-            const grid = document.getElementById("grid");
-            const card = document.createElement("div");
-            card.className = "flip-card";
-            card.setAttribute("data-id", pair.id);
-            
-            card.innerHTML = `
-                <div class="flip-card-inner">
-                    <div class="card-face card-front">
-                        <div style="flex:1; overflow:auto;">${pair.question}</div>
-                        <button class="card-btn" onclick="deletePair(${pair.id})" style="margin-top:auto;">🗑️</button>
-                    </div>
-                    <div class="card-face card-back">
-                        <div style="flex:1; overflow:auto;">${pair.response}</div>
-                        <button class="card-btn" onclick="copyResponse(${pair.id})" style="margin-top:auto;">📋</button>
-                    </div>
-                </div>
-            `;
-            
-            card.addEventListener('click', (e) => {
-                if (e.target.closest('.card-btn')) return;
-                card.classList.toggle('flipped');
-            });
-            
-            grid.appendChild(card);
-        }
-
-        function deletePair(id) {
-            pairs = pairs.filter(p => p.id !== id);
-            document.querySelector(`[data-id="${id}"]`)?.remove();
-            save();
-        }
-
-        function stripMarkdown(text) {
-            return text
-                .replace(/<[^>]*>/g, '')
-                .replace(/\*\*([^*]+)\*\*/g, '$1')
-                .replace(/\*([^*]+)\*/g, '$1')
-                .replace(/`([^`]+)`/g, '$1')
-                .replace(/```[\s\S]*?```/g, '')
-                .replace(/#{1,6}\s+/g, '')
-                .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-                .trim();
-        }
-
-        function copyResponse(id) {
-            const pair = pairs.find(p => p.id === id);
-            if (pair) {
-                const text = stripMarkdown(pair.response);
-                navigator.clipboard.writeText(text);
-                alert('Copied!');
-            }
-        }
-
-        function exportData() {
-            const data = JSON.stringify(pairs, null, 2);
-            const blob = new Blob([data], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'mindmap.json';
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function importData(e) {
+        function handleFile(e) {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = (ev) => {
-                try {
-                    const imported = JSON.parse(ev.target.result);
-                    if (Array.isArray(imported)) {
-                        pairs = imported;
-                        document.getElementById("grid").innerHTML = '';
-                        pairs.forEach(renderPair);
-                        save();
-                        alert('Imported!');
-                    }
-                } catch { alert('Invalid file'); }
+            reader.onload = ev => {
+                const dataUrl = ev.target.result;
+                addPair({question:"Local Media", response:`<div class="response-content">${createMediaTile(dataUrl)}</div>`, sessionId: ""});
             };
-            reader.readAsText(file);
-        }
-
-        function showSavedNotice() {
-            const notice = document.getElementById("savedNotice");
-            notice.classList.add("show");
-            setTimeout(() => notice.classList.remove("show"), 2000);
-        }
-
-        function showSettings() {
-            document.getElementById("settingsModal").classList.add("show");
-        }
-
-        function closeSettings() {
-            document.getElementById("settingsModal").classList.remove("show");
-        }
-
-        function saveSettings() {
-            localStorage.setItem("mindmap-baseUrl", document.getElementById("baseUrl").value);
-            closeSettings();
-            showSavedNotice();
-        }
-
-        function save() {
-            localStorage.setItem("mindmap-pairs", JSON.stringify(pairs));
-        }
-
-        function load() {
-            const saved = JSON.parse(localStorage.getItem("mindmap-pairs") || "[]");
-            const url = localStorage.getItem("mindmap-baseUrl");
-            if (url) document.getElementById("baseUrl").value = url;
-            pairs = saved;
-            pairs.forEach(p => renderPair(p));
-        }
-
-        document.getElementById("userInput").addEventListener("keypress", (e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-
-        load();
-    </script>
-</body>
-</html>        body {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 60px 1fr;
-            gap: 0;
-            min-height: 100vh;
-        }
-
-        .header {
-            grid-column: 1 / -1;
-            background: var(--dark-gray);
-            border-bottom: 2px solid var(--yellow);
-            padding: 0 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            height: 60px;
-        }
-
-        .logo {
-            font-size: 1.25rem;
-            font-weight: bold;
-            color: var(--yellow);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .logo-icon {
-            font-size: 1.5rem;
-        }
-
-        .header-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        button {
-            background: var(--gray);
-            color: var(--text);
-            border: 1px solid var(--light-gray);
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.18s ease;
-            font-size: 0.9rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        button:hover {
-            background: var(--light-gray);
-            border-color: var(--yellow);
-            color: var(--yellow);
-            transform: translateY(-1px);
-        }
-
-        button.btn-primary {
-            background: var(--yellow);
-            color: var(--black);
-            border: 1px solid var(--yellow);
-        }
-
-        button.btn-primary:hover {
-            background: var(--yellow-bright);
-            border-color: var(--yellow-bright);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        .container {
-            grid-column: 1 / -1;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0;
-            height: calc(100vh - 60px);
-        }
-
-        .left-panel {
-            border-right: 2px solid var(--yellow);
-            display: flex;
-            flex-direction: column;
-            background: var(--black);
-            min-height: 0;
-        }
-
-        .panel-header {
-            padding: 18px;
-            border-bottom: 1px solid var(--border);
-            background: var(--dark-gray);
-        }
-
-        .panel-title {
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: var(--yellow);
-            margin-bottom: 10px;
-        }
-
-        .input-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .input-group select {
-            flex: 1;
-            background: var(--gray);
-            color: var(--text);
-            border: 1px solid var(--light-gray);
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 0.95rem;
-        }
-
-        .input-group select:focus {
-            outline: none;
-            border-color: var(--yellow);
-        }
-
-        .panel-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 16px;
-            overflow-y: auto;
-            min-height: 0;
-        }
-
-        .messages-box {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            overflow-y: auto;
-            margin-bottom: 16px;
-            padding-right: 10px;
-        }
-
-        .message {
-            padding: 12px;
-            border-radius: 8px;
-            line-height: 1.5;
-            word-wrap: break-word;
-            display: inline-block;
-            max-width: 100%;
-        }
-
-        .message.user {
-            background: var(--yellow);
-            color: var(--black);
-            align-self: flex-end;
-            max-width: 80%;
-            border-left: 3px solid var(--yellow-bright);
-        }
-
-        .message.assistant {
-            background: var(--gray);
-            color: var(--text);
-            align-self: flex-start;
-            max-width: 80%;
-            border-left: 3px solid var(--yellow);
-        }
-
-        .message .msg-row {
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-        }
-
-        .message .msg-text {
-            white-space: pre-wrap;
-            word-break: break-word;
-            flex: 1;
-        }
-
-        .message .msg-actions {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-        }
-
-        .input-area {
-            display: flex;
-            gap: 10px;
-            padding: 12px 16px 16px;
-            border-top: 1px solid var(--border);
-            background: transparent;
-        }
-
-        textarea {
-            flex: 1;
-            background: var(--gray);
-            color: var(--text);
-            border: 1px solid var(--light-gray);
-            padding: 10px;
-            border-radius: 8px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.95rem;
-            resize: vertical;
-            min-height: 90px;
-            max-height: 240px;
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: var(--yellow);
-        }
-
-        .input-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .input-actions button {
-            width: 56px;
-            height: 56px;
-            font-size: 1.1rem;
-            border-radius: 8px;
-        }
-
-        .right-panel {
-            display: flex;
-            flex-direction: column;
-            background: var(--black);
-            min-height: 0;
-        }
-
-        .cards-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 16px;
-            overflow-y: auto;
-            gap: 12px;
-            min-height: 0;
-        }
-
-        .card {
-            background: var(--dark-gray);
-            border: 1px solid var(--light-gray);
-            border-top: 3px solid var(--yellow);
-            border-radius: 8px;
-            padding: 0;
-            margin-bottom: 0;
-            transition: all 0.18s ease;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .card:hover {
-            border-left: 3px solid var(--yellow);
-            box-shadow: 0 6px 18px rgba(255, 215, 0, 0.12);
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            padding: 14px;
-            cursor: pointer;
-            user-select: none;
-            border-bottom: 1px solid transparent;
-        }
-
-        .card.collapsed .card-header {
-            border-bottom: none;
-        }
-
-        .card.expanded .card-header {
-            border-bottom: 1px solid var(--border);
-        }
-
-        .card-header:hover {
-            background: rgba(255, 215, 0, 0.05);
-        }
-
-        .card-title-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .card-type {
-            display: inline-block;
-            background: rgba(255, 215, 0, 0.08);
-            color: var(--yellow);
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            align-self: flex-start;
-        }
-
-        .card-title {
-            font-weight: bold;
-            color: var(--yellow);
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .card-desc {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-            margin-bottom: 6px;
-        }
-
-        .card-content {
-            padding: 14px;
-            max-height: 500px;
-            overflow-y: auto;
-            transition: all 0.3s ease;
-        }
-
-        .card.collapsed .card-content {
-            display: none;
-        }
-
-        .card.expanded .card-content {
-            display: block;
-        }
-
-        .card-preview {
-            background: var(--black);
-            border: 1px solid var(--border);
-            padding: 10px;
-            border-radius: 6px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            max-height: 400px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            word-break: break-all;
-            margin-bottom: 10px;
-        }
-
-        .card-meta {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px solid var(--border);
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-
-        .card-actions {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-        }
-
-        .card-actions button {
-            padding: 6px 8px;
-            font-size: 0.85rem;
-            border-radius: 6px;
-        }
-
-        .card-toggle {
-            background: none;
-            border: none;
-            color: var(--yellow);
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 4px;
-            transition: transform 0.3s ease;
-        }
-
-        .card.expanded .card-toggle {
-            transform: rotate(180deg);
-        }
-
-        .panel-controls {
-            padding: 14px;
-            border-top: 1px solid var(--border);
-            background: var(--dark-gray);
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .panel-controls button {
-            flex: 1;
-            min-width: 88px;
-            border-radius: 8px;
-        }
-
-        .panel-header-controls {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .search-filter-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-            padding: 0 16px;
-        }
-
-        .search-input {
-            flex: 1;
-            background: var(--gray);
-            color: var(--text);
-            border: 1px solid var(--light-gray);
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 0.95rem;
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: var(--yellow);
-        }
-
-        .filter-select {
-            background: var(--gray);
-            color: var(--text);
-            border: 1px solid var(--light-gray);
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 0.95rem;
-            min-width: 120px;
-        }
-
-        .filter-select:focus {
-            outline: none;
-            border-color: var(--yellow);
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
-        }
-
-        .modal.show {
-            display: flex;
-        }
-
-        .modal-content {
-            background: var(--dark-gray);
-            border: 2px solid var(--yellow);
-            border-radius: 10px;
-            padding: 22px;
-            max-width: 720px;
-            width: 100%;
-            max-height: 86vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            font-size: 1.25rem;
-            font-weight: bold;
-            color: var(--yellow);
-            margin-bottom: 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            color: var(--yellow);
-            font-size: 1.4rem;
-            cursor: pointer;
-            padding: 0;
-        }
-
-        .modal-close:hover {
-            color: var(--yellow-bright);
-        }
-
-        .form-group {
-            margin-bottom: 12px;
-        }
-
-        .form-label {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-            margin-bottom: 6px;
-            display: block;
-        }
-
-        .form-input {
-            width: 100%;
-            background: var(--gray);
-            color: var(--text);
-            border: 1px solid var(--light-gray);
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-family: 'Courier New', monospace;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: var(--yellow);
-        }
-
-        .modal-footer {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 12px;
-        }
-
-        ::-webkit-scrollbar {
-            width: 10px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--gray);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--yellow);
-            border-radius: 5px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--yellow-bright);
-        }
-
-        .loading {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--yellow);
-            font-weight: bold;
-        }
-
-        .spinner {
-            width: 16px;
-            height: 16px;
-            border: 2px solid var(--yellow);
-            border-top: 2px solid transparent;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Card filters and search styling */
-        .card-filter-info {
-            padding: 8px 16px;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            border-bottom: 1px solid var(--border);
-            background: var(--dark-gray);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .clear-filter-btn {
-            background: none;
-            border: none;
-            color: var(--yellow);
-            font-size: 0.8rem;
-            cursor: pointer;
-            padding: 4px 8px;
-        }
-
-        .clear-filter-btn:hover {
-            text-decoration: underline;
-        }
-
-        /* Bulk card controls */
-        .bulk-controls {
-            display: flex;
-            gap: 8px;
-            padding: 8px 16px;
-            border-bottom: 1px solid var(--border);
-            background: var(--dark-gray);
-        }
-
-        .bulk-controls button {
-            padding: 6px 12px;
-            font-size: 0.85rem;
-            min-width: auto;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 900px) {
-            body {
-                font-size: 15px;
-            }
-
-            .container {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto 1fr 1fr;
-                height: auto;
-            }
-
-            .left-panel, .right-panel {
-                height: auto;
-                border-right: none;
-                border-top: 2px solid var(--yellow);
-            }
-
-            .panel-header, .panel-controls, .config-section, .panel-content {
-                padding: 12px;
-            }
-
-            .input-area {
-                padding: 10px 12px 14px;
-                gap: 8px;
-            }
-
-            textarea {
-                min-height: 120px;
-                max-height: 260px;
-                font-size: 0.95rem;
-            }
-
-            .input-actions button {
-                width: 48px;
-                height: 48px;
-                font-size: 1.1rem;
-            }
-
-            .messages-box .message.user,
-            .messages-box .message.assistant {
-                max-width: 100%;
-            }
-
-            .card {
-                padding: 0;
-            }
-
-            .card-preview {
-                max-height: 300px;
-            }
-
-            .header {
-                padding: 8px 12px;
-            }
-
-            .logo { font-size: 1.05rem; }
-            .logo-icon { font-size: 1.25rem; }
-
-            .search-filter-container {
-                flex-direction: column;
-            }
-
-            .bulk-controls {
-                flex-wrap: wrap;
-            }
-        }
-
-        /* Small touch target awareness */
-        button[aria-label] { touch-action: manipulation; }
-
-    </style>
-</head>
-<body>
-    <header class="header">
-        <div class="logo">
-            <span class="logo-icon">⚡</span>
-            <span>AI Copilot Workspace</span>
-        </div>
-        <div class="header-buttons">
-            <button onclick="showStats()" aria-label="Show stats">📊 Stats</button>
-            <button onclick="showSettings()" aria-label="Settings">⚙️ Settings</button>
-            <button class="btn-primary" onclick="clearAll()" aria-label="Clear all">🗑️ Clear All</button>
-        </div>
-    </header>
-
-    <div class="container">
-        <div class="left-panel">
-            <div class="panel-header">
-                <div class="panel-title">💬 Chat & Generation</div>
-                <div class="input-group">
-                    <select id="modeSelect" aria-label="Mode select">
-                        <option value="chat">💬 Chat</option>
-                        <option value="code">💻 Generate Code</option>
-                        <option value="document">📄 Create Doc</option>
-                    </select>
-                    <select id="languageSelect" aria-label="Language select">
-                        <option value="javascript">JavaScript</option>
-                        <option value="python">Python</option>
-                        <option value="html">HTML/CSS</option>
-                        <option value="react">React</option>
-                        <option value="typescript">TypeScript</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="panel-content">
-                <div class="messages-box" id="messagesBox"></div>
-
-                <div class="input-area">
-                    <textarea id="userInput" placeholder="Type your message or code request..."></textarea>
-                    <div class="input-actions" role="group" aria-label="Input actions">
-                        <button class="btn-primary" onclick="sendMessage()" title="Send (Enter)" aria-label="Send message">⚡</button>
-                        <button onclick="copyLastMessage()" title="Copy" aria-label="Copy last message">📋</button>
-                        <button onclick="clearMessages()" title="Clear" aria-label="Clear messages">🗑️</button>
-                    </div>
-                </div>
-            </div>
-            <!-- REMOVED API endpoint from here - moved to settings only -->
-        </div>
-
-        <div class="right-panel">
-            <div class="panel-header">
-                <div class="panel-title">📦 Generated Cards</div>
-                <div class="panel-header-controls">
-                    <span id="cardCount">0 cards</span>
-                    <div id="loadingStatus"></div>
-                </div>
-            </div>
-
-            <!-- Search and Filter -->
-            <div class="search-filter-container">
-                <input type="text" class="search-input" id="cardSearch" placeholder="Search cards...">
-                <select class="filter-select" id="cardFilter">
-                    <option value="all">All Types</option>
-                    <option value="code">Code</option>
-                    <option value="document">Document</option>
-                    <option value="other">Other</option>
-                </select>
-            </div>
-
-            <!-- Filter info and bulk controls -->
-            <div class="card-filter-info" id="filterInfo" style="display: none;">
-                <span id="filterText"></span>
-                <button class="clear-filter-btn" onclick="clearFilters()">Clear filters</button>
-            </div>
-
-            <div class="bulk-controls" id="bulkControls" style="display: none;">
-                <button onclick="expandAllCards()" title="Expand all cards">🔽 Expand All</button>
-                <button onclick="collapseAllCards()" title="Collapse all cards">▶️ Collapse All</button>
-                <button onclick="selectAllCards()" title="Select all cards">✓ Select All</button>
-                <button onclick="deleteSelectedCards()" title="Delete selected" style="color: #ff6b6b;">🗑️ Delete Selected</button>
-            </div>
-
-            <!-- Cards Container -->
-            <div class="cards-container" id="cardsContainer"></div>
-
-            <div class="panel-controls">
-                <button onclick="exportCards()" aria-label="Export cards">📤 Export</button>
-                <button onclick="importCards()" aria-label="Import cards">📥 Import</button>
-                <button onclick="triggerFileUpload()" aria-label="Upload file">📎 Upload</button>
-                <button onclick="saveCardsLocal()" aria-label="Save cards">💾 Save</button>
-                <button onclick="loadCardsLocal()" aria-label="Load cards">📂 Load</button>
-                <button onclick="toggleBulkControls()" aria-label="Bulk actions">📋 Bulk</button>
-
-                <!-- hidden file input -->
-                <input type="file" id="fileInput" accept=".txt,.md,.json" style="display:none">
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit Card Modal -->
-    <div class="modal" id="editModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span>✏️ Edit Card</span>
-                <button class="modal-close" onclick="closeModal()" aria-label="Close edit modal">×</button>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Title</label>
-                <input type="text" class="form-input" id="editTitle">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Description</label>
-                <input type="text" class="form-input" id="editDesc">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Type</label>
-                <select class="form-input" id="editType">
-                    <option value="code">Code</option>
-                    <option value="document">Document</option>
-                    <option value="other">Other</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Content</label>
-                <textarea class="form-input" id="editContent" style="min-height: 200px;"></textarea>
-            </div>
-            <div class="modal-footer">
-                <button onclick="closeModal()">Cancel</button>
-                <button class="btn-primary" onclick="saveEdit()">Save Changes</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Settings Modal -->
-    <div class="modal" id="settingsModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span>⚙️ Settings</span>
-                <button class="modal-close" onclick="closeSettingsModal()" aria-label="Close settings">×</button>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Worker API Endpoint</label>
-                <input type="text" class="form-input" id="settingsEndpoint" placeholder="https://your-worker.workers.dev">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Model Preference</label>
-                <select class="form-input" id="modelSelect">
-                    <option value="auto">Auto Select</option>
-                    <option value="deepseek-coder">DeepSeek Coder</option>
-                    <option value="qwen-coder">Qwen Coder</option>
-                    <option value="kat-coder">KAT Coder Pro</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Default Card State</label>
-                <select class="form-input" id="defaultCardState">
-                    <option value="collapsed">Collapsed (save space)</option>
-                    <option value="expanded">Expanded (show content)</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Theme</label>
-                <select class="form-input" id="themeSelect">
-                    <option value="dark">Dark (Black/Yellow)</option>
-                    <option value="light">Light</option>
-                </select>
-            </div>
-
-            <hr style="border-color: var(--border); margin: 10px 0;">
-
-            <div class="form-group">
-                <label class="form-label">Text-to-Speech Voice</label>
-                <select class="form-input" id="voiceSelect"></select>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">TTS Rate: <span id="rateVal">1</span></label>
-                <input type="range" id="ttsRate" min="0.5" max="2" step="0.1" value="1">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">TTS Pitch: <span id="pitchVal">1</span></label>
-                <input type="range" id="ttsPitch" min="0.5" max="2" step="0.1" value="1">
-            </div>
-
-            <div class="modal-footer">
-                <button onclick="closeSettingsModal()">Close</button>
-                <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Stats Modal -->
-    <div class="modal" id="statsModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span>📊 Statistics</span>
-                <button class="modal-close" onclick="closeStatsModal()" aria-label="Close stats">×</button>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div style="background: var(--gray); padding: 15px; border-radius: 6px; border-left: 3px solid var(--yellow);">
-                    <div style="color: var(--yellow); font-size: 1.5rem; font-weight: bold;" id="statCards">0</div>
-                    <div style="color: var(--text-secondary); font-size: 0.9rem;">Cards Generated</div>
-                </div>
-                <div style="background: var(--gray); padding: 15px; border-radius: 6px; border-left: 3px solid var(--yellow);">
-                    <div style="color: var(--yellow); font-size: 1.5rem; font-weight: bold;" id="statMessages">0</div>
-                    <div style="color: var(--text-secondary); font-size: 0.9rem;">Messages</div>
-                </div>
-                <div style="background: var(--gray); padding: 15px; border-radius: 6px; border-left: 3px solid var(--yellow);">
-                    <div style="color: var(--yellow); font-size: 1.5rem; font-weight: bold;" id="statCode">0</div>
-                    <div style="color: var(--text-secondary); font-size: 0.9rem;">Code Blocks</div>
-                </div>
-                <div style="background: var(--gray); padding: 15px; border-radius: 6px; border-left: 3px solid var(--yellow);">
-                    <div style="color: var(--yellow); font-size: 1.5rem; font-weight: bold;" id="statTime">0m</div>
-                    <div style="color: var(--text-secondary); font-size: 0.9rem;">Session Time</div>
-                </div>
-            </div>
-            <div style="margin-top: 20px; text-align: center;">
-                <button class="btn-primary" onclick="closeStatsModal()" style="width: 100%;">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // State
-        let messages = [];
-        let cards = [];
-        let currentEditCard = null;
-        let sessionStart = Date.now();
-        let selectedCards = new Set();
-        let isBulkMode = false;
-
-        // TTS state
-        let voices = [];
-        let selectedVoiceIndex = null;
-        let ttsRate = 1;
-        let ttsPitch = 1;
-        let currentUtterance = null;
-
-        // Filter state
-        let currentFilter = 'all';
-        let currentSearch = '';
-        let defaultCardState = 'collapsed';
-
-        document.addEventListener('DOMContentLoaded', () => {
-            loadFromStorage();
-            updateCardCount();
-
-            // Setup Enter to send
-            document.getElementById('userInput').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                }
-            });
-
-            // file input handling
-            document.getElementById('fileInput').addEventListener('change', handleFileInput);
-
-            // tts controls
-            document.getElementById('ttsRate').addEventListener('input', (e) => {
-                ttsRate = parseFloat(e.target.value);
-                document.getElementById('rateVal').textContent = ttsRate.toFixed(1);
-            });
-            document.getElementById('ttsPitch').addEventListener('input', (e) => {
-                ttsPitch = parseFloat(e.target.value);
-                document.getElementById('pitchVal').textContent = ttsPitch.toFixed(1);
-            });
-
-            // search and filter
-            document.getElementById('cardSearch').addEventListener('input', (e) => {
-                currentSearch = e.target.value.toLowerCase();
-                filterCards();
-            });
-
-            document.getElementById('cardFilter').addEventListener('change', (e) => {
-                currentFilter = e.target.value;
-                filterCards();
-            });
-
-            // session timer
-            setInterval(() => {
-                const minutes = Math.floor((Date.now() - sessionStart) / 60000);
-                document.getElementById('statTime').textContent = minutes + 'm';
-            }, 60000);
-
-            // Load voices
-            populateVoiceList();
-            if (typeof speechSynthesis !== 'undefined') {
-                speechSynthesis.onvoiceschanged = populateVoiceList;
-            }
-
-            if (messages.length === 0) {
-                addMessage('assistant', '👋 Welcome! I can:\n• Generate code\n• Create documentation\n• Answer questions\n\nConfigure your API endpoint in Settings (⚙️), then start chatting!\n\n💡 New: Cards are now collapsible to save space.');
-            }
-        });
-
-        /* ----------------------
-           Networking: sendMessage
-           ---------------------- */
-        async function sendMessage() {
-            const input = document.getElementById('userInput');
-            const text = input.value.trim();
-            if (!text) return;
-
-            const mode = document.getElementById('modeSelect').value;
-            const language = document.getElementById('languageSelect').value;
-
-            addMessage('user', text);
-            input.value = '';
-            showLoading(true);
-
-            try {
-                const endpoint = document.getElementById('settingsEndpoint').value;
-                if (!endpoint) {
-                    addMessage('assistant', '⚠️ Please configure your API endpoint in Settings first!');
-                    return;
-                }
-
-                const apiPath = mode === 'code' ? '/api/code' : '/api/chat';
-                const body = mode === 'code'
-                    ? { prompt: text, language }
-                    : { message: text };
-
-                const response = await fetch(endpoint + apiPath, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-                const data = await response.json();
-
-                if (mode === 'code' && data.code) {
-                    createCard({
-                        type: 'code',
-                        title: `${language} Code`,
-                        desc: text.substring(0, 140),
-                        content: data.code,
-                        language: data.language || language,
-                        modelInfo: data.modelInfo
-                    });
-                    addMessage('assistant', `✅ Generated ${language} code!\n${data.modelInfo ? 'Model: ' + data.modelInfo.usedModel : ''}`);
-                } else if (data.response) {
-                    addMessage('assistant', data.response);
-                } else {
-                    addMessage('assistant', '✅ Done!');
-                }
-
-            } catch (error) {
-                addMessage('assistant', `❌ Error: ${error.message}`);
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        /* ----------------------
-           Messages + UI helpers
-           ---------------------- */
-        function addMessage(role, content) {
-            const box = document.getElementById('messagesBox');
-            const msg = document.createElement('div');
-            msg.className = `message ${role}`;
-
-            const row = document.createElement('div');
-            row.className = 'msg-row';
-
-            const textEl = document.createElement('div');
-            textEl.className = 'msg-text';
-            textEl.textContent = content;
-
-            const actions = document.createElement('div');
-            actions.className = 'msg-actions';
-
-            // TTS button
-            const ttsBtn = document.createElement('button');
-            ttsBtn.title = 'Read message';
-            ttsBtn.setAttribute('aria-label', 'Read message');
-            ttsBtn.textContent = '🔊';
-            ttsBtn.style.fontSize = '0.95rem';
-            ttsBtn.onclick = () => {
-                if (speechSynthesis && speechSynthesis.speaking) {
-                    stopSpeaking();
-                } else {
-                    speakText(content, {
-                        rate: ttsRate,
-                        pitch: ttsPitch,
-                        voiceIndex: selectedVoiceIndex
-                    });
-                }
-            };
-
-            // copy button
-            const copyBtn = document.createElement('button');
-            copyBtn.textContent = '📋';
-            copyBtn.title = 'Copy';
-            copyBtn.onclick = async () => {
-                try {
-                    await navigator.clipboard.writeText(content);
-                    copyBtn.textContent = '✓';
-                    setTimeout(() => copyBtn.textContent = '📋', 1500);
-                } catch (e) {
-                    alert('Clipboard write failed: ' + e.message);
-                }
-            };
-
-            actions.appendChild(ttsBtn);
-            actions.appendChild(copyBtn);
-
-            row.appendChild(textEl);
-            row.appendChild(actions);
-            msg.appendChild(row);
-
-            box.appendChild(msg);
-            box.scrollTop = box.scrollHeight;
-
-            messages.push({ role, content, timestamp: Date.now() });
-            saveToStorage();
-            updateCardCount();
-        }
-
-        /* ----------------------
-           Cards: creation/editing
-           ---------------------- */
-        function createCard(data) {
-            const container = document.getElementById('cardsContainer');
-            const card = document.createElement('div');
-            card.className = `card ${defaultCardState === 'collapsed' ? 'collapsed' : 'expanded'}`;
-            
-            if (data.id) {
-                card.dataset.cardId = data.id;
-            } else {
-                card.dataset.cardId = 'card_' + Date.now() + Math.random().toString(36).substr(2, 9);
-                data.id = card.dataset.cardId;
-            }
-
-            // header with toggle
-            const header = document.createElement('div');
-            header.className = 'card-header';
-            header.onclick = (e) => {
-                if (!e.target.closest('button')) {
-                    toggleCard(card);
-                }
-            };
-
-            const titleArea = document.createElement('div');
-            titleArea.className = 'card-title-area';
-
-            const typeEl = document.createElement('div');
-            typeEl.className = 'card-type';
-            typeEl.textContent = (data.type || 'item').toUpperCase();
-
-            const titleEl = document.createElement('div');
-            titleEl.className = 'card-title';
-            titleEl.innerHTML = `<span>${data.title || (data.type || 'Card')}</span>`;
-
-            titleArea.appendChild(typeEl);
-            titleArea.appendChild(titleEl);
-
-            const actions = document.createElement('div');
-            actions.className = 'card-actions';
-
-            // select checkbox for bulk mode
-            const selectCheckbox = document.createElement('input');
-            selectCheckbox.type = 'checkbox';
-            selectCheckbox.className = 'card-select';
-            selectCheckbox.style.display = isBulkMode ? 'block' : 'none';
-            selectCheckbox.onchange = (e) => {
-                if (e.target.checked) {
-                    selectedCards.add(card.dataset.cardId);
-                } else {
-                    selectedCards.delete(card.dataset.cardId);
-                }
-                updateBulkControls();
-            };
-
-            // edit button
-            const editBtn = document.createElement('button');
-            editBtn.textContent = '✏️';
-            editBtn.onclick = function () { editCard(this); };
-            editBtn.setAttribute('aria-label', 'Edit card');
-
-            // copy content
-            const copyBtn = document.createElement('button');
-            copyBtn.textContent = '📋';
-            copyBtn.onclick = function () { copyCard(this); };
-            copyBtn.setAttribute('aria-label', 'Copy card content');
-
-            // delete
-            const delBtn = document.createElement('button');
-            delBtn.textContent = '🗑️';
-            delBtn.onclick = function () { deleteCard(this); };
-            delBtn.setAttribute('aria-label', 'Delete card');
-
-            // TTS for card
-            const ttsBtn = document.createElement('button');
-            ttsBtn.textContent = '🔊';
-            ttsBtn.onclick = () => {
-                if (speechSynthesis && speechSynthesis.speaking) {
-                    stopSpeaking();
-                } else {
-                    speakText(data.content || '', {
-                        rate: ttsRate,
-                        pitch: ttsPitch,
-                        voiceIndex: selectedVoiceIndex
-                    });
-                }
-            };
-            ttsBtn.setAttribute('aria-label', 'Read card');
-
-            // Toggle button
-            const toggleBtn = document.createElement('button');
-            toggleBtn.className = 'card-toggle';
-            toggleBtn.innerHTML = '🔽';
-            toggleBtn.onclick = (e) => {
-                e.stopPropagation();
-                toggleCard(card);
-            };
-
-            actions.appendChild(selectCheckbox);
-            actions.appendChild(editBtn);
-            actions.appendChild(copyBtn);
-            actions.appendChild(delBtn);
-            actions.appendChild(ttsBtn);
-            actions.appendChild(toggleBtn);
-
-            header.appendChild(titleArea);
-            header.appendChild(actions);
-
-            // content area
-            const content = document.createElement('div');
-            content.className = 'card-content';
-
-            const desc = document.createElement('div');
-            desc.className = 'card-desc';
-            desc.textContent = data.desc || '';
-
-            const previewText = data.content ? data.content.toString() : '';
-            const preview = previewText.substring(0, 500) + (previewText.length > 500 ? '...' : '');
-
-            const previewEl = document.createElement('div');
-            previewEl.className = 'card-preview';
-            previewEl.textContent = preview;
-
-            const meta = document.createElement('div');
-            meta.className = 'card-meta';
-            meta.innerHTML = `<span>${data.language || data.type || ''}</span><span>${new Date().toLocaleTimeString()}</span>`;
-
-            content.appendChild(desc);
-            content.appendChild(previewEl);
-            content.appendChild(meta);
-
-            card.appendChild(header);
-            card.appendChild(content);
-
-            // store data on element
-            card.dataset.cardData = JSON.stringify(data || {});
-
-            // Add to container based on filter
-            if (filterCard(data)) {
-                container.appendChild(card);
-            } else {
-                card.style.display = 'none';
-            }
-
-            cards.push(data);
-            updateCardCount();
-            saveToStorage();
-        }
-
-        function toggleCard(card) {
-            if (card.classList.contains('collapsed')) {
-                card.classList.remove('collapsed');
-                card.classList.add('expanded');
-                card.querySelector('.card-toggle').innerHTML = '🔼';
-            } else {
-                card.classList.remove('expanded');
-                card.classList.add('collapsed');
-                card.querySelector('.card-toggle').innerHTML = '🔽';
-            }
-        }
-
-        function expandAllCards() {
-            document.querySelectorAll('.card').forEach(card => {
-                card.classList.remove('collapsed');
-                card.classList.add('expanded');
-                card.querySelector('.card-toggle').innerHTML = '🔼';
-            });
-        }
-
-        function collapseAllCards() {
-            document.querySelectorAll('.card').forEach(card => {
-                card.classList.remove('expanded');
-                card.classList.add('collapsed');
-                card.querySelector('.card-toggle').innerHTML = '🔽';
-            });
-        }
-
-        function editCard(btn) {
-            const card = btn.closest('.card');
-            const data = JSON.parse(card.dataset.cardData || '{}');
-
-            currentEditCard = card;
-            document.getElementById('editTitle').value = data.title || '';
-            document.getElementById('editDesc').value = data.desc || '';
-            document.getElementById('editType').value = data.type || 'code';
-            document.getElementById('editContent').value = data.content || '';
-
-            document.getElementById('editModal').classList.add('show');
-        }
-
-        function saveEdit() {
-            if (!currentEditCard) return;
-
-            const prev = JSON.parse(currentEditCard.dataset.cardData || '{}');
-            const data = {
-                ...prev,
-                title: document.getElementById('editTitle').value,
-                desc: document.getElementById('editDesc').value,
-                type: document.getElementById('editType').value,
-                content: document.getElementById('editContent').value
-            };
-
-            currentEditCard.dataset.cardData = JSON.stringify(data);
-            currentEditCard.querySelector('.card-title span').textContent = data.title;
-            currentEditCard.querySelector('.card-desc').textContent = data.desc;
-            currentEditCard.querySelector('.card-type').textContent = data.type.toUpperCase();
-            
-            const previewText = data.content ? data.content.toString() : '';
-            const preview = previewText.substring(0, 500) + (previewText.length > 500 ? '...' : '');
-            currentEditCard.querySelector('.card-preview').textContent = preview;
-
-            // update cards array
-            for (let i = 0; i < cards.length; i++) {
-                if (cards[i].id === prev.id || (cards[i].title === prev.title && cards[i].content === prev.content)) {
-                    cards[i] = data;
-                    break;
-                }
-            }
-
-            closeModal();
-            saveToStorage();
-            updateCardCount();
-            filterCards();
-        }
-
-        function copyCard(btn) {
-            const card = btn.closest('.card');
-            const data = JSON.parse(card.dataset.cardData || '{}');
-            navigator.clipboard.writeText(data.content || '')
-                .then(() => {
-                    btn.textContent = '✓';
-                    setTimeout(() => btn.textContent = '📋', 1500);
-                })
-                .catch(() => alert('Copy failed'));
-        }
-
-        function deleteCard(btn) {
-            const card = btn.closest('.card');
-            const data = JSON.parse(card.dataset.cardData || '{}');
-            
-            if (confirm('Delete this card?')) {
-                card.remove();
-                cards = cards.filter(c => c.id !== data.id);
-                updateCardCount();
-                saveToStorage();
-            }
-        }
-
-        /* ----------------------
-           Bulk Operations
-           ---------------------- */
-        function toggleBulkControls() {
-            isBulkMode = !isBulkMode;
-            const bulkControls = document.getElementById('bulkControls');
-            const checkboxes = document.querySelectorAll('.card-select');
-            
-            if (isBulkMode) {
-                bulkControls.style.display = 'flex';
-                checkboxes.forEach(cb => cb.style.display = 'block');
-            } else {
-                bulkControls.style.display = 'none';
-                checkboxes.forEach(cb => cb.style.display = 'none');
-                selectedCards.clear();
-            }
-        }
-
-        function selectAllCards() {
-            const checkboxes = document.querySelectorAll('.card-select');
-            checkboxes.forEach(cb => {
-                cb.checked = true;
-                const card = cb.closest('.card');
-                selectedCards.add(card.dataset.cardId);
-            });
-            updateBulkControls();
-        }
-
-        function deleteSelectedCards() {
-            if (selectedCards.size === 0) return;
-            
-            if (confirm(`Delete ${selectedCards.size} selected cards?`)) {
-                selectedCards.forEach(id => {
-                    const card = document.querySelector(`[data-card-id="${id}"]`);
-                    if (card) card.remove();
-                });
-                
-                cards = cards.filter(c => !selectedCards.has(c.id));
-                selectedCards.clear();
-                updateCardCount();
-                saveToStorage();
-                toggleBulkControls();
-            }
-        }
-
-        function updateBulkControls() {
-            const deleteBtn = document.querySelector('#bulkControls button[onclick="deleteSelectedCards()"]');
-            if (deleteBtn) {
-                deleteBtn.textContent = `🗑️ Delete (${selectedCards.size})`;
-            }
-        }
-
-        /* ----------------------
-           Filtering and Search
-           ---------------------- */
-        function filterCard(cardData) {
-            if (currentFilter !== 'all' && cardData.type !== currentFilter) {
-                return false;
-            }
-            
-            if (currentSearch) {
-                const searchText = currentSearch.toLowerCase();
-                const titleMatch = (cardData.title || '').toLowerCase().includes(searchText);
-                const descMatch = (cardData.desc || '').toLowerCase().includes(searchText);
-                const contentMatch = (cardData.content || '').toLowerCase().includes(searchText);
-                
-                if (!titleMatch && !descMatch && !contentMatch) {
-                    return false;
-                }
-            }
-            
-            return true;
-        }
-
-        function filterCards() {
-            const allCards = document.querySelectorAll('.card');
-            let visibleCount = 0;
-            
-            allCards.forEach(card => {
-                const data = JSON.parse(card.dataset.cardData || '{}');
-                if (filterCard(data)) {
-                    card.style.display = 'flex';
-                    visibleCount++;
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-            
-            // Update filter info
-            const filterInfo = document.getElementById('filterInfo');
-            const filterText = document.getElementById('filterText');
-            
-            if (currentFilter !== 'all' || currentSearch) {
-                let info = `Showing ${visibleCount} of ${allCards.length} cards`;
-                if (currentFilter !== 'all') info += ` • Type: ${currentFilter}`;
-                if (currentSearch) info += ` • Search: "${currentSearch}"`;
-                
-                filterText.textContent = info;
-                filterInfo.style.display = 'flex';
-            } else {
-                filterInfo.style.display = 'none';
-            }
-            
-            updateCardCount();
-        }
-
-        function clearFilters() {
-            document.getElementById('cardSearch').value = '';
-            document.getElementById('cardFilter').value = 'all';
-            currentSearch = '';
-            currentFilter = 'all';
-            filterCards();
-        }
-
-        /* ----------------------
-           UI Helpers
-           ---------------------- */
-        function copyLastMessage() {
-            if (messages.length > 0) {
-                const last = messages[messages.length - 1].content || '';
-                navigator.clipboard.writeText(last)
-                    .catch(() => alert('Copy failed'));
-            }
-        }
-
-        function clearMessages() {
-            if (confirm('Clear all messages?')) {
-                document.getElementById('messagesBox').innerHTML = '';
-                messages = [];
-                saveToStorage();
-                updateCardCount();
-            }
-        }
-
-        function clearAll() {
-            if (confirm('Clear everything?')) {
-                document.getElementById('messagesBox').innerHTML = '';
-                document.getElementById('cardsContainer').innerHTML = '';
-                messages = [];
-                cards = [];
-                selectedCards.clear();
-                localStorage.clear();
-                updateCardCount();
-            }
-        }
-
-        /* ----------------------
-           Import / Export / Storage
-           ---------------------- */
-        function exportCards() {
-            const data = {
-                cards,
-                messages,
-                exportDate: new Date().toISOString()
-            };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `copilot-export-${Date.now()}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function importCards() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            input.onchange = (e) => {
-                const file = e.target.files[0];
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    try {
-                        const data = JSON.parse(event.target.result);
-                        if (data.cards) {
-                            data.cards.forEach(card => createCard(card));
-                        }
-                        if (data.messages) {
-                            data.messages.forEach(m => addMessage(m.role || 'assistant', m.content || ''));
-                        }
-                        alert('✅ Imported!');
-                    } catch (err) {
-                        alert('❌ Error: ' + err.message);
-                    }
-                };
-                reader.readAsText(file);
-            };
-            input.click();
-        }
-
-        function triggerFileUpload() {
-            document.getElementById('fileInput').click();
-        }
-
-        async function handleFileInput(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const name = file.name.toLowerCase();
-
-            if (name.endsWith('.txt') || name.endsWith('.md') || name.endsWith('.json')) {
-                try {
-                    const text = await file.text();
-                    createCard({
-                        type: 'document',
-                        title: file.name,
-                        desc: 'Imported file',
-                        content: text,
-                        language: 'text'
-                    });
-                    alert('✅ File imported as a card');
-                } catch (err) {
-                    alert('❌ Error reading file: ' + err.message);
-                }
-            } else {
-                alert('File type not auto-parsed. Only .txt .md .json are auto-imported.');
-            }
+            reader.readAsDataURL(file);
             e.target.value = '';
         }
 
-        function saveCardsLocal() {
-            saveToStorage();
-            alert('✅ Saved to browser!');
+        async function sendMessage() {
+            let input = document.getElementById("userInput").value.trim();
+            if (!input) return;
+            const mode = document.getElementById("modeSelect").value;
+
+            if (isMediaUrl(input)) {
+                addPair({question:"Media URL", response:`<div class="response-content">${createMediaTile(input)}</div>`, sessionId: ""});
+                document.getElementById("userInput").value = '';
+                return;
+            }
+
+            const lines = input.split('\n');
+            const tiles = [];
+            let current = '';
+            for (const line of lines) {
+                if (line.trim() === '---' && current.trim()) {
+                    tiles.push(current.trim());
+                    current = '';
+                } else current += line + '\n';
+            }
+            if (current.trim()) tiles.push(current.trim());
+
+            for (let i = 0; i < tiles.length; i++) {
+                const text = tiles[i];
+                const isLast = i === tiles.length - 1;
+                const sessionId = Date.now() + "-" + i;
+                addPair({question:text, response:'Processing...', sessionId});
+                if (isLast) await sendToAI(text, sessionId, mode);
+            }
+            document.getElementById("userInput").value = '';
         }
 
-        function loadCardsLocal() {
-            loadFromStorage();
-            updateCardCount();
-            alert('✅ Loaded!');
-        }
-
-        function saveToStorage() {
+        async function sendToAI(text, sessionId, mode) {
+            document.getElementById("loading").classList.add("show");
             try {
-                localStorage.setItem('copilot-cards', JSON.stringify(cards));
-                localStorage.setItem('copilot-messages', JSON.stringify(messages));
-                // save settings
-                const settings = {
-                    voiceIndex: selectedVoiceIndex,
-                    ttsRate,
-                    ttsPitch,
-                    theme: document.getElementById('themeSelect') ? document.getElementById('themeSelect').value : 'dark',
-                    model: document.getElementById('modelSelect') ? document.getElementById('modelSelect').value : 'auto',
-                    endpoint: document.getElementById('settingsEndpoint') ? document.getElementById('settingsEndpoint').value : '',
-                    defaultCardState: document.getElementById('defaultCardState') ? document.getElementById('defaultCardState').value : 'collapsed'
-                };
-                localStorage.setItem('copilot-settings', JSON.stringify(settings));
-            } catch (e) {
-                console.warn('Save failed', e);
+                const base = document.getElementById("baseUrl").value.trim();
+                if (!base) {updateLastPair({response:'Set API URL!', sessionId}); return}
+
+                const history = sessionHistory[sessionId] || [];
+                const messages = [...history, {role:"user", content:text}];
+
+                const payload = mode==='code'
+                    ? {prompt:text, messages}
+                    : mode==='generate'
+                    ? {prompt:text, format:"text", messages}
+                    : {message:text, messages, sessionId};
+
+                const path = mode==='code' ? '/api/code' : mode==='generate' ? '/api/generate' : '/api/chat';
+
+                const res = await apiFetch(path, payload);
+                if (!res.ok) {updateLastPair({response:`HTTP ${res.status||'Error'}`, sessionId}); return}
+
+                let reply = '';
+                if (typeof res.data === 'string') reply = res.data;
+                else if (res.data.response) reply = res.data.response;
+                else if (res.data.message) reply = res.data.message;
+                else if (res.data.code) reply = res.data.code;
+                else reply = JSON.stringify(res.data, null, 2);
+
+                const formatted = (mode==='code' || res.data.code)
+                    ? `<pre><code>${reply.trim()}</code></pre>`
+                    : reply;
+
+                updateLastPair({response:formatted, sessionId});
+                sessionHistory[sessionId] = [...messages, {role:"assistant", content:reply}];
+
+            } catch {updateLastPair({response:'Failed', sessionId})}
+            finally {document.getElementById("loading").classList.remove("show")}
+        }
+
+        function sendTileToAI(id) {
+            const tile = pairs.find(p => p.id === id);
+            if (!tile) return;
+            const cleanText = tile.question.replace(/<[^>]*>/g, '');
+            addPair({question:`→ ${cleanText}`, response:'Processing...', sessionId:tile.sessionId || ""});
+            sendToAI(cleanText, tile.sessionId || Date.now().toString(), document.getElementById("modeSelect").value);
+        }
+
+        function addPair(p){
+            const id=Date.now()+Math.random();
+            pairs.push({id,question:p.question,response:p.response,sessionId:p.sessionId||""});
+            renderPair(pairs[pairs.length-1]);
+            save();
+        }
+        function updateLastPair(u){
+            if(pairs.length>0){
+                const last=pairs[pairs.length-1];
+                Object.assign(last,u);
+                const c=document.querySelector(`[data-id="${last.id}"]`);
+                if(c) c.querySelector('.response-content').innerHTML=u.response;
+                save();
             }
         }
-
-        function loadFromStorage() {
-            const saved = localStorage.getItem('copilot-cards');
-            const msgs = localStorage.getItem('copilot-messages');
-            const settingsRaw = localStorage.getItem('copilot-settings');
-
-            if (saved) {
-                try {
-                    cards = JSON.parse(saved) || [];
-                } catch (e) { cards = []; }
-            }
-            if (msgs) {
-                try {
-                    messages = JSON.parse(msgs) || [];
-                } catch (e) { messages = []; }
-            }
-
-            // Load settings
-            if (settingsRaw) {
-                try {
-                    const settings = JSON.parse(settingsRaw);
-                    selectedVoiceIndex = settings.voiceIndex ?? null;
-                    ttsRate = settings.ttsRate ?? 1;
-                    ttsPitch = settings.ttsPitch ?? 1;
-                    defaultCardState = settings.defaultCardState || 'collapsed';
-                    
-                    if (document.getElementById('ttsRate')) {
-                        document.getElementById('ttsRate').value = ttsRate;
-                        document.getElementById('rateVal').textContent = ttsRate.toFixed(1);
-                    }
-                    if (document.getElementById('ttsPitch')) {
-                        document.getElementById('ttsPitch').value = ttsPitch;
-                        document.getElementById('pitchVal').textContent = ttsPitch.toFixed(1);
-                    }
-                    if (document.getElementById('themeSelect')) {
-                        document.getElementById('themeSelect').value = settings.theme || 'dark';
-                    }
-                    if (document.getElementById('modelSelect')) {
-                        document.getElementById('modelSelect').value = settings.model || 'auto';
-                    }
-                    if (document.getElementById('settingsEndpoint')) {
-                        document.getElementById('settingsEndpoint').value = settings.endpoint || '';
-                    }
-                    if (document.getElementById('defaultCardState')) {
-                        document.getElementById('defaultCardState').value = defaultCardState;
-                    }
-                } catch (e) { /* ignore */ }
-            }
-
-            // populate messages
-            const container = document.getElementById('cardsContainer');
-            container.innerHTML = '';
-            cards.forEach(card => {
-                createCard(card);
-            });
-
-            // messages
-            document.getElementById('messagesBox').innerHTML = '';
-            messages.forEach(m => {
-                addMessage(m.role || 'assistant', m.content || '');
-            });
+        function renderPair(p){
+            const g=document.getElementById("grid");
+            const c=document.createElement("div");c.className="flip-card";c.dataset.id=p.id;
+            c.innerHTML=`
+                <div class="flip-card-inner">
+                    <div class="card-face card-front"><div style="flex:1;overflow:auto">${p.question}</div>
+                        <div class="card-actions">
+                            <button class="card-btn" onclick="deletePair(${p.id})">Delete</button>
+                            <button class="card-btn" onclick="sendTileToAI(${p.id})">Send to AI</button>
+                        </div>
+                    </div>
+                    <div class="card-face card-back"><div class="response-content" style="flex:1;overflow:auto">${p.response}</div>
+                        <button class="card-btn" onclick="copyResponse(${p.id})">Copy</button>
+                    </div>
+                </div>`;
+            c.onclick=e=>{if(e.target.closest('.card-btn'))return;c.classList.toggle('flipped')};
+            g.appendChild(c);
         }
-
-        function updateCardCount() {
-            const visibleCards = document.querySelectorAll('.card[style*="display: flex"], .card:not([style])');
-            const totalCards = cards.length;
-            document.getElementById('cardCount').textContent = `${visibleCards.length} of ${totalCards} cards`;
-        }
-
-        /* ----------------------
-           Modal Functions
-           ---------------------- */
-        function closeModal() {
-            document.getElementById('editModal').classList.remove('show');
-        }
-
-        function showSettings() {
-            document.getElementById('settingsModal').classList.add('show');
-        }
-
-        function closeSettingsModal() {
-            document.getElementById('settingsModal').classList.remove('show');
-        }
-
-        function saveSettings() {
-            // Update default card state
-            defaultCardState = document.getElementById('defaultCardState').value;
-            
-            // Update all existing cards to new default state
-            document.querySelectorAll('.card').forEach(card => {
-                card.classList.remove('collapsed', 'expanded');
-                card.classList.add(defaultCardState === 'collapsed' ? 'collapsed' : 'expanded');
-                card.querySelector('.card-toggle').innerHTML = defaultCardState === 'collapsed' ? '🔽' : '🔼';
-            });
-
-            saveToStorage();
-            closeSettingsModal();
-            alert('✅ Settings saved!');
-        }
-
-        function showStats() {
-            document.getElementById('statCards').textContent = cards.length;
-            document.getElementById('statMessages').textContent = messages.length;
-            const codeCount = cards.filter(c => c.type === 'code').length;
-            document.getElementById('statCode').textContent = codeCount;
-            document.getElementById('statsModal').classList.add('show');
-        }
-
-        function closeStatsModal() {
-            document.getElementById('statsModal').classList.remove('show');
-        }
-
-        function showLoading(show) {
-            const status = document.getElementById('loadingStatus');
-            if (show) {
-                status.innerHTML = '<div class="loading"><div class="spinner"></div>Processing...</div>';
-            } else {
-                status.innerHTML = '';
-            }
-        }
-
-        /* ----------------------
-           TTS: Web Speech API
-           ---------------------- */
-        function populateVoiceList() {
-            if (!('speechSynthesis' in window)) {
-                document.getElementById('voiceSelect') && (document.getElementById('voiceSelect').innerHTML = '<option>Not supported</option>');
-                return;
-            }
-            voices = speechSynthesis.getVoices() || [];
-            const select = document.getElementById('voiceSelect');
-            if (!select) return;
-            select.innerHTML = '';
-            voices.forEach((v, i) => {
-                const opt = document.createElement('option');
-                opt.value = i;
-                opt.textContent = `${v.name} ${v.lang ? '— ' + v.lang : ''}${v.default ? ' (default)' : ''}`;
-                select.appendChild(opt);
-            });
-            if (selectedVoiceIndex !== null && selectedVoiceIndex < voices.length) {
-                select.value = selectedVoiceIndex;
-            } else if (typeof selectedVoiceIndex === 'number' && voices[selectedVoiceIndex]) {
-                select.value = selectedVoiceIndex;
-            } else {
-                const d = voices.findIndex(v => v.default);
-                if (d >= 0) select.value = d;
-            }
-        }
-
-        function speakText(text, options = {}, onEnd) {
-            if (!('speechSynthesis' in window)) {
-                alert('TTS not supported in this browser.');
-                return;
-            }
-            stopSpeaking();
-
-            const utter = new SpeechSynthesisUtterance(String(text || ''));
-            utter.rate = options.rate || ttsRate || 1;
-            utter.pitch = options.pitch || ttsPitch || 1;
-            const idx = (options.voiceIndex !== undefined && options.voiceIndex !== null) ? options.voiceIndex : selectedVoiceIndex;
-            if (typeof idx === 'number' && voices[idx]) {
-                utter.voice = voices[idx];
-            }
-            utter.onend = () => {
-                currentUtterance = null;
-                if (typeof onEnd === 'function') onEnd();
+        function deletePair(id){pairs=pairs.filter(p=>p.id!==id);document.querySelector(`[data-id="${id}"]`)?.remove();save()}
+        function copyResponse(id){const p=pairs.find(x=>x.id===id);if(p){const t=document.createElement('div');t.innerHTML=p.response;navigator.clipboard.writeText(t.textContent||'');alert('Copied!')}}
+        function exportData(){const data={pairs,sessionHistory};const b=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download="mindmap-full.json";a.click();URL.revokeObjectURL(u)}
+        function importData(e){
+            const f=e.target.files[0];if(!f)return;
+            const r=new FileReader();r.onload=x=>{
+                try{
+                    const d=JSON.parse(x.target.result);
+                    pairs = d.pairs || [];
+                    Object.assign(sessionHistory, d.sessionHistory || {});
+                    document.getElementById("grid").innerHTML='';
+                    pairs.forEach(renderPair);
+                    save();alert('Imported!');
+                }catch{alert('Bad file')}
             };
-            utter.onerror = (e) => {
-                console.warn('TTS error', e);
-            };
-            currentUtterance = utter;
-            speechSynthesis.speak(utter);
+            r.readAsText(f);
         }
-
-        function stopSpeaking() {
-            if (speechSynthesis && speechSynthesis.speaking) {
-                speechSynthesis.cancel();
+        function showSavedNotice(){const n=document.getElementById("savedNotice");n.classList.add("show");setTimeout(()=>n.classList.remove("show"),2000)}
+        function showSettings(){document.getElementById("settingsModal").classList.add("show")}
+        function closeSettings(){document.getElementById("settingsModal").classList.remove("show")}
+        function saveSettings(){localStorage.setItem("mindmap-baseUrl",document.getElementById("baseUrl").value.trim());closeSettings();showSavedNotice()}
+        function save(){localStorage.setItem("mindmap-data",JSON.stringify({pairs,sessionHistory}))}
+        function load(){
+            const saved=localStorage.getItem("mindmap-data");
+            if(saved){
+                const d=JSON.parse(saved);
+                pairs=d.pairs||[];
+                Object.assign(sessionHistory, d.sessionHistory||{});
+                pairs.forEach(renderPair);
             }
-            currentUtterance = null;
+            const url=localStorage.getItem("mindmap-baseUrl");
+            if(url)document.getElementById("baseUrl").value=url;
         }
-
-        // Expose functions for inline handlers
-        window.showSettings = showSettings;
-        window.showStats = showStats;
-        window.clearAll = clearAll;
-        window.sendMessage = sendMessage;
-        window.copyLastMessage = copyLastMessage;
-        window.clearMessages = clearMessages;
-        window.exportCards = exportCards;
-        window.importCards = importCards;
-        window.saveCardsLocal = saveCardsLocal;
-        window.loadCardsLocal = loadCardsLocal;
-        window.triggerFileUpload = triggerFileUpload;
-        window.editCard = editCard;
-        window.copyCard = copyCard;
-        window.deleteCard = deleteCard;
-        window.closeModal = closeModal;
-        window.saveEdit = saveEdit;
-        window.saveSettings = saveSettings;
-        window.closeSettingsModal = closeSettingsModal;
-        window.closeStatsModal = closeStatsModal;
-        window.speakText = speakText;
-        window.stopSpeaking = stopSpeaking;
-        window.populateVoiceList = populateVoiceList;
-        window.toggleCard = toggleCard;
-        window.expandAllCards = expandAllCards;
-        window.collapseAllCards = collapseAllCards;
-        window.toggleBulkControls = toggleBulkControls;
-        window.selectAllCards = selectAllCards;
-        window.deleteSelectedCards = deleteSelectedCards;
-        window.clearFilters = clearFilters;
-
+        document.getElementById("userInput").addEventListener("keypress",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage()}})
+        load();
     </script>
 </body>
 </html>
