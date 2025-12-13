@@ -13,7 +13,7 @@
   --bg:#0a0a0a; --glass:rgba(26,26,26,0.86);
   --yellow:#ffd700; --text:#fff; --border:rgba(255,215,0,0.28);
   --blue:#6496ff;
-  --card-min-height:180px;
+  --card-min-height:200px; /* Slightly taller base height to give text room */
 }
 html,body{height:100%}
 body{font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text);display:flex;flex-direction:column;height:100vh;overflow:hidden}
@@ -34,7 +34,7 @@ textarea{min-height:80px;resize:vertical}
 
 .canvas{flex:1;overflow:auto;padding:8px;background:var(--bg)}
 
-/* Grid: 2 columns on mobile */
+/* Grid: 2 columns on mobile, responsive elsewhere */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
@@ -48,7 +48,7 @@ textarea{min-height:80px;resize:vertical}
   }
 }
 
-/* Flip cards */
+/* Flip cards - restored original look */
 .flip-card{
   position:relative;
   border-radius:8px;
@@ -79,20 +79,26 @@ textarea{min-height:80px;resize:vertical}
   border-radius:8px;
   background:var(--glass);
 }
+
+/* Front face - yellow indicator stays, but text gets space */
 .card-front{
   border-left:4px solid var(--yellow);
   background:linear-gradient(135deg, rgba(255,215,0,0.06), rgba(255,215,0,0.02));
+  padding-left:16px; /* Push content away from the thick yellow bar */
 }
+
+/* Back face */
 .card-back{
   transform:rotateY(180deg);
   border-left:4px solid var(--blue);
   background:linear-gradient(135deg, rgba(100,150,255,0.06), rgba(100,150,255,0.02));
 }
 
-/* BULLETPROOF TEXT FIX — this is the key change */
+/* KEY FIX: Question text now guaranteed to show */
 .question-div{
-  flex:1;
-  overflow:hidden;                  /* Changed from auto → hidden */
+  flex:1 1 auto;
+  min-height:0; /* Allows flex shrink properly */
+  overflow:hidden;
   white-space:pre-wrap;
   word-break:break-word;
   padding-right:4px;
@@ -100,13 +106,13 @@ textarea{min-height:80px;resize:vertical}
   color:var(--text);
   font-size:1rem;
   line-height:1.5;
+  margin-top:4px;
   display:-webkit-box;
-  -webkit-line-clamp:8;             /* Show up to ~8 lines */
+  -webkit-line-clamp:10;
   -webkit-box-orient:vertical;
-  text-overflow:ellipsis;           /* ... on overflow */
+  text-overflow:ellipsis;
 }
 
-/* Response side stays scrollable */
 .response-content{
   flex:1;
   overflow:auto;
@@ -156,7 +162,7 @@ textarea{min-height:80px;resize:vertical}
   cursor:pointer;
 }
 
-/* Modals, fullscreen, etc. — unchanged */
+/* Modals, fullscreen, loading, etc. (unchanged) */
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:2000;align-items:center;justify-content:center;padding:20px;overflow:auto}
 .modal.show{display:flex}
 .modal-content{background:var(--glass);border:2px solid var(--yellow);border-radius:12px;padding:18px;width:100%;max-width:960px;max-height:90vh;overflow:auto}
@@ -179,13 +185,13 @@ textarea{min-height:80px;resize:vertical}
 .saved-notice{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:rgba(0,255,0,0.08);color:#0f0;border:1px solid #0f0;padding:10px 14px;border-radius:8px;z-index:999;opacity:0;transition:opacity .18s}
 .saved-notice.show{opacity:1}
 
-/* Streaming */
+/* Streaming animations */
 .streaming-cursor{display:inline-block;width:8px;height:1em;background-color:var(--yellow);margin-left:2px;animation:blink 1s infinite;vertical-align:middle}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 .streaming-indicator{position:absolute;top:10px;right:10px;color:var(--yellow);font-size:0.8rem;animation:pulse 1.5s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
 
-/* Compose */
+/* Compose modal */
 .compose-text{min-height:300px;max-height:70vh;resize:vertical;width:100%;padding:12px;border-radius:8px;background:var(--bg);border:1px solid var(--border);color:var(--text)}
  </style>
 </head>
