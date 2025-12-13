@@ -7,7 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
   <style>
-    /* Theme & layout */
+   /* Theme & layout */
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#0a0a0a; --glass:rgba(26,26,26,0.86);
@@ -34,7 +34,7 @@ textarea{min-height:80px;resize:vertical}
 
 .canvas{flex:1;overflow:auto;padding:8px;background:var(--bg)}
 
-/* Updated grid: 2 columns on mobile, responsive on larger screens */
+/* Grid: 2 columns on mobile */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
@@ -48,7 +48,7 @@ textarea{min-height:80px;resize:vertical}
   }
 }
 
-/* Original flip cards — fully restored */
+/* Flip cards */
 .flip-card{
   position:relative;
   border-radius:8px;
@@ -89,14 +89,24 @@ textarea{min-height:80px;resize:vertical}
   background:linear-gradient(135deg, rgba(100,150,255,0.06), rgba(100,150,255,0.02));
 }
 
+/* BULLETPROOF TEXT FIX — this is the key change */
 .question-div{
   flex:1;
-  overflow:auto;
+  overflow:hidden;                  /* Changed from auto → hidden */
   white-space:pre-wrap;
   word-break:break-word;
   padding-right:4px;
   cursor:default;
+  color:var(--text);
+  font-size:1rem;
+  line-height:1.5;
+  display:-webkit-box;
+  -webkit-line-clamp:8;             /* Show up to ~8 lines */
+  -webkit-box-orient:vertical;
+  text-overflow:ellipsis;           /* ... on overflow */
 }
+
+/* Response side stays scrollable */
 .response-content{
   flex:1;
   overflow:auto;
@@ -146,7 +156,7 @@ textarea{min-height:80px;resize:vertical}
   cursor:pointer;
 }
 
-/* Rest of your original styles (modals, fullscreen, etc.) — unchanged */
+/* Modals, fullscreen, etc. — unchanged */
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:2000;align-items:center;justify-content:center;padding:20px;overflow:auto}
 .modal.show{display:flex}
 .modal-content{background:var(--glass);border:2px solid var(--yellow);border-radius:12px;padding:18px;width:100%;max-width:960px;max-height:90vh;overflow:auto}
@@ -169,15 +179,15 @@ textarea{min-height:80px;resize:vertical}
 .saved-notice{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:rgba(0,255,0,0.08);color:#0f0;border:1px solid #0f0;padding:10px 14px;border-radius:8px;z-index:999;opacity:0;transition:opacity .18s}
 .saved-notice.show{opacity:1}
 
-/* Streaming animations */
+/* Streaming */
 .streaming-cursor{display:inline-block;width:8px;height:1em;background-color:var(--yellow);margin-left:2px;animation:blink 1s infinite;vertical-align:middle}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 .streaming-indicator{position:absolute;top:10px;right:10px;color:var(--yellow);font-size:0.8rem;animation:pulse 1.5s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
 
-/* Compose modal */
+/* Compose */
 .compose-text{min-height:300px;max-height:70vh;resize:vertical;width:100%;padding:12px;border-radius:8px;background:var(--bg);border:1px solid var(--border);color:var(--text)}
-  </style>
+ </style>
 </head>
 <body>
   <div class="header">
