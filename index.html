@@ -800,7 +800,7 @@ function saveEditedTile() {
   const card = gridElement.querySelector(`[data-id="${tile.id}"]`);
   if (card) {
     const questionDiv = card.querySelector('.card-front .question-div');
-    if (questionDiv) questionDiv.textContent = tile.question;
+    if (questionDiv) questionDiv.innerHTML = escapeHTML(tile.question);
 
     const responseDiv = card.querySelector('.card-back .response-content');
     if (responseDiv) responseDiv.innerHTML = safeRenderMarkdown(tile.response);
