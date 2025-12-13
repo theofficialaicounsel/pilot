@@ -1,1202 +1,1187 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>AI Mind Map</title>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
-    <style>
-        /* --- Global Styles --- */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --bg: #0a0a0a;
-            --glass: rgba(26, 26, 26, 0.8);
-            --yellow: #ffd700;
-            --text: #fff;
-            --border: rgba(255, 215, 0, 0.3);
-            --red: #ff4444;
-            --blue: #58a6ff;
-            --hover-overlay: rgba(255, 215, 0, 0.1);
-        }
-        body {
-            font-family: 'system-ui', 'Segoe UI', 'Roboto', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>AI Mind Map</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+  <style>
+    /* --- Global Styles --- */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+        --bg: #0a0a0a;
+        --glass: rgba(26, 26, 26, 0.8);
+        --yellow: #ffd700;
+        --text: #fff;
+        --border: rgba(255, 215, 0, 0.3);
+        --red: #ff4444;
+        --blue: #58a6ff;
+        --hover-overlay: rgba(255, 215, 0, 0.1);
+    }
+    body {
+        font-family: 'system-ui', 'Segoe UI', 'Roboto', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
 
-        /* --- Header --- */
-        .header {
-            height: 50px;
-            background: rgba(10, 10, 10, 0.95);
-            border-bottom: 2px solid var(--yellow);
-            padding: 0 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-shrink: 0;
-            z-index: 1000;
-        }
-        .logo { font-size: 1.1rem; font-weight: bold; color: var(--yellow); cursor: pointer; }
+    /* --- Header --- */
+    .header {
+        height: 50px;
+        background: rgba(10, 10, 10, 0.95);
+        border-bottom: 2px solid var(--yellow);
+        padding: 0 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+        z-index: 1000;
+    }
+    .logo { font-size: 1.1rem; font-weight: bold; color: var(--yellow); cursor: pointer; }
 
-        /* --- Buttons --- */
-        button {
-            background: var(--glass);
-            color: var(--yellow);
-            border: 1px solid var(--border);
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.2s, color 0.2s, transform 0.1s;
-            font-family: inherit;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-        }
-        button:hover {
-            background: var(--yellow);
-            color: var(--bg);
-        }
-        .send-btn {
-            background: var(--yellow);
-            color: var(--bg);
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-            padding: 12px 15px;
-        }
-        .send-btn:hover {
-            background: var(--yellow);
-            color: var(--bg);
-            filter: brightness(1.1);
-        }
+    /* --- Buttons --- */
+    button {
+        background: var(--glass);
+        color: var(--yellow);
+        border: 1px solid var(--border);
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.2s, color 0.2s, transform 0.1s;
+        font-family: inherit;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+    }
+    button:hover {
+        background: var(--yellow);
+        color: var(--bg);
+    }
+    .send-btn {
+        background: var(--yellow);
+        color: var(--bg);
+        border: none;
+        font-weight: bold;
+        cursor: pointer;
+        padding: 12px 15px;
+    }
+    .send-btn:hover {
+        background: var(--yellow);
+        color: var(--bg);
+        filter: brightness(1.1);
+    }
 
-        /* --- Main Container --- */
-        .main-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+    /* --- Main Container --- */
+    .main-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
 
-        /* --- Input Panel --- */
-        .input-panel {
-            background: rgba(10, 10, 10, 0.95);
-            padding: 12px;
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
-        .section { margin-bottom: 12px; }
-        .section-title {
-            font-size: 0.75rem;
-            color: var(--yellow);
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        select, textarea, input {
-            width: 100%;
-            background: var(--glass);
-            color: var(--text);
-            border: 1px solid var(--border);
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 1rem;
-            font-family: inherit;
-            margin-bottom: 8px;
-        }
-        textarea { min-height: 80px; resize: vertical; }
-        textarea:focus, input:focus { outline: none; border-color: var(--yellow); box-shadow: 0 0 0 2px rgba(255,215,0,0.2); }
+    /* --- Input Panel --- */
+    .input-panel {
+        background: rgba(10, 10, 10, 0.95);
+        padding: 12px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+    }
+    .section { margin-bottom: 12px; }
+    .section-title {
+        font-size: 0.75rem;
+        color: var(--yellow);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    select, textarea, input {
+        width: 100%;
+        background: var(--glass);
+        color: var(--text);
+        border: 1px solid var(--border);
+        padding: 8px;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-family: inherit;
+        margin-bottom: 8px;
+    }
+    textarea { min-height: 80px; resize: vertical; }
+    textarea:focus, input:focus { outline: none; border-color: var(--yellow); box-shadow: 0 0 0 2px rgba(255,215,0,0.2); }
 
-        /* --- Resizeable Divider --- */
-        .resize-divider {
-            height: 8px;
-            background: var(--yellow);
-            cursor: ns-resize;
-            flex-shrink: 0;
-            z-index: 1001;
-            border-top: 1px solid var(--border);
-            border-bottom: 1px solid var(--border);
-            transition: background 0.2s;
-        }
-        .resize-divider:hover { background: var(--yellow); }
+    /* --- Resizeable Divider --- */
+    .resize-divider {
+        height: 8px;
+        background: var(--yellow);
+        cursor: ns-resize;
+        flex-shrink: 0;
+        z-index: 1001;
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        transition: background 0.2s;
+    }
+    .resize-divider:hover { background: var(--yellow); }
 
-        /* --- Canvas Area --- */
-        .canvas {
-            flex: 1;
-            overflow-y: auto;
-            background: var(--bg);
-            padding: 8px;
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            grid-auto-rows: minmax(180px, auto);
-            gap: 8px;
-            width: 100%;
-            height: 100%;
-        }
+    /* --- Canvas Area --- */
+    .canvas {
+        flex: 1;
+        overflow-y: auto;
+        background: var(--bg);
+        padding: 8px;
+    }
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        grid-auto-rows: minmax(180px, auto);
+        gap: 8px;
+        width: 100%;
+        height: 100%;
+    }
 
-        /* --- Flip Card --- */
-        .flip-card {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            min-height: 0;
-            cursor: pointer;
-            perspective: 1000px;
-            overflow: hidden;
-            background: var(--bg);
-           
+    /* --- Flip Card --- */
+    .flip-card {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        cursor: pointer;
+        perspective: 1000px;
+        overflow: hidden;
+        background: var(--bg);
         user-select: none;
-            border-radius: 8px;
-            border: 2px solid var(--border);
-            transition: border-color 0.2s, border-width 0.2s;
-        }
-        .flip-card:hover {
-            border-color: var(--yellow);
-            border-width: 2px;
-            box-shadow: 0 0 15px var(--yellow);
-        }
-        .flip-card.selected {
-            border: 4px solid var(--blue) !important;
-            box-shadow: 0 0 25px var(--blue);
-        }
-        .flip-card-inner {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            transition: transform .6s;
-            transform-style: preserve-3d;
-            border-radius: 8px;
-        }
-        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+        border-radius: 8px;
+        border: 2px solid var(--border);
+        transition: border-color 0.2s, border-width 0.2s;
+    }
+    .flip-card:hover {
+        border-color: var(--yellow);
+        border-width: 2px;
+        box-shadow: 0 0 15px var(--yellow);
+    }
+    .flip-card.selected {
+        border: 4px solid var(--blue) !important;
+        box-shadow: 0 0 25px var(--blue);
+    }
+    .flip-card-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transition: transform .6s;
+        transform-style: preserve-3d;
+        border-radius: 8px;
+    }
+    .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
 
-        .card-face {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            display: flex;
-            flex-direction: column;
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            padding: 12px;
-            font-size: 0.75rem;
-            line-height: 1.4;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,.5);
-            border-radius: 8px;
-        }
-        .card-front {
-            background: linear-gradient(135deg,rgba(255,215,0,.1),rgba(255,215,0,.05));
-            border-left: 4px solid var(--yellow);
-        }
-        .card-front div:first-child {
-            flex: 1;
-            overflow: auto;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            padding-right: 4px;
-        }
-        .card-back {
-            transform: rotateY(180deg);
-            background: linear-gradient(135deg,rgba(100,150,255,.1),rgba(100,150,255,.05));
-            border-left: 4px solid var(--blue);
-        }
-        .response-content {
-            flex: 1;
-            overflow: auto;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            font-family: monospace;
-            padding-right: 4px;
-        }
+    .card-face {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        display: flex;
+        flex-direction: column;
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        padding: 12px;
+        font-size: 0.75rem;
+        line-height: 1.4;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,.5);
+        border-radius: 8px;
+    }
+    .card-front {
+        background: linear-gradient(135deg, rgba(255,215,0,.1), rgba(255,215,0,.05));
+        border-left: 4px solid var(--yellow);
+    }
+    .card-front > div:first-child {
+        flex: 1;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        padding-right: 4px;
+    }
+    .card-back {
+        transform: rotateY(180deg);
+        background: linear-gradient(135deg, rgba(100,150,255,.1), rgba(100,150,255,.05));
+        border-left: 4px solid var(--blue);
+    }
+    .response-content {
+        flex: 1;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        font-family: monospace;
+        padding-right: 4px;
+    }
 
-        /* Markdown rendering adjustments */
-        .response-content h1, .card-face h1 { font-size: 0.9rem; margin: 0.8em 0 0.3em; color: var(--yellow); }
-        .response-content h2, .card-face h2 { font-size: 0.85rem; margin: 0.7em 0 0.25em; }
-        .response-content h3, .card-face h3 { font-size: 0.8rem; margin: 0.6em 0 0.2em; }
-        .response-content p { margin-bottom: 0.7em; }
-        .response-content strong { color: var(--yellow); }
-        .response-content code { background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 3px; font-size: 0.9em; }
-        .response-content pre { background: #1a1a1a; padding: 12px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; font-size: 0.9em; border: 1px solid var(--border); }
-        .response-content pre code { background: none; padding: 0; border-radius: 0; font-size: inherit; }
-        .response-content ul, .response-content ol { margin-left: 25px; margin-bottom: 0.8em; }
-        .response-content li { margin-bottom: 0.4em; }
-        .response-content blockquote { border-left: 3px solid var(--blue); padding-left: 1em; color: var(--text); opacity: 0.8; margin-left: 0; }
+    /* Markdown rendering adjustments */
+    .response-content h1, .card-face h1 { font-size: 0.9rem; margin: 0.8em 0 0.3em; color: var(--yellow); }
+    .response-content h2, .card-face h2 { font-size: 0.85rem; margin: 0.7em 0 0.25em; }
+    .response-content h3, .card-face h3 { font-size: 0.8rem; margin: 0.6em 0 0.2em; }
+    .response-content p { margin-bottom: 0.7em; }
+    .response-content strong { color: var(--yellow); }
+    .response-content code { background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 3px; font-size: 0.9em; }
+    .response-content pre { background: #1a1a1a; padding: 12px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; font-size: 0.9em; border: 1px solid var(--border); }
+    .response-content pre code { background: none; padding: 0; border-radius: 0; font-size: inherit; }
+    .response-content ul, .response-content ol { margin-left: 25px; margin-bottom: 0.8em; }
+    .response-content li { margin-bottom: 0.4em; }
+    .response-content blockquote { border-left: 3px solid var(--blue); padding-left: 1em; color: var(--text); opacity: 0.8; margin-left: 0; }
 
-        .card-actions {
-            display: flex;
-            gap: 6px;
-            margin-top: 8px;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-            padding-top: 6px;
-            border-top: 1px solid var(--border);
-        }
+    .card-actions {
+        display: flex;
+        gap: 6px;
+        margin-top: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        padding-top: 6px;
+        border-top: 1px solid var(--border);
+    }
 
-        .card-btn {
-            background: rgba(0,0,0,.5);
-            border: none;
-            color: var(--text);
-            font-size: 1.1rem;
-            cursor: pointer;
-            padding: 6px 8px;
-            border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s, color 0.2s, transform 0.1s;
-            flex-shrink: 0;
-        }
-        .card-btn:hover {
-            background: var(--yellow);
-            color: var(--bg);
-            transform: scale(1.05);
-        }
-        .card-btn.delete { color: var(--red); }
+    .card-btn {
+        background: rgba(0,0,0,.5);
+        border: none;
+        color: var(--text);
+        font-size: 1.1rem;
+        cursor: pointer;
+        padding: 6px 8px;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s, color 0.2s, transform 0.1s;
+        flex-shrink: 0;
+    }
+    .card-btn:hover {
+        background: var(--yellow);
+        color: var(--bg);
+        transform: scale(1.05);
+    }
+    .card-btn.delete { color: var(--red); }
 
-        /* --- Modals --- */
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            overflow-y: auto;
-        }
-        .modal.show { display: flex; }
-        .modal-content {
-            background: var(--glass);
-            border: 2px solid var(--yellow);
-            border-radius: 12px;
-            padding: 20px;
-            max-width: 600px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            color: var(--text);
-            font-family: inherit;
-        }
-        .modal-title {
-            font-size: 1.4rem;
-            color: var(--yellow);
-            margin-bottom: 16px;
-            text-align: center;
-        }
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 20px;
-        }
+    /* --- Modals --- */
+    .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.95);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        overflow-y: auto;
+    }
+    .modal.show { display: flex; }
+    .modal-content {
+        background: var(--glass);
+        border: 2px solid var(--yellow);
+        border-radius: 12px;
+        padding: 20px;
+        max-width: 600px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        color: var(--text);
+        font-family: inherit;
+    }
+    .modal-title {
+        font-size: 1.4rem;
+        color: var(--yellow);
+        margin-bottom: 16px;
+        text-align: center;
+    }
+    .modal-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 20px;
+    }
 
-        /* Edit Modal */
-        .edit-modal-content textarea {
-            min-height: 150px;
-            margin-bottom: 10px;
-        }
-        .edit-modal-content .modal-row {
-            margin-bottom: 15px;
-        }
-        .edit-modal-content .preview-toggle {
-            font-size: 0.8rem;
-            color: var(--yellow);
-            cursor: pointer;
-            text-decoration: underline;
-            margin-left: 10px;
-            background: none; border: none; padding: 0;
-        }
-        .edit-modal-content .preview-toggle:hover {
-            color: var(--text);
-            text-decoration: none;
-        }
-        .edit-modal-content .markdown-preview {
-            background: var(--glass);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 12px;
-            margin-top: 8px;
-            min-height: 100px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            font-family: monospace;
-            font-size: 0.9rem;
-        }
+    /* Edit Modal */
+    .edit-modal-content textarea {
+        min-height: 150px;
+        margin-bottom: 10px;
+    }
+    .edit-modal-content .modal-row {
+        margin-bottom: 15px;
+    }
+    .edit-modal-content .preview-toggle {
+        font-size: 0.8rem;
+        color: var(--yellow);
+        cursor: pointer;
+        text-decoration: underline;
+        margin-left: 10px;
+        background: none; border: none; padding: 0;
+    }
+    .edit-modal-content .preview-toggle:hover {
+        color: var(--text);
+        text-decoration: none;
+    }
+    .edit-modal-content .markdown-preview {
+        background: var(--glass);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 12px;
+        margin-top: 8px;
+        min-height: 100px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        font-family: monospace;
+        font-size: 0.9rem;
+    }
 
-        /* --- Loading & Notices --- */
-        .loading {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--glass);
-            border: 1px solid var(--yellow);
-            padding: 12px 20px;
-            border-radius: 8px;
-            display: none;
-            z-index: 999;
-            font-weight: bold;
-            animation: pulse 1.5s infinite;
-        }
-        .loading.show { display: block; }
-        @keyframes pulse {
-            0% { opacity: 0.7; }
-            50% { opacity: 1; }
-            100% { opacity: 0.7; }
-        }
+    /* --- Loading & Notices --- */
+    .loading {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: var(--glass);
+        border: 1px solid var(--yellow);
+        padding: 12px 20px;
+        border-radius: 8px;
+        display: none;
+        z-index: 999;
+        font-weight: bold;
+        animation: pulse 1.5s infinite;
+    }
+    .loading.show { display: block; }
+    @keyframes pulse {
+        0% { opacity: 0.7; }
+        50% { opacity: 1; }
+        100% { opacity: 0.7; }
+    }
 
-        .saved-notice {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 255, 0, 0.2);
-            color: #0f0;
-            border: 1px solid #0f0;
-            padding: 10px 20px;
-            border-radius: 8px;
-            z-index: 999;
-            opacity: 0;
-            transition: opacity 0.5s;
-        }
-        .saved-notice.show { opacity: 1; }
+    .saved-notice {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 255, 0, 0.2);
+        color: #0f0;
+        border: 1px solid #0f0;
+        padding: 10px 20px;
+        border-radius: 8px;
+        z-index: 999;
+        opacity: 0;
+        transition: opacity 0.5s;
+    }
+    .saved-notice.show { opacity: 1; }
 
-        /* --- Long Press Menu --- */
-        .longpress-menu {
-            position: absolute;
-            background: rgba(0, 0, 0, 0.95);
-            border: 2px solid var(--yellow);
-            border-radius: 12px;
-            padding: 12px;
-            z-index: 9999;
-            display: none;
-            flex-direction: column;
-            gap: 8px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.7);
-        }
-        .longpress-menu button {
-            width: 100%;
-            text-align: left;
-            background: transparent;
-            border: none;
-            padding: 8px 12px;
-            color: var(--text);
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .longpress-menu button:hover {
-            background: var(--hover-overlay);
-            color: var(--yellow);
-        }
+    /* --- Long Press Menu --- */
+    .longpress-menu {
+        position: absolute;
+        background: rgba(0, 0, 0, 0.95);
+        border: 2px solid var(--yellow);
+        border-radius: 12px;
+        padding: 12px;
+        z-index: 9999;
+        display: none;
+        flex-direction: column;
+        gap: 8px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.7);
+    }
+    .longpress-menu button {
+        width: 100%;
+        text-align: left;
+        background: transparent;
+        border: none;
+        padding: 8px 12px;
+        color: var(--text);
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .longpress-menu button:hover {
+        background: var(--hover-overlay);
+        color: var(--yellow);
+    }
 
-        /* --- Fullscreen Overlay --- */
-        .fullscreen-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: var(--bg);
-            z-index: 3000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            overflow: hidden;
-            flex-direction: column;
-            border: 4px solid var(--yellow);
-            box-shadow: 0 0 50px rgba(255,215,0,0.3);
-            border-radius: 12px;
-        }
-        .fullscreen-overlay.show { display: flex; }
-        .fullscreen-main-content {
-            width: 100%;
-            height: 100%;
-            max-width: 90vw;
-            max-height: 90vh;
-            perspective: 1000px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-        .fullscreen-card-inner {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            transition: transform .8s ease-in-out;
-            transform-style: preserve-3d;
-            border-radius: 8px;
-        }
-        .fullscreen-card-inner.flipped { transform: rotateY(180deg); }
+    /* --- Fullscreen Overlay --- */
+    .fullscreen-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: var(--bg);
+        z-index: 3000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        overflow: hidden;
+        flex-direction: column;
+        border: 4px solid var(--yellow);
+        box-shadow: 0 0 50px rgba(255,215,0,0.3);
+        border-radius: 12px;
+    }
+    .fullscreen-overlay.show { display: flex; }
+    .fullscreen-main-content {
+        width: 100%;
+        height: 100%;
+        max-width: 90vw;
+        max-height: 90vh;
+        perspective: 1000px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+    .fullscreen-card-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transition: transform .8s ease-in-out;
+        transform-style: preserve-3d;
+        border-radius: 8px;
+    }
+    .fullscreen-card-inner.flipped { transform: rotateY(180deg); }
 
-        .fullscreen-card-face {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            display: flex;
-            flex-direction: column;
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            padding: 20px;
-            font-size: 0.9rem;
-            line-height: 1.5;
-            overflow: hidden;
-            box-shadow: inset 0 0 20px rgba(0,0,0,.5);
-            border-radius: 8px;
-        }
-        .fullscreen-card-face.card-front {
-            background: linear-gradient(135deg,rgba(255,215,0,.15),rgba(255,215,0,.08));
-            border-left: 4px solid var(--yellow);
-        }
-        .fullscreen-card-face.card-back {
-            transform: rotateY(180deg);
-            background: linear-gradient(135deg,rgba235,150,255,.15),rgba(100,150,255,.08));
-            border-left: 4px solid var(--blue);
-        }
+    .fullscreen-card-face {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        display: flex;
+        flex-direction: column;
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        padding: 20px;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        overflow: hidden;
+        box-shadow: inset 0 0 20px rgba(0,0,0,.5);
+        border-radius: 8px;
+    }
+    .fullscreen-card-face.card-front {
+        background: linear-gradient(135deg, rgba(255,215,0,.15), rgba(255,215,0,.08));
+        border-left: 4px solid var(--yellow);
+    }
+    .fullscreen-card-face.card-back {
+        transform: rotateY(180deg);
+        background: linear-gradient(135deg, rgba(100,150,255,.15), rgba(100,150,255,.08));
+        border-left: 4px solid var(--blue);
+    }
 
-        .fullscreen-question-text {
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: var(--yellow);
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--border);
-            flex-shrink: 0;
-        }
-        .fullscreen-response-content {
-            flex: 1;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            font-family: monospace;
-            padding-right: 8px;
-        }
-        .fullscreen-response-content h1 { font-size: 1.2rem; }
-        .fullscreen-response-content h2 { font-size: 1.1rem; }
-        .fullscreen-response-content h3 { font-size: 1.0rem; }
+    .fullscreen-question-text {
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: var(--yellow);
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+    }
+    .fullscreen-response-content {
+        flex: 1;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        font-family: monospace;
+        padding-right: 8px;
+    }
+    .fullscreen-response-content h1 { font-size: 1.2rem; }
+    .fullscreen-response-content h2 { font-size: 1.1rem; }
+    .fullscreen-response-content h3 { font-size: 1.0rem; }
 
-        .fullscreen-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-            padding-top: 10px;
-            border-top: 1px solid var(--border);
-            justify-content: flex-end;
-            z-index: 3001;
-            background: rgba(10,10,10, 0.9);
-            margin-left: -20px; margin-right: -20px;
-            padding-left: 20px; padding-right: 20px;
-            padding-bottom: 20px;
-            flex-shrink: 0;
-        }
-        .fullscreen-card-btn {
-            background: var(--glass);
-            color: var(--text);
-            border: 1px solid var(--border);
-            font-size: 1.2rem;
-            padding: 10px 12px;
-            border-radius: 8px;
-            width: 40px; height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease-in-out;
-        }
-        .fullscreen-card-btn:hover {
-            background: var(--yellow);
-            color: var(--bg);
-            transform: scale(1.1);
-            border-color: var(--yellow);
-        }
-        .fullscreen-card-btn.delete { color: var(--red); border-color: var(--red); }
-        .fullscreen-card-btn.delete:hover { background: var(--red); color: var(--bg); }
-        .fullscreen-card-btn.close:hover { background: var(--red); border-color: var(--red); }
-    </style>
+    .fullscreen-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+        padding-top: 10px;
+        border-top: 1px solid var(--border);
+        justify-content: flex-end;
+        z-index: 3001;
+        background: rgba(10,10,10, 0.9);
+        margin-left: -20px; margin-right: -20px;
+        padding-left: 20px; padding-right: 20px;
+        padding-bottom: 20px;
+        flex-shrink: 0;
+    }
+    .fullscreen-card-btn {
+        background: var(--glass);
+        color: var(--text);
+        border: 1px solid var(--border);
+        font-size: 1.2rem;
+        padding: 10px 12px;
+        border-radius: 8px;
+        width: 40px; height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease-in-out;
+    }
+    .fullscreen-card-btn:hover {
+        background: var(--yellow);
+        color: var(--bg);
+        transform: scale(1.1);
+        border-color: var(--yellow);
+    }
+    .fullscreen-card-btn.delete { color: var(--red); border-color: var(--red); }
+    .fullscreen-card-btn.delete:hover { background: var(--red); color: var(--bg); }
+    .fullscreen-card-btn.close:hover { background: var(--red); border-color: var(--red); }
+  </style>
 </head>
 <body>
-    <div class="header">
-        <div class="logo" onclick="window.location.reload()">AI Mind Map</div>
-        <button onclick="showSettings()">Settings</button>
+  <div class="header">
+    <div class="logo" id="logoBtn">AI Mind Map</div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <button id="settingsOpenBtn" type="button">Settings</button>
+      <button id="runTestsBtn" type="button" class="send-btn" title="Run self-tests">Run tests</button>
+    </div>
+  </div>
+
+  <div class="main-container">
+    <div class="input-panel" id="inputPanel">
+      <div class="section">
+        <div class="section-title">Mode</div>
+        <select id="modeSelect">
+          <option value="chat">Chat</option>
+          <option value="code">Code</option>
+          <option value="generate">Generate</option>
+        </select>
+      </div>
+      <div class="section">
+        <div class="section-title">Message/Prompt</div>
+        <textarea id="userInput" placeholder="Ask anything..."></textarea>
+        <button id="sendBtn" class="send-btn" type="button">Send</button>
+      </div>
     </div>
 
-    <div class="main-container">
-        <div class="input-panel" id="inputPanel">
-            <div class="section">
-                <div class="section-title">Mode</div>
-                <select id="modeSelect">
-                    <option value="chat">Chat</option>
-                    <option value="code">Code</option>
-                    <option value="generate">Generate</option>
-                </select>
-            </div>
-            <div class="section">
-                <div class="section-title">Message/Prompt</div>
-                <textarea id="userInput" placeholder="Ask anything..."></textarea>
-                <button class="send-btn" onclick="sendMessage()">Send</button>
-            </div>
-        </div>
+    <div class="resize-divider" id="resizeDivider" role="separator"></div>
 
-        <div class="resize-divider" id="resizeDivider"></div>
-
-        <div class="canvas" id="canvas">
-            <div class="grid" id="grid"></div>
-        </div>
+    <div class="canvas" id="canvas">
+      <div class="grid" id="grid"></div>
     </div>
+  </div>
 
-    <!-- Notices & Menus -->
-    <div class="saved-notice" id="savedNotice">Saved!</div>
-    <div class="longpress-menu" id="longpressMenu"></div>
-    <div class="loading" id="loading">Processing...</div>
+  <div class="saved-notice" id="savedNotice">Saved!</div>
+  <div class="loading" id="loading">Processing...</div>
 
-    <!-- Settings Modal -->
-    <div class="modal" id="settingsModal">
-        <div class="modal-content">
-            <div class="modal-title">Settings</div>
-            <div class="section">
-                <div class="section-title">API Base URL</div>
-                <input type="text" id="baseUrl" placeholder="https://your-worker.workers.dev">
-            </div>
-            <div class="section">
-                <div class="section-title">Current Session ID</div>
-                <input type="text" id="sessionIdInput" readonly>
-            </div>
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button onclick="exportData()">💾 Export Mind Map</button>
-                <label for="importFile" class="send-btn">Import Mind Map</label>
-                <input type="file" id="importFile" accept=".json" onchange="importData(event)" style="display: none;">
-            </div>
-            <div class="modal-actions">
-                <button onclick="closeSettings()">Cancel</button>
-                <button class="send-btn" onclick="saveSettings()">Save</button>
-            </div>
-        </div>
+  <div class="modal" id="settingsModal" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-title">Settings</div>
+      <div class="section">
+        <div class="section-title">API Base URL</div>
+        <input type="text" id="baseUrl" placeholder="https://your-worker.workers.dev">
+      </div>
+      <div class="section">
+        <div class="section-title">Current Session ID</div>
+        <input type="text" id="sessionIdInput" readonly>
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 15px;">
+        <button id="exportBtn" type="button">💾 Export Mind Map</button>
+        <label for="importFile" class="send-btn" style="cursor:pointer;">Import Mind Map</label>
+        <input type="file" id="importFile" accept=".json" style="display: none;">
+      </div>
+      <div class="modal-actions">
+        <button id="settingsCancelBtn" type="button">Cancel</button>
+        <button id="settingsSaveBtn" class="send-btn" type="button">Save</button>
+      </div>
     </div>
+  </div>
 
-    <!-- Edit Modal -->
-    <div class="modal" id="editModal">
-        <div class="modal-content edit-modal-content">
-            <div class="modal-title">Edit Tile <span id="editTileIdDisplay"></span></div>
-            <div class="modal-row">
-                <div class="section-title">Question / Intro</div>
-                <textarea id="editQuestion"></textarea>
-            </div>
-            <div class="modal-row">
-                <div class="section-title">Response Markdown <span class="preview-toggle" id="editTogglePreview">Preview</span></div>
-                <textarea id="editResponse"></textarea>
-                <div class="markdown-preview" id="editPreview"></div>
-            </div>
-            <div class="modal-actions">
-                <button onclick="closeEditModal()">Cancel</button>
-                <button class="send-btn" onclick="saveEditedTile()">Save</button>
-            </div>
-        </div>
+  <div class="modal" id="editModal" aria-hidden="true">
+    <div class="modal-content edit-modal-content">
+      <div class="modal-title">Edit Tile <span id="editTileIdDisplay"></span></div>
+      <div class="modal-row">
+        <div class="section-title">Question / Intro</div>
+        <textarea id="editQuestion"></textarea>
+      </div>
+      <div class="modal-row">
+        <div class="section-title">Response Markdown <button id="editTogglePreview" class="preview-toggle" type="button">Preview</button></div>
+        <textarea id="editResponse"></textarea>
+        <div class="markdown-preview" id="editPreview" style="display:none;"></div>
+      </div>
+      <div class="modal-actions">
+        <button id="editCancelBtn" type="button">Cancel</button>
+        <button id="editSaveBtn" class="send-btn" type="button">Save</button>
+      </div>
     </div>
+  </div>
 
-    <!-- Fullscreen View -->
-    <div class="fullscreen-overlay" id="fullscreenOverlay">
-        <div class="fullscreen-main-content">
-            <div class="fullscreen-card-inner">
-                <div class="card-face card-front fullscreen-card-face">
-                    <div class="fullscreen-question-text"></div>
-                    <div class="fullscreen-response-content"></div>
-                    <div class="fullscreen-actions">
-                        <button class="fullscreen-card-btn edit" title="Edit" onclick="handleFullscreenAction('edit')">✏️</button>
-                        <button class="fullscreen-card-btn share" title="Share" onclick="handleFullscreenAction('share')">↗️</button>
-                        <button class="fullscreen-card-btn followup" title="Follow Up" onclick="handleFullscreenAction('followup')">↪️</button>
-                        <button class="fullscreen-card-btn delete" title="Delete" onclick="handleFullscreenAction('delete')">🗑️</button>
-                        <button class="fullscreen-card-btn close" title="Close" onclick="handleFullscreenAction('close')">×</button>
-                    </div>
-                </div>
-                <div class="card-face card-back fullscreen-card-face">
-                    <div class="fullscreen-question-text"></div>
-                    <div class="fullscreen-response-content"></div>
-                    <div class="fullscreen-actions">
-                        <button class="fullscreen-card-btn edit" title="Edit" onclick="handleFullscreenAction('edit')">✏️</button>
-                        <button class="fullscreen-card-btn share" title="Share" onclick="handleFullscreenAction('share')">↗️</button>
-                        <button class="fullscreen-card-btn followup" title="Follow Up" onclick="handleFullscreenAction('followup')">↪️</button>
-                        <button class="fullscreen-card-btn delete" title="Delete" onclick="handleFullscreenAction('delete')">🗑️</button>
-                        <button class="fullscreen-card-btn close" title="Close" onclick="handleFullscreenAction('close')">×</button>
-                    </div>
-                </div>
-            </div>
+  <div class="fullscreen-overlay" id="fullscreenOverlay" aria-hidden="true">
+    <div class="fullscreen-main-content">
+      <div class="fullscreen-card-inner" id="fullscreenInner">
+        <div class="card-face card-front fullscreen-card-face">
+          <div class="fullscreen-question-text"></div>
+          <div class="fullscreen-response-content"></div>
+          <div class="fullscreen-actions">
+            <button class="fullscreen-card-btn" data-action="flip" title="Flip">↻</button>
+            <button class="fullscreen-card-btn" data-action="edit" title="Edit">✏️</button>
+            <button class="fullscreen-card-btn" data-action="followup" title="Follow Up">↪️</button>
+            <button class="fullscreen-card-btn delete" data-action="delete" title="Delete">🗑️</button>
+            <button class="fullscreen-card-btn close" data-action="close" title="Close">×</button>
+          </div>
         </div>
+        <div class="card-face card-back fullscreen-card-face">
+          <div class="fullscreen-question-text"></div>
+          <div class="fullscreen-response-content"></div>
+          <div class="fullscreen-actions">
+            <button class="fullscreen-card-btn" data-action="flip" title="Flip">↻</button>
+            <button class="fullscreen-card-btn" data-action="edit" title="Edit">✏️</button>
+            <button class="fullscreen-card-btn" data-action="followup" title="Follow Up">↪️</button>
+            <button class="fullscreen-card-btn delete" data-action="delete" title="Delete">🗑️</button>
+            <button class="fullscreen-card-btn close" data-action="close" title="Close">×</button>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <script>
-        // --- Global Variables ---
-        let pairs = [];
-        let history = [];
-        let sessionId = "main-" + Date.now();
-        let selectedTiles = new Set();
-        let longPressTimer;
-        let accumulatedAIResponse = '';
-        let currentTileIdForStreaming = null;
-        let textDecoder = new TextDecoder('utf-8');
+  <script>
+    // --- Global Variables ---
+    let pairs = [];
+    let history = [];
+    let sessionId = "main-" + Date.now();
+    let currentFullscreenTileId = null;
+    let accumulatedAIResponse = '';
+    let currentTileIdForStreaming = null;
+    let textDecoder = new TextDecoder('utf-8');
 
-        // Resize state
-        let isResizing = false;
-        let startY, startHeightInputPanel;
-        let resizeRAF = null;
+    // Resize state
+    let isResizing = false;
+    let startY, startHeightInputPanel;
 
-        // DOM References
-        const gridElement = document.getElementById("grid");
-        const userInputElement = document.getElementById("userInput");
-        const modeSelectElement = document.getElementById("modeSelect");
-        const baseUrlInput = document.getElementById("baseUrl");
-        const sessionIdInput = document.getElementById("sessionIdInput");
-        const settingsModal = document.getElementById("settingsModal");
-        const savedNotice = document.getElementById("savedNotice");
-        const longpressMenu = document.getElementById("longpressMenu");
-        const loadingIndicator = document.getElementById("loading");
-        const dragDivider = document.getElementById("resizeDivider");
-        const inputPanelElement = document.getElementById("inputPanel");
-        const editModal = document.getElementById("editModal");
-        const editQuestionTextarea = document.getElementById("editQuestion");
-        const editResponseTextarea = document.getElementById("editResponse");
-        const editPreviewDiv = document.getElementById("editPreview");
-        const editTogglePreviewSpan = document.getElementById("editTogglePreview");
-        const fullscreenOverlay = document.getElementById("fullscreenOverlay");
-        const fullscreenCardInner = fullscreenOverlay.querySelector('.fullscreen-card-inner');
-        const fullscreenQuestionDivs = fullscreenOverlay.querySelectorAll('.fullscreen-question-text');
-        const fullscreenResponseDivs = fullscreenOverlay.querySelectorAll('.fullscreen-response-content');
-        const editTileIdDisplaySpan = document.getElementById("editTileIdDisplay");
+    // DOM References
+    const gridElement = document.getElementById("grid");
+    const userInputElement = document.getElementById("userInput");
+    const modeSelectElement = document.getElementById("modeSelect");
+    const baseUrlInput = document.getElementById("baseUrl");
+    const sessionIdInput = document.getElementById("sessionIdInput");
+    const settingsModal = document.getElementById("settingsModal");
+    const savedNotice = document.getElementById("savedNotice");
+    const loadingIndicator = document.getElementById("loading");
+    const dragDivider = document.getElementById("resizeDivider");
+    const inputPanelElement = document.getElementById("inputPanel");
+    const editModal = document.getElementById("editModal");
+    const editQuestionTextarea = document.getElementById("editQuestion");
+    const editResponseTextarea = document.getElementById("editResponse");
+    const editPreviewDiv = document.getElementById("editPreview");
+    const editTogglePreviewBtn = document.getElementById("editTogglePreview");
+    const editTileIdDisplaySpan = document.getElementById("editTileIdDisplay");
+    const fullscreenOverlay = document.getElementById("fullscreenOverlay");
+    const fullscreenCardInner = document.getElementById("fullscreenInner");
+    const fullscreenQuestionTexts = fullscreenOverlay.querySelectorAll('.fullscreen-question-text');
+    const fullscreenResponseContents = fullscreenOverlay.querySelectorAll('.fullscreen-response-content');
 
-        // Storage Keys
-        const STORAGE_DATA_KEY = "mindmap-data";
-        const STORAGE_BASEURL_KEY = "mindmap-baseUrl";
-        const STORAGE_DIVIDER_HEIGHT_KEY = "mindmap-divider-height";
+    // Buttons
+    const logoBtn = document.getElementById("logoBtn");
+    const settingsOpenBtn = document.getElementById("settingsOpenBtn");
+    const runTestsBtn = document.getElementById("runTestsBtn");
+    const settingsSaveBtn = document.getElementById("settingsSaveBtn");
+    const settingsCancelBtn = document.getElementById("settingsCancelBtn");
+    const exportBtn = document.getElementById("exportBtn");
+    const importFileInput = document.getElementById("importFile");
+    const sendBtn = document.getElementById("sendBtn");
+    const editSaveBtn = document.getElementById("editSaveBtn");
+    const editCancelBtn = document.getElementById("editCancelBtn");
 
-        // Icons
-        const ICONS = {
-            delete: "🗑️", copy: "📋", followup: "↪️", fullscreen: "⛶",
-            edit: "✏️", share: "↗️", close: "×"
-        };
+    // Storage Keys
+    const STORAGE_DATA_KEY = "mindmap-data";
+    const STORAGE_BASEURL_KEY = "mindmap-baseUrl";
+    const STORAGE_DIVIDER_HEIGHT_KEY = "mindmap-divider-height";
 
-        // --- Helpers ---
-        function getBaseUrl() { return baseUrlInput.value.trim().replace(/\/+$/, ''); }
+    // Icons
+    const ICONS = {
+      delete: "🗑️",
+      copy: "📋",
+      followup: "↪️",
+      fullscreen: "⛶",
+      edit: "✏️",
+      close: "×"
+    };
 
-        function escapeHTML(str) {
-            const div = document.createElement('div');
-            div.appendChild(document.createTextNode(str));
-            return div.innerHTML;
-        }
+    // --- Helpers ---
+    function getBaseUrl() {
+      return (baseUrlInput.value || '').trim().replace(/\/+$/, '');
+    }
 
-        function safeRenderMarkdown(md) {
-            const html = marked.parse(md || '');
-            return DOMPurify.sanitize(html);
-        }
+    function escapeHTML(str = '') {
+      const div = document.createElement('div');
+      div.appendChild(document.createTextNode(String(str)));
+      return div.innerHTML;
+    }
 
-        function updateTileResponseContent(tileId, contentHTML, isStreaming = false) {
-            const tileElement = gridElement.querySelector(`[data-id="${tileId}"]`);
-            if (!tileElement) return;
-            const responseDiv = tileElement.querySelector('.response-content');
-            if (!responseDiv) return;
+    function safeRenderMarkdown(md) {
+      const html = marked.parse(md || '');
+      return DOMPurify.sanitize(html);
+    }
 
-            if (isStreaming) {
-                responseDiv.textContent += contentHTML;
-            } else {
-                responseDiv.innerHTML = contentHTML;
-            }
-        }
+    function updateTileResponseContent(tileId, contentHTML, isStreaming = false) {
+      const tileElement = gridElement.querySelector(`[data-id="${tileId}"]`);
+      if (!tileElement) return;
+      const responseDiv = tileElement.querySelector('.response-content');
+      if (!responseDiv) return;
 
-        function updateTileQuestionContent(tileId, questionText) {
-            const tileElement = gridElement.querySelector(`[data-id="${tileId}"]`);
-            if (!tileElement) return;
-            const questionDiv = tileElement.querySelector('.card-front > div:first-child');
-            if (questionDiv) questionDiv.textContent = questionText;
-        }
+      if (isStreaming) {
+        responseDiv.textContent += contentHTML;
+      } else {
+        responseDiv.innerHTML = contentHTML;
+      }
+    }
 
-        function addPair(p) {
-            const id = crypto.randomUUID();
-            pairs.push({ id, question: p.question, response: p.response || '', sessionId: p.sessionId || sessionId });
-            renderPair(pairs[pairs.length - 1]);
-            save();
-            return id;
-        }
+    function updateTileQuestionContent(tileId, questionText) {
+      const tileElement = gridElement.querySelector(`[data-id="${tileId}"]`);
+      if (!tileElement) return;
+      const questionDiv = tileElement.querySelector('.card-front > div:first-child');
+      if (questionDiv) questionDiv.textContent = questionText;
+    }
 
-        function renderPair(p) {
-            let responseHTML = 'Waiting for AI...';
-            if (p.response && p.response !== '...' && !p.response.startsWith('Error:')) {
-                responseHTML = safeRenderMarkdown(p.response);
-            } else if (p.response === '...') {
-                responseHTML = '...';
-            } else if (p.response.startsWith('Error:')) {
-                responseHTML = `<p style="color:red;">${escapeHTML(p.response)}</p>`;
-            }
+    function addPair(p) {
+      const id = crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now() + '-' + Math.floor(Math.random()*100000);
+      pairs.push({ id, question: p.question, response: p.response || '', sessionId: p.sessionId || sessionId });
+      renderPair(pairs[pairs.length - 1]);
+      save();
+      return id;
+    }
 
-            const c = document.createElement("div");
-            c.className = "flip-card";
-            c.dataset.id = p.id;
+    function renderPair(p) {
+      let responseHTML = 'Waiting for AI...';
+      if (p.response && p.response !== '...' && !p.response.startsWith('Error:')) {
+        responseHTML = safeRenderMarkdown(p.response);
+      } else if (p.response === '...') {
+        responseHTML = '...';
+      } else if (p.response && p.response.startsWith('Error:')) {
+        responseHTML = `<p style="color:red;">${escapeHTML(p.response)}</p>`;
+      }
 
-            c.innerHTML = `
-                <div class="flip-card-inner">
-                    <div class="card-face card-front">
-                        <div style="flex:1;overflow:auto;padding:4px;">${escapeHTML(p.question)}</div>
-                        <div class="card-actions">
-                            <button class="card-btn fullscreen" title="Fullscreen" onclick="event.stopPropagation(); showFullscreen('\( {p.id}')"> \){ICONS.fullscreen}</button>
-                            <button class="card-btn edit" title="Edit" onclick="event.stopPropagation(); showEditModal('\( {p.id}')"> \){ICONS.edit}</button>
-                            <button class="card-btn delete" title="Delete" onclick="event.stopPropagation(); deletePair('\( {p.id}')"> \){ICONS.delete}</button>
-                            <button class="card-btn copy" title="Copy Response" onclick="event.stopPropagation(); copyResponse('\( {p.id}')"> \){ICONS.copy}</button>
-                            <button class="card-btn followup" title="Follow Up" onclick="event.stopPropagation(); sendTileToAI('\( {p.id}')"> \){ICONS.followup}</button>
-                        </div>
-                    </div>
-                    <div class="card-face card-back">
-                        <div class="response-content">${responseHTML}</div>
-                        <div class="card-actions">
-                            <button class="card-btn fullscreen" title="Fullscreen" onclick="event.stopPropagation(); showFullscreen('\( {p.id}')"> \){ICONS.fullscreen}</button>
-                            <button class="card-btn edit" title="Edit" onclick="event.stopPropagation(); showEditModal('\( {p.id}')"> \){ICONS.edit}</button>
-                            <button class="card-btn copy" title="Copy Response" onclick="event.stopPropagation(); copyResponse('\( {p.id}')"> \){ICONS.copy}</button>
-                        </div>
-                    </div>
-                </div>`;
+      const c = document.createElement("div");
+      c.className = "flip-card";
+      c.dataset.id = p.id;
 
-            c.onclick = e => {
-                if (e.target.closest('.card-btn') || e.target.closest('.card-actions')) return;
-                c.classList.toggle('flipped');
-            };
-            c.onmousedown = e => { longPressTimer = setTimeout(() => showLongPressMenu(e, p.id), 600); };
-            c.onmouseup = c.onmouseleave = () => clearTimeout(longPressTimer);
-            c.ontouchstart = e => { longPressTimer = setTimeout(() => showLongPressMenu(e, p.id), 600); };
-            c.ontouchend = c.ontouchmove = () => clearTimeout(longPressTimer);
+      c.innerHTML = `
+        <div class="flip-card-inner">
+          <div class="card-face card-front">
+            <div style="flex:1;overflow:auto;padding:4px;">${escapeHTML(p.question)}</div>
+            <div class="card-actions">
+              <button class="card-btn" data-action="show-fullscreen" title="Fullscreen">${ICONS.fullscreen}</button>
+              <button class="card-btn" data-action="edit" title="Edit">${ICONS.edit}</button>
+              <button class="card-btn delete" data-action="delete" title="Delete">${ICONS.delete}</button>
+              <button class="card-btn" data-action="copy" title="Copy Response">${ICONS.copy}</button>
+              <button class="card-btn" data-action="followup" title="Follow Up">${ICONS.followup}</button>
+            </div>
+          </div>
+          <div class="card-face card-back">
+            <div class="response-content">${responseHTML}</div>
+            <div class="card-actions">
+              <button class="card-btn" data-action="show-fullscreen" title="Fullscreen">${ICONS.fullscreen}</button>
+              <button class="card-btn" data-action="edit" title="Edit">${ICONS.edit}</button>
+              <button class="card-btn" data-action="copy" title="Copy Response">${ICONS.copy}</button>
+            </div>
+          </div>
+        </div>`;
 
-            gridElement.appendChild(c);
-        }
+      c.addEventListener('click', e => {
+        if (e.target.closest('.card-btn') || e.target.closest('.card-actions')) return;
+        c.classList.toggle('flipped');
+      });
 
-        // --- Streaming & API ---
-        async function processSSEStream(reader, tileId) {
-            let buffer = '';
-            accumulatedAIResponse = '';
+      gridElement.appendChild(c);
+    }
 
-            try {
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    buffer += textDecoder.decode(value, { stream: true });
+    // --- API & Streaming ---
+    async function processSSEStream(reader, tileId) {
+      let buffer = '';
+      accumulatedAIResponse = '';
 
-                    let parts = buffer.split('\n\n');
-                    buffer = parts.pop() || '';
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += textDecoder.decode(value, { stream: true });
 
-                    for (const part of parts) {
-                        if (part.startsWith('data: ')) {
-                            const dataStr = part.substring(6);
-                            if (dataStr === '[DONE]') return;
-                            try {
-                                const data = JSON.parse(dataStr);
-                                const content = data.choices?.[0]?.delta?.content;
-                                if (content) {
-                                    accumulatedAIResponse += content;
-                                    updateTileResponseContent(tileId, content, true);
-                                }
-                            } catch (e) { /* ignore malformed */ }
-                        }
-                    }
+          let parts = buffer.split('\n\n');
+          buffer = parts.pop() || '';
+
+          for (const part of parts) {
+            if (part.startsWith('data: ')) {
+              const dataStr = part.substring(6);
+              if (dataStr === '[DONE]') return;
+              try {
+                const data = JSON.parse(dataStr);
+                const content = data.choices?.[0]?.delta?.content;
+                if (content) {
+                  accumulatedAIResponse += content;
+                  updateTileResponseContent(tileId, content, true);
                 }
-            } catch (err) {
-                console.error(err);
-                updateTileResponseContent(tileId, `<p style="color:red;">Stream error: ${escapeHTML(err.message)}</p>`, false);
-            } finally {
-                if (accumulatedAIResponse) {
-                    const safeHTML = safeRenderMarkdown(accumulatedAIResponse);
-                    updateTileResponseContent(tileId, safeHTML, false);
-
-                    const tile = pairs.find(p => p.id === tileId);
-                    if (tile) tile.response = accumulatedAIResponse;
-                    save();
-                }
+              } catch (e) {
+                accumulatedAIResponse += dataStr;
+                updateTileResponseContent(tileId, dataStr, true);
+              }
             }
+          }
         }
-
-        async function apiFetch(path, payload) {
-            const base = getBaseUrl();
-            if (!base) throw new Error('API Base URL not set.');
-            const res = await fetch(base + path, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(err.error || `HTTP ${res.status}`);
-            }
-            return res.body.getReader();
+      } catch (err) {
+        console.error(err);
+        updateTileResponseContent(tileId, `<p style="color:red;">Stream error: ${escapeHTML(err.message)}</p>`, false);
+      } finally {
+        if (accumulatedAIResponse) {
+          const safeHTML = safeRenderMarkdown(accumulatedAIResponse);
+          updateTileResponseContent(tileId, safeHTML, false);
+          const tile = pairs.find(t => t.id === tileId);
+          if (tile) tile.response = accumulatedAIResponse;
+          save();
         }
+      }
+    }
 
-        async function sendMessage() {
-            const input = userInputElement.value.trim();
-            if (!input) return;
-            const mode = modeSelectElement.value;
+    async function apiFetch(path, payload) {
+      const base = getBaseUrl();
+      if (!base) throw new Error('API Base URL not set.');
+      const url = base + path;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
 
-            userInputElement.value = '';
-            loadingIndicator.classList.add("show");
+      if (!res.ok) {
+        let msg = `HTTP ${res.status}`;
+        try { const json = await res.json(); msg = json.error || json.message || JSON.stringify(json); } catch {}
+        throw new Error(msg);
+      }
 
-            try {
-                const payload = { sessionId };
-                if (mode === 'chat') payload.message = input;
-                else payload.prompt = input;
+      if (res.body) return res.body.getReader();
 
-                const path = mode === 'code' ? '/api/code' : mode === 'generate' ? '/api/generate' : '/api/chat';
-
-                currentTileIdForStreaming = addPair({ question: input, response: '...' });
-                const reader = await apiFetch(path, payload);
-                await processSSEStream(reader, currentTileIdForStreaming);
-
-            } catch (err) {
-                if (currentTileIdForStreaming) {
-                    const msg = `Error: ${err.message}`;
-                    updateTileResponseContent(currentTileIdForStreaming, `<p style="color:red;">${escapeHTML(msg)}</p>`, false);
-                    const tile = pairs.find(p => p.id === currentTileIdForStreaming);
-                    if (tile) tile.response = msg;
-                } else {
-                    alert(err.message);
-                }
-            } finally {
-                loadingIndicator.classList.remove("show");
-                currentTileIdForStreaming = null;
-            }
+      // Fallback for non-streaming
+      const text = await res.text();
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(encoder.encode(text));
+          controller.close();
         }
+      });
+      return stream.getReader();
+    }
 
-        // --- Tile Actions ---
-        function deletePair(id) {
-            pairs = pairs.filter(p => p.id !== id);
-            document.querySelector(`[data-id="${id}"]`)?.remove();
-            selectedTiles.delete(id);
-            save();
+    async function sendMessage() {
+      const input = userInputElement.value.trim();
+      if (!input) return;
+      const mode = modeSelectElement.value;
+
+      userInputElement.value = '';
+      loadingIndicator.classList.add("show");
+
+      try {
+        const payload = { sessionId };
+        if (mode === 'chat') payload.message = input;
+        else payload.prompt = input;
+
+        const path = mode === 'code' ? '/api/code' : mode === 'generate' ? '/api/generate' : '/api/chat';
+
+        currentTileIdForStreaming = addPair({ question: input, response: '...' });
+        const reader = await apiFetch(path, payload);
+        await processSSEStream(reader, currentTileIdForStreaming);
+      } catch (err) {
+        if (currentTileIdForStreaming) {
+          const msg = `Error: ${err.message || String(err)}`;
+          updateTileResponseContent(currentTileIdForStreaming, `<p style="color:red;">${escapeHTML(msg)}</p>`, false);
+          const tile = pairs.find(t => t.id === currentTileIdForStreaming);
+          if (tile) tile.response = msg;
+          save();
+        } else {
+          alert(err.message || String(err));
         }
+      } finally {
+        loadingIndicator.classList.remove("show");
+        currentTileIdForStreaming = null;
+      }
+    }
 
-        function copyResponse(id) {
-            const el = gridElement.querySelector(`[data-id="${id}"] .response-content`);
-            navigator.clipboard.writeText(el?.textContent || '').then(() => alert('Copied!'));
+    // --- Tile Actions ---
+    function deletePair(id) {
+      pairs = pairs.filter(p => p.id !== id);
+      document.querySelector(`[data-id="${id}"]`)?.remove();
+      save();
+    }
+
+    function copyResponse(id) {
+      const el = gridElement.querySelector(`[data-id="${id}"] .response-content`);
+      const text = el ? el.textContent || '' : '';
+      navigator.clipboard.writeText(text).then(() => showSavedNotice('Copied!')).catch(() => alert('Copy failed'));
+    }
+
+    function sendTileToAI(id) {
+      const tile = pairs.find(p => p.id === id);
+      if (!tile) return;
+      const respText = gridElement.querySelector(`[data-id="${id}"] .response-content`)?.textContent || '';
+      userInputElement.value = `\( {tile.question}\n\n---\n\n \){respText.slice(0, 1000)}`;
+      userInputElement.focus();
+    }
+
+    function showFullscreen(id) {
+      const tile = pairs.find(p => p.id === id);
+      if (!tile) return;
+      currentFullscreenTileId = id;
+
+      fullscreenQuestionTexts.forEach(el => el.textContent = tile.question);
+      fullscreenResponseContents.forEach(el => el.innerHTML = tile.response ? safeRenderMarkdown(tile.response) : 'No response yet');
+
+      fullscreenOverlay.classList.add("show");
+      fullscreenOverlay.setAttribute('aria-hidden', 'false');
+    }
+
+    function hideFullscreen() {
+      fullscreenOverlay.classList.remove("show");
+      fullscreenOverlay.setAttribute('aria-hidden', 'true');
+      currentFullscreenTileId = null;
+    }
+
+    function flipFullscreen() {
+      fullscreenCardInner.classList.toggle('flipped');
+    }
+
+    function showEditModal(id) {
+      const tile = pairs.find(p => p.id === id);
+      if (!tile) return;
+
+      editTileIdDisplaySpan.textContent = `#${id.slice(0,8)}`;
+      editQuestionTextarea.value = tile.question;
+      editResponseTextarea.value = tile.response || '';
+      editPreviewDiv.style.display = 'none';
+      editModal.classList.add("show");
+      currentFullscreenTileId = id; // reuse variable
+      hideFullscreen();
+    }
+
+    function saveEditedTile() {
+      const tile = pairs.find(p => p.id === currentFullscreenTileId);
+      if (!tile) return;
+
+      tile.question = editQuestionTextarea.value.trim();
+      tile.response = editResponseTextarea.value.trim();
+
+      updateTileQuestionContent(tile.id, tile.question);
+      updateTileResponseContent(tile.id, safeRenderMarkdown(tile.response), false);
+
+      if (fullscreenOverlay.classList.contains('show')) {
+        showFullscreen(tile.id);
+      }
+
+      closeEditModal();
+      save();
+      showSavedNotice();
+    }
+
+    function closeEditModal() {
+      editModal.classList.remove("show");
+    }
+
+    function toggleEditPreview() {
+      if (editPreviewDiv.style.display === 'none') {
+        editPreviewDiv.innerHTML = safeRenderMarkdown(editResponseTextarea.value);
+        editPreviewDiv.style.display = 'block';
+        editTogglePreviewBtn.textContent = 'Hide Preview';
+      } else {
+        editPreviewDiv.style.display = 'none';
+        editTogglePreviewBtn.textContent = 'Preview';
+      }
+    }
+
+    // --- Settings ---
+    function showSettings() {
+      baseUrlInput.value = localStorage.getItem(STORAGE_BASEURL_KEY) || '';
+      sessionIdInput.value = sessionId;
+      settingsModal.classList.add("show");
+    }
+
+    function closeSettings() {
+      settingsModal.classList.remove("show");
+    }
+
+    function saveSettings() {
+      localStorage.setItem(STORAGE_BASEURL_KEY, baseUrlInput.value.trim());
+      closeSettings();
+      showSavedNotice();
+    }
+
+    // --- Import / Export ---
+    function exportData() {
+      const data = { pairs, history, sessionId };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ai-mindmap-export.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(file) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const data = JSON.parse(e.target.result);
+          pairs = data.pairs || [];
+          history = data.history || [];
+          sessionId = data.sessionId || "main-" + Date.now();
+          gridElement.innerHTML = '';
+          pairs.forEach(renderPair);
+          save();
+          showSavedNotice();
+        } catch (err) {
+          alert('Invalid file: ' + err.message);
         }
+      };
+      reader.readAsText(file);
+    }
 
-        function sendTileToAI(id) {
-            const tile = pairs.find(p => p.id === id);
-            if (!tile) return;
-            const respText = gridElement.querySelector(`[data-id="${id}"] .response-content`)?.textContent || '';
-            userInputElement.value = `\( {tile.question}\n\n---\n\n \){respText.slice(0, 1000)}`;
-            userInputElement.focus();
+    // --- Persistence ---
+    function save() {
+      const data = { pairs, history, sessionId };
+      localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify(data));
+    }
+
+    function load() {
+      const raw = localStorage.getItem(STORAGE_DATA_KEY);
+      if (raw) {
+        try {
+          const data = JSON.parse(raw);
+          pairs = data.pairs || [];
+          history = data.history || [];
+          sessionId = data.sessionId || sessionId;
+          pairs.forEach(renderPair);
+        } catch (e) {
+          console.warn("Failed to load data", e);
         }
+      }
+      const savedUrl = localStorage.getItem(STORAGE_BASEURL_KEY);
+      if (savedUrl) baseUrlInput.value = savedUrl;
 
-        // --- Fullscreen ---
-        let currentFullscreenTileId = null;
+      const savedHeight = localStorage.getItem(STORAGE_DIVIDER_HEIGHT_KEY);
+      if (savedHeight) inputPanelElement.style.height = savedHeight;
+    }
 
-        function showFullscreen(tileId) {
-            const tile = pairs.find(p => p.id === tileId);
-            const tileEl = gridElement.querySelector(`[data-id="${tileId}"]`);
-            if (!tile || !tileEl) return;
+    function showSavedNotice(text = "Saved!") {
+      savedNotice.textContent = text;
+      savedNotice.classList.add("show");
+      setTimeout(() => savedNotice.classList.remove("show"), 2000);
+    }
 
-            currentFullscreenTileId = tileId;
+    // --- Self-test ---
+    function runSelfTests() {
+      try {
+        // Basic checks
+        const testId = addPair({ question: "test", response: "ok" });
+        if (!document.querySelector(`[data-id="${testId}"]`)) throw new Error("Card not rendered");
+        deletePair(testId);
+        if (document.querySelector(`[data-id="${testId}"]`)) throw new Error("Card not removed");
+        alert("✅ All self-tests passed!");
+      } catch (e) {
+        alert("❌ Tests failed: " + e.message);
+        console.error(e);
+      }
+    }
 
-            const questionDiv = tileEl.querySelector('.card-front div:first-child');
-            const question = questionDiv?.textContent || tile.question;
+    // --- Event Listeners ---
+    logoBtn.addEventListener('click', () => location.reload());
+    settingsOpenBtn.addEventListener('click', showSettings);
+    runTestsBtn.addEventListener('click', runSelfTests);
+    settingsSaveBtn.addEventListener('click', saveSettings);
+    settingsCancelBtn.addEventListener('click', closeSettings);
+    exportBtn.addEventListener('click', exportData);
+    importFileInput.addEventListener('change', e => {
+      if (e.target.files[0]) importData(e.target.files[0]);
+      e.target.value = '';
+    });
+    sendBtn.addEventListener('click', sendMessage);
+    editSaveBtn.addEventListener('click', saveEditedTile);
+    editCancelBtn.addEventListener('click', closeEditModal);
+    editTogglePreviewBtn.addEventListener('click', toggleEditPreview);
 
-            fullscreenQuestionDivs.forEach(el => el.textContent = question);
-            fullscreenResponseDivs.forEach(el => el.innerHTML = safeRenderMarkdown(tile.response));
+    // Delegated click handler
+    document.addEventListener('click', e => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const id = btn.closest('.flip-card')?.dataset.id || currentFullscreenTileId;
 
-            if (tileEl.classList.contains('flipped')) {
-                fullscreenCardInner.classList.add('flipped');
-            } else {
-                fullscreenCardInner.classList.remove('flipped');
-            }
+      switch (action) {
+        case 'show-fullscreen': showFullscreen(id); break;
+        case 'flip': flipFullscreen(); break;
+        case 'edit': showEditModal(id); break;
+        case 'delete': if (confirm('Delete this tile?')) deletePair(id); break;
+        case 'copy': copyResponse(id); break;
+        case 'followup': sendTileToAI(id); break;
+        case 'close': hideFullscreen(); break;
+      }
+    });
 
-            fullscreenOverlay.classList.add("show");
-        }
+    // Resize handler
+    dragDivider.addEventListener('mousedown', e => {
+      isResizing = true;
+      startY = e.clientY;
+      startHeightInputPanel = inputPanelElement.getBoundingClientRect().height;
+      document.body.style.userSelect = 'none';
+    });
 
-        function hideFullscreen() {
-            fullscreenOverlay.classList.remove("show");
-            fullscreenCardInner.classList.remove('flipped');
-            fullscreenQuestionDivs.forEach(el => el.textContent = '');
-            fullscreenResponseDivs.forEach(el => el.innerHTML = '');
-            currentFullscreenTileId = null;
-        }
+    document.addEventListener('mousemove', e => {
+      if (!isResizing) return;
+      const delta = e.clientY - startY;
+      const newHeight = startHeightInputPanel + delta;
+      if (newHeight > 100 && newHeight < window.innerHeight - 100) {
+        inputPanelElement.style.height = newHeight + 'px';
+      }
+    });
 
-        function handleFullscreenAction(action) {
-            if (!currentFullscreenTileId) return hideFullscreen();
+    document.addEventListener('mouseup', () => {
+      if (isResizing) {
+        isResizing = false;
+        document.body.style.userSelect = '';
+        localStorage.setItem(STORAGE_DIVIDER_HEIGHT_KEY, inputPanelElement.style.height);
+      }
+    });
 
-            switch (action) {
-                case 'edit': showEditModal(currentFullscreenTileId); hideFullscreen(); break;
-                case 'share': copyTileLink(currentFullscreenTileId); break;
-                case 'followup': sendTileToAI(currentFullscreenTileId); hideFullscreen(); break;
-                case 'delete': deletePair(currentFullscreenTileId); hideFullscreen(); break;
-                case 'close':
-                default: hideFullscreen(); break;
-            }
-        }
+    // Touch resize
+    dragDivider.addEventListener('touchstart', e => {
+      isResizing = true;
+      startY = e.touches[0].clientY;
+      startHeightInputPanel = inputPanelElement.getBoundingClientRect().height;
+      e.preventDefault();
+    }, { passive: false });
 
-        function copyTileLink(id) {
-            const tile = pairs.find(p => p.id === id);
-            if (tile) {
-                const text = tile.response.replace(/<[^>]*>/g, '').trim();
-                navigator.clipboard.writeText(text).then(() => alert('Response copied!'));
-            }
-        }
+    document.addEventListener('touchmove', e => {
+      if (!isResizing) return;
+      const delta = e.touches[0].clientY - startY;
+      const newHeight = startHeightInputPanel + delta;
+      if (newHeight > 100 && newHeight < window.innerHeight - 100) {
+        inputPanelElement.style.height = newHeight + 'px';
+      }
+    }, { passive: false });
 
-        // Click to flip in fullscreen
-        fullscreenOverlay.addEventListener('click', e => {
-            if (e.target === fullscreenOverlay || e.target.closest('.fullscreen-main-content')) {
-                fullscreenCardInner.classList.toggle('flipped');
-            }
-        });
+    document.addEventListener('touchend', () => {
+      if (isResizing) {
+        isResizing = false;
+        localStorage.setItem(STORAGE_DIVIDER_HEIGHT_KEY, inputPanelElement.style.height);
+      }
+    });
 
-        // --- Edit Modal ---
-        let editingTileId = null;
-        let isPreviewMode = false;
+    // Keyboard shortcut
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
 
-        function showEditModal(tileId) {
-            editingTileId = tileId;
-            const tile = pairs.find(p => p.id === tileId);
-            if (!tile) return;
+    // Click outside modals to close
+    document.addEventListener('click', e => {
+      if (e.target === settingsModal) closeSettings();
+      if (e.target === editModal) closeEditModal();
+      if (e.target === fullscreenOverlay) hideFullscreen();
+    });
 
-            editQuestionTextarea.value = tile.question;
-            editResponseTextarea.value = tile.response;
-            editTileIdDisplaySpan.textContent = `#${tileId.slice(-6)}`;
-
-            isPreviewMode = false;
-            editTogglePreviewSpan.textContent = "Preview";
-            editResponseTextarea.style.display = "block";
-            editPreviewDiv.style.display = "none";
-
-            editModal.classList.add("show");
-        }
-
-        function closeEditModal() {
-            editModal.classList.remove("show");
-            editingTileId = null;
-        }
-
-        function toggleEditPreview() {
-            isPreviewMode = !isPreviewMode;
-            if (isPreviewMode) {
-                editPreviewDiv.innerHTML = safeRenderMarkdown(editResponseTextarea.value);
-                editResponseTextarea.style.display = "none";
-                editPreviewDiv.style.display = "block";
-                editTogglePreviewSpan.textContent = "Edit";
-            } else {
-                editResponseTextarea.style.display = "block";
-                editPreviewDiv.style.display = "none";
-                editTogglePreviewSpan.textContent = "Preview";
-            }
-        }
-
-        function saveEditedTile() {
-            if (!editingTileId) return closeEditModal();
-            const tile = pairs.find(p => p.id === editingTileId);
-            if (!tile) return closeEditModal();
-
-            tile.question = editQuestionTextarea.value.trim();
-            tile.response = editResponseTextarea.value.trim();
-
-            updateTileQuestionContent(editingTileId, tile.question);
-            updateTileResponseContent(editingTileId, safeRenderMarkdown(tile.response), false);
-
-            save();
-            showSavedNotice();
-            closeEditModal();
-        }
-
-        editTogglePreviewSpan.addEventListener('click', toggleEditPreview);
-
-        // --- Long Press Menu ---
-        function showLongPressMenu(e, id) {
-            e.stopPropagation();
-            const menu = longpressMenu;
-            const pageX = e.touches ? e.touches[0].pageX : e.pageX;
-            const pageY = e.touches ? e.touches[0].pageY : e.pageY;
-            menu.style.left = `${pageX}px`;
-            menu.style.top = `${pageY}px`;
-
-            const isSelected = selectedTiles.has(id);
-            const mergeBtn = selectedTiles.size > 1 ? `<button onclick="mergeSelected();hideMenu()">📋 Merge Selected</button>` : '';
-
-            menu.innerHTML = `
-                <button onclick="deletePair('${id}');hideMenu()">🗑️ Delete</button>
-                <button onclick="sendTileToAI('${id}');hideMenu()">↪️ Follow Up</button>
-                <button onclick="toggleSelect('\( {id}');hideMenu()"> \){isSelected ? '🚫 Deselect' : '✅ Select'}</button>
-                <button onclick="showFullscreen('${id}');hideMenu()">⛶ Fullscreen</button>
-                <button onclick="showEditModal('${id}');hideMenu()">✏️ Edit</button>
-                <button onclick="copyTileLink('${id}');hideMenu()">↗️ Share/Copy</button>
-                ${mergeBtn}
-            `;
-            menu.style.display = "flex";
-        }
-
-        function hideMenu() { longpressMenu.style.display = "none"; }
-
-        function toggleSelect(id) {
-            const card = gridElement.querySelector(`[data-id="${id}"]`);
-            if (card) {
-                card.classList.toggle('selected');
-                if (selectedTiles.has(id)) selectedTiles.delete(id);
-                else selectedTiles.add(id);
-            }
-        }
-
-        function mergeSelected() {
-            if (selectedTiles.size < 2) return alert("Select 2+ tiles");
-            const selected = pairs.filter(p => selectedTiles.has(p.id));
-            const combined = selected.map(p => `\( {p.question}\n\n---\n\n \){p.response}`).join('\n=====\n');
-            addPair({ question: "Merged Tiles", response: combined });
-            selected.forEach(t => deletePair(t.id));
-            selectedTiles.clear();
-            document.querySelectorAll('.flip-card.selected').forEach(el => el.classList.remove('selected'));
-        }
-
-        // --- Export / Import ---
-        function exportData() {
-            const data = { pairs, history, sessionId };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `mindmap-${new Date().toISOString().slice(0,10)}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function importData(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = ev => {
-                try {
-                    const data = JSON.parse(ev.target.result);
-                    pairs = data.pairs || [];
-                    history = data.history || [];
-                    sessionId = data.sessionId || "main-" + Date.now();
-                    gridElement.innerHTML = '';
-                    pairs.forEach(renderPair);
-                    sessionIdInput.value = sessionId;
-                    save();
-                    alert("Imported successfully!");
-                    closeSettings();
-                } catch (err) {
-                    alert("Invalid file");
-                }
-                e.target.value = '';
-            };
-            reader.readAsText(file);
-        }
-
-        // --- Settings ---
-        function showSettings() {
-            settingsModal.classList.add("show");
-            sessionIdInput.value = sessionId;
-        }
-        function closeSettings() { settingsModal.classList.remove("show"); }
-        function saveSettings() {
-            localStorage.setItem(STORAGE_BASEURL_KEY, baseUrlInput.value.trim());
-            closeSettings();
-            showSavedNotice();
-        }
-
-        // --- Resize Divider ---
-        dragDivider.addEventListener('mousedown', e => {
-            e.preventDefault();
-            isResizing = true;
-            startY = e.clientY;
-            startHeightInputPanel = inputPanelElement.offsetHeight;
-            document.addEventListener('mousemove', onMouseMove);
-            document.addEventListener('mouseup', onMouseUp);
-            document.body.style.cursor = 'ns-resize';
-        });
-
-        function onMouseMove(e) {
-            if (!isResizing) return;
-            if (resizeRAF) cancelAnimationFrame(resizeRAF);
-            resizeRAF = requestAnimationFrame(() => {
-                const delta = e.clientY - startY;
-                let newH = startHeightInputPanel + delta;
-                newH = Math.max(80, Math.min(newH, window.innerHeight * 0.8));
-                inputPanelElement.style.height = `${newH}px`;
-                localStorage.setItem(STORAGE_DIVIDER_HEIGHT_KEY, newH);
-            });
-        }
-
-        function onMouseUp() {
-            isResizing = false;
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', onMouseUp);
-            document.body.style.cursor = '';
-        }
-
-        function loadDividerHeight() {
-            const h = localStorage.getItem(STORAGE_DIVIDER_HEIGHT_KEY);
-            if (h) inputPanelElement.style.height = `${Math.max(80, Math.min(parseFloat(h), window.innerHeight * 0.8))}px`;
-            else inputPanelElement.style.height = "200px";
-        }
-
-        // --- Save / Load ---
-        function save() {
-            localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify({ pairs, history, sessionId }));
-        }
-
-        function load() {
-            const raw = localStorage.getItem(STORAGE_DATA_KEY);
-            if (raw) {
-                try {
-                    const data = JSON.parse(raw);
-                    pairs = data.pairs || [];
-                    history = data.history || [];
-                    sessionId = data.sessionId || "main-" + Date.now();
-                    pairs.forEach(renderPair);
-                } catch (e) {
-                    pairs = []; history = []; sessionId = "main-" + Date.now();
-                }
-            }
-            const url = localStorage.getItem(STORAGE_BASEURL_KEY);
-            if (url) baseUrlInput.value = url;
-            loadDividerHeight();
-            sessionIdInput.value = sessionId;
-        }
-
-        function showSavedNotice() {
-            savedNotice.classList.add("show");
-            setTimeout(() => savedNotice.classList.remove("show"), 2000);
-        }
-
-        // --- Global Key Events ---
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') {
-                hideMenu();
-                closeEditModal();
-                closeSettings();
-                hideFullscreen();
-            }
-        });
-
-        userInputElement.addEventListener('keydown', e => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-
-        // Hide menus on outside click
-        document.addEventListener('click', e => {
-            if (!longpressMenu.contains(e.target) && longpressMenu.style.display === 'flex') hideMenu();
-            if (!editModal.contains(e.target) && editModal.classList.contains('show')) closeEditModal();
-            if (!settingsModal.contains(e.target) && settingsModal.classList.contains('show')) closeSettings();
-            if (!fullscreenOverlay.contains(e.target) && fullscreenOverlay.classList.contains('show')) hideFullscreen();
-        });
-
-        // Init
-        load();
-    </script>
+    // Init
+    load();
+  </script>
 </body>
 </html>
