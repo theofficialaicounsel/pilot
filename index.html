@@ -176,8 +176,7 @@
     <div class="fullscreen-main-content">
       <div class="fullscreen-card-inner" id="fullscreenInner">
         <div class="fullscreen-card-face card-front">
-          <div class="fullscreen-question-text"></div>
-          <div class="fullscreen-response-content"></div>
+          <div class="fullscreen-question-text" style="flex:1;overflow:auto;white-space:pre-wrap;word-break:break-word;padding-right:8px;line-height:1.5;font-size:16px;"></div>
           <div style="margin-top:12px;display:flex;gap:10px;justify-content:flex-end">
             <button class="fullscreen-card-btn" data-action="flip" title="Flip">
               <!-- flip icon -->
@@ -203,8 +202,7 @@
         </div>
 
         <div class="fullscreen-card-face card-back">
-          <div class="fullscreen-question-text"></div>
-          <div class="fullscreen-response-content"></div>
+          <div class="fullscreen-response-content" style="flex:1;overflow:auto;white-space:pre-wrap;word-break:break-word;padding-right:8px;font-family:'Consolas','Monaco','Courier New',monospace;line-height:1.5;font-size:16px;"></div>
           <div style="margin-top:12px;display:flex;gap:10px;justify-content:flex-end">
             <button class="fullscreen-card-btn" data-action="flip" title="Flip">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" class="icon"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12v6a2 2 0 0 1-2 2H7"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12V6a2 2 0 0 1 2-2h12"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 9l-4 4 4 4"/></svg>
@@ -331,7 +329,7 @@ function renderPair(p) {
   card.innerHTML = `
     <div class="flip-card-inner">
       <div class="card-face card-front">
-        <div class="question-div" data-id="${p.id}">${escapeHTML(p.question)}</div>
+        <div class="question-div">${escapeHTML(p.question)}</div>
         <div class="card-actions">
           <button class="card-btn" data-action="show-fullscreen" data-id="${p.id}" title="Fullscreen">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" class="icon"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7V4h3M20 7V4h-3M4 17v3h3M20 17v3h-3"/></svg>
@@ -436,11 +434,33 @@ async function processSSEStream(reader, tileId) {
           if (line.startsWith('data:')) {
             const dataStr = line.substring(5).trim();
             if (dataStr === '[DONE]') {
-              const safeHTML = safeRenderMarkdown(accumulatedAIResponse);
-              updateTileResponseContent(tileId, safeHTML, false);
+              // === FINAL CLEANUP FOR OPENROUTER ===
+              let cleanResponse = accumulatedAIResponse.trim();
+
+              // Remove common OpenRouter artifacts
+              cleanResponse = cleanResponse
+                // Remove tool_use / function call JSON blocks
+                .replace(/\{[\s\S]*?"type"\s*:\s*"tool_use"[\s\S]*?\}/g, '')
+                .replace(/\{[\s\S]*?"function"[\s\S]*?\}/g, '')
+                // Remove any full JSON objects that look like schema or empty choices
+                .replace(/```json\s*\{[\s\S]*?\}\s*```/g, '')
+                .replace(/\{[\s\S]*?"choices"\s*:\s*\[\s*\][\s\S]*?\}/g, '')
+                // Remove standalone JSON lines
+                .replace(/^\s*\{.*?\}\s*$/gm, '')
+                .replace(/^\s*\[.*?\]\s*$/gm, '')
+                // Clean up empty code blocks and extra newlines
+                .replace(/```[\s\S]*?```/g, match => match.trim() === '``````' ? '' : match)
+                .replace(/\n{3,}/g, '\n\n')
+                .trim();
+
+              const finalHTML = cleanResponse 
+                ? safeRenderMarkdown(cleanResponse) 
+                : '<em style="color:#888">No content received (possibly tool calls only)</em>';
+
+              updateTileResponseContent(tileId, finalHTML, false);
 
               const tile = pairs.find(t => t.id === tileId);
-              if (tile) tile.response = accumulatedAIResponse;
+              if (tile) tile.response = cleanResponse || '';
               save();
 
               fullscreenOverlay.classList.remove('streaming');
@@ -449,21 +469,31 @@ async function processSSEStream(reader, tileId) {
 
             try {
               const data = JSON.parse(dataStr);
+
+              // Standard OpenAI-compatible delta
               const content = data.choices?.[0]?.delta?.content;
               if (content) {
                 accumulatedAIResponse += content;
                 updateTileResponseContent(tileId, content, true);
-              } else {
-                accumulatedAIResponse += dataStr;
-                updateTileResponseContent(tileId, dataStr, true);
+                continue;
               }
+
+              // Some providers send tool calls separately — ignore them visually
+              if (data.choices?.[0]?.delta?.tool_calls || data.choices?.[0]?.delta?.function_call) {
+                // Silently accumulate nothing visible
+                continue;
+              }
+
+              // Fallback: if no content, don't show raw JSON during streaming
             } catch (err) {
-              accumulatedAIResponse += dataStr;
-              updateTileResponseContent(tileId, dataStr, true);
+              // If not parseable JSON, treat as raw text (rare fallback)
+              // But avoid showing obvious JSON strings during live streaming
+              if (!dataStr.trim().startsWith('{') && !dataStr.trim().startsWith('[')) {
+                accumulatedAIResponse += dataStr + '\n';
+                updateTileResponseContent(tileId, dataStr + '\n', true);
+              }
+              // Otherwise: drop raw JSON chunks during streaming
             }
-          } else {
-            accumulatedAIResponse += line;
-            updateTileResponseContent(tileId, line, true);
           }
         }
       }
@@ -474,12 +504,28 @@ async function processSSEStream(reader, tileId) {
   } finally {
     fullscreenOverlay.classList.remove('streaming');
 
+    // Final fallback cleanup if stream ended without [DONE]
     if (accumulatedAIResponse) {
-      const safeHTML = safeRenderMarkdown(accumulatedAIResponse);
-      updateTileResponseContent(tileId, safeHTML, false);
+      let cleanResponse = accumulatedAIResponse.trim();
+
+      cleanResponse = cleanResponse
+        .replace(/\{[\s\S]*?"type"\s*:\s*"tool_use"[\s\S]*?\}/g, '')
+        .replace(/\{[\s\S]*?"function"[\s\S]*?\}/g, '')
+        .replace(/```json\s*\{[\s\S]*?\}\s*```/g, '')
+        .replace(/\{[\s\S]*?"choices"\s*:\s*\[\s*\][\s\S]*?\}/g, '')
+        .replace(/^\s*\{.*?\}\s*$/gm, '')
+        .replace(/^\s*\[.*?\]\s*$/gm, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+
+      const finalHTML = cleanResponse 
+        ? safeRenderMarkdown(cleanResponse) 
+        : '<em style="color:#888">No content after cleanup</em>';
+
+      updateTileResponseContent(tileId, finalHTML, false);
 
       const tile = pairs.find(t => t.id === tileId);
-      if (tile) tile.response = accumulatedAIResponse;
+      if (tile) tile.response = cleanResponse || '';
       save();
     }
 
@@ -605,20 +651,22 @@ function showFullscreen(id) {
 
   currentFullscreenTileId = id;
 
-  // Set question text in both sides
-  fullscreenQuestionTexts.forEach(el => {
-    el.textContent = tile.question || '';
-  });
+  // Set question text on front face only
+  const frontQuestion = fullscreenOverlay.querySelector('.card-front .fullscreen-question-text');
+  if (frontQuestion) {
+    frontQuestion.textContent = tile.question || '';
+  }
 
-  // Set response content in both sides
-  fullscreenResponseContents.forEach(el => {
+  // Set response content on back face only
+  const backResponse = fullscreenOverlay.querySelector('.card-back .fullscreen-response-content');
+  if (backResponse) {
     if (currentTileIdForStreaming === id && accumulatedAIResponse) {
-      el.textContent = accumulatedAIResponse;
+      backResponse.textContent = accumulatedAIResponse;
     } else {
-      el.innerHTML = tile.response ? safeRenderMarkdown(tile.response) : 'No response yet';
+      backResponse.innerHTML = tile.response ? safeRenderMarkdown(tile.response) : 'No response yet';
     }
-    el.scrollTop = el.scrollHeight;
-  });
+    backResponse.scrollTop = backResponse.scrollHeight;
+  }
 
   // Auto-flip to response side for better viewing
   fullscreenCardInner.classList.add('flipped');
