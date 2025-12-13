@@ -1,540 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  <title>AI Mind Map</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5.0,user-scalable=yes" />
+  <title>AI Mind Map — Streaming Fullscreen Auto-Scroll</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
   <style>
-    /* --- Global Styles --- */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root {
-        --bg: #0a0a0a;
-        --glass: rgba(26, 26, 26, 0.8);
-        --yellow: #ffd700;
-        --text: #fff;
-        --border: rgba(255, 215, 0, 0.3);
-        --red: #ff4444;
-        --blue: #58a6ff;
-        --hover-overlay: rgba(255, 215, 0, 0.1);
+    /* Theme & layout */
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0a0a0a; --glass:rgba(26,26,26,0.86);
+      --yellow:#ffd700; --text:#fff; --border:rgba(255,215,0,0.28);
+      --card-min-height:180px;
     }
-    body {
-        font-family: 'system-ui', 'Segoe UI', 'Roboto', sans-serif;
-        background: var(--bg);
-        color: var(--text);
-        height: 100vh;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-    }
+    html,body{height:100%}
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text);display:flex;flex-direction:column;height:100vh;overflow:hidden}
 
-    /* --- Header --- */
-    .header {
-        height: 50px;
-        background: rgba(10, 10, 10, 0.95);
-        border-bottom: 2px solid var(--yellow);
-        padding: 0 12px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-shrink: 0;
-        z-index: 1000;
-    }
-    .logo { font-size: 1.1rem; font-weight: bold; color: var(--yellow); cursor: pointer; }
+    .header{height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:rgba(10,10,10,0.95);border-bottom:2px solid var(--yellow);z-index:1000}
+    .logo{color:var(--yellow);font-weight:700;cursor:pointer}
 
-    /* --- Buttons --- */
-    button {
-        background: var(--glass);
-        color: var(--yellow);
-        border: 1px solid var(--border);
-        padding: 8px 12px;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: background 0.2s, color 0.2s, transform 0.1s;
-        font-family: inherit;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-    }
-    button:hover {
-        background: var(--yellow);
-        color: var(--bg);
-    }
-    .send-btn {
-        background: var(--yellow);
-        color: var(--bg);
-        border: none;
-        font-weight: bold;
-        cursor: pointer;
-        padding: 12px 15px;
-    }
-    .send-btn:hover {
-        background: var(--yellow);
-        color: var(--bg);
-        filter: brightness(1.1);
-    }
+    .main-container{flex:1;display:flex;flex-direction:column;overflow:hidden}
 
-    /* --- Main Container --- */
-    .main-container {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-    }
+    .input-panel{background:rgba(10,10,10,0.95);padding:12px;overflow:auto;transition:height .12s,opacity .12s;min-height:0}
+    .section{margin-bottom:12px}
+    .section-title{font-size:.75rem;color:var(--yellow);margin-bottom:8px;text-transform:uppercase}
+    select,textarea,input{width:100%;background:var(--glass);color:var(--text);border:1px solid var(--border);padding:8px;border-radius:6px;font-family:inherit;margin-bottom:8px}
+    textarea{min-height:80px;resize:vertical}
+    .send-btn{background:var(--yellow);color:var(--bg);border:none;padding:10px 14px;border-radius:6px;font-weight:700}
 
-    /* --- Input Panel --- */
-    .input-panel {
-        background: rgba(10, 10, 10, 0.95);
-        padding: 12px;
-        flex-shrink: 0;
-        display: flex;
-        flex-direction: column;
-        overflow-y: auto;
-    }
-    .section { margin-bottom: 12px; }
-    .section-title {
-        font-size: 0.75rem;
-        color: var(--yellow);
-        margin-bottom: 8px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-    select, textarea, input {
-        width: 100%;
-        background: var(--glass);
-        color: var(--text);
-        border: 1px solid var(--border);
-        padding: 8px;
-        border-radius: 6px;
-        font-size: 1rem;
-        font-family: inherit;
-        margin-bottom: 8px;
-    }
-    textarea { min-height: 80px; resize: vertical; }
-    textarea:focus, input:focus { outline: none; border-color: var(--yellow); box-shadow: 0 0 0 2px rgba(255,215,0,0.2); }
+    .resize-divider{height:8px;background:var(--yellow);cursor:ns-resize;border-top:1px solid var(--border);border-bottom:1px solid var(--border);flex-shrink:0}
+    .canvas{flex:1;overflow:auto;padding:8px;background:var(--bg)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px;align-items:start}
 
-    /* --- Resizeable Divider --- */
-    .resize-divider {
-        height: 8px;
-        background: var(--yellow);
-        cursor: ns-resize;
-        flex-shrink: 0;
-        z-index: 1001;
-        border-top: 1px solid var(--border);
-        border-bottom: 1px solid var(--border);
-        transition: background 0.2s;
-    }
-    .resize-divider:hover { background: var(--yellow); }
+    .flip-card{position:relative;border-radius:8px;border:2px solid var(--border);overflow:hidden;background:var(--bg);min-height:var(--card-min-height)}
+    .flip-card-inner{width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d;border-radius:8px}
+    .flip-card.flipped .flip-card-inner{transform:rotateY(180deg)}
 
-    /* --- Canvas Area --- */
-    .canvas {
-        flex: 1;
-        overflow-y: auto;
-        background: var(--bg);
-        padding: 8px;
-    }
-    .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        grid-auto-rows: minmax(180px, auto);
-        gap: 8px;
-        width: 100%;
-        height: 100%;
-    }
+    .card-face{position:absolute;width:100%;height:100%;backface-visibility:hidden;display:flex;flex-direction:column;padding:12px;border-radius:8px;background:var(--glass)}
+    .card-front{border-left:4px solid var(--yellow);background:linear-gradient(135deg, rgba(255,215,0,0.06), rgba(255,215,0,0.02))}
+    .card-back{transform:rotateY(180deg);border-left:4px solid var(--blue);background:linear-gradient(135deg, rgba(100,150,255,0.06), rgba(100,150,255,0.02))}
+    .question-div{flex:1;overflow:auto;white-space:pre-wrap;word-break:break-word;padding-right:4px;cursor:pointer}
+    .response-content{flex:1;overflow:auto;white-space:pre-wrap;word-break:break-word;font-family:monospace;padding-right:4px}
 
-    /* --- Flip Card --- */
-    .flip-card {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        min-height: 0;
-        cursor: pointer;
-        perspective: 1000px;
-        overflow: hidden;
-        background: var(--bg);
-        user-select: none;
-        border-radius: 8px;
-        border: 2px solid var(--border);
-        transition: border-color 0.2s, border-width 0.2s;
-    }
-    .flip-card:hover {
-        border-color: var(--yellow);
-        border-width: 2px;
-        box-shadow: 0 0 15px var(--yellow);
-    }
-    .flip-card.selected {
-        border: 4px solid var(--blue) !important;
-        box-shadow: 0 0 25px var(--blue);
-    }
-    .flip-card-inner {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        transition: transform .6s;
-        transform-style: preserve-3d;
-        border-radius: 8px;
-    }
-    .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+    .card-actions{display:flex;gap:8px;margin-top:8px;border-top:1px solid var(--border);padding-top:6px;justify-content:flex-end;flex-wrap:wrap}
+    .card-btn{background:rgba(0,0,0,0.5);border:none;color:var(--text);width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 
-    .card-face {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        backface-visibility: hidden;
-        display: flex;
-        flex-direction: column;
-        background: var(--glass);
-        backdrop-filter: blur(10px);
-        padding: 12px;
-        font-size: 0.75rem;
-        line-height: 1.4;
-        overflow: hidden;
-        box-shadow: 0 4px 20px rgba(0,0,0,.5);
-        border-radius: 8px;
-    }
-    .card-front {
-        background: linear-gradient(135deg, rgba(255,215,0,.1), rgba(255,215,0,.05));
-        border-left: 4px solid var(--yellow);
-    }
-    .card-front > div:first-child {
-        flex: 1;
-        overflow: auto;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        padding-right: 4px;
-    }
-    .card-back {
-        transform: rotateY(180deg);
-        background: linear-gradient(135deg, rgba(100,150,255,.1), rgba(100,150,255,.05));
-        border-left: 4px solid var(--blue);
-    }
-    .response-content {
-        flex: 1;
-        overflow: auto;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        font-family: monospace;
-        padding-right: 4px;
-    }
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:2000;align-items:center;justify-content:center;padding:20px;overflow:auto}
+    .modal.show{display:flex}
+    .modal-content{background:var(--glass);border:2px solid var(--yellow);border-radius:12px;padding:18px;width:100%;max-width:960px;max-height:90vh;overflow:auto}
 
-    /* Markdown rendering adjustments */
-    .response-content h1, .card-face h1 { font-size: 0.9rem; margin: 0.8em 0 0.3em; color: var(--yellow); }
-    .response-content h2, .card-face h2 { font-size: 0.85rem; margin: 0.7em 0 0.25em; }
-    .response-content h3, .card-face h3 { font-size: 0.8rem; margin: 0.6em 0 0.2em; }
-    .response-content p { margin-bottom: 0.7em; }
-    .response-content strong { color: var(--yellow); }
-    .response-content code { background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 3px; font-size: 0.9em; }
-    .response-content pre { background: #1a1a1a; padding: 12px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; font-size: 0.9em; border: 1px solid var(--border); }
-    .response-content pre code { background: none; padding: 0; border-radius: 0; font-size: inherit; }
-    .response-content ul, .response-content ol { margin-left: 25px; margin-bottom: 0.8em; }
-    .response-content li { margin-bottom: 0.4em; }
-    .response-content blockquote { border-left: 3px solid var(--blue); padding-left: 1em; color: var(--text); opacity: 0.8; margin-left: 0; }
+    .fullscreen-overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:3000;align-items:center;justify-content:center;padding:20px;overflow:hidden;border:4px solid var(--yellow);border-radius:12px;box-shadow:0 0 50px rgba(255,215,0,0.2)}
+    .fullscreen-overlay.show{display:flex}
+    .fullscreen-overlay.streaming::before{content:'Streaming...';position:absolute;top:10px;right:10px;background:var(--yellow);color:var(--bg);padding:4px 8px;border-radius:4px;font-size:0.8rem;font-weight:bold;z-index:3001}
+    .fullscreen-main-content{width:96%;height:94%;max-width:1200px;max-height:86vh;display:flex;flex-direction:column;background:transparent}
+    .fullscreen-card-inner{width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d;border-radius:8px}
+    .fullscreen-card-face{position:absolute;width:100%;height:100%;backface-visibility:hidden;display:flex;flex-direction:column;padding:20px;border-radius:8px;background:var(--glass);box-shadow:inset 0 0 20px rgba(0,0,0,0.6)}
+    .fullscreen-card-face.card-front{border-left:4px solid var(--yellow)}
+    .fullscreen-card-face.card-back{transform:rotateY(180deg);border-left:4px solid var(--blue)}
 
-    .card-actions {
-        display: flex;
-        gap: 6px;
-        margin-top: 8px;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-        padding-top: 6px;
-        border-top: 1px solid var(--border);
-    }
+    .fullscreen-question-text{font-weight:700;color:var(--yellow);margin-bottom:12px}
+    .fullscreen-response-content{flex:1;overflow:auto;white-space:pre-wrap;word-break:break-word;padding-right:8px;font-family:'Consolas','Monaco','Courier New',monospace;line-height:1.5;font-size:16px}
 
-    .card-btn {
-        background: rgba(0,0,0,.5);
-        border: none;
-        color: var(--text);
-        font-size: 1.1rem;
-        cursor: pointer;
-        padding: 6px 8px;
-        border-radius: 50%;
-        width: 36px;
-        height: 36px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        transition: background 0.2s, color 0.2s, transform 0.1s;
-        flex-shrink: 0;
-    }
-    .card-btn:hover {
-        background: var(--yellow);
-        color: var(--bg);
-        transform: scale(1.05);
-    }
-    .card-btn.delete { color: var(--red); }
+    .loading{position:fixed;bottom:18px;right:18px;background:var(--glass);padding:12px 16px;border-radius:8px;border:1px solid var(--yellow);display:none;z-index:999}
+    .loading.show{display:block}
+    .saved-notice{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:rgba(0,255,0,0.08);color:#0f0;border:1px solid #0f0;padding:10px 14px;border-radius:8px;z-index:999;opacity:0;transition:opacity .18s}
+    .saved-notice.show{opacity:1}
 
-    /* --- Modals --- */
-    .modal {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.95);
-        z-index: 2000;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-        overflow-y: auto;
-    }
-    .modal.show { display: flex; }
-    .modal-content {
-        background: var(--glass);
-        border: 2px solid var(--yellow);
-        border-radius: 12px;
-        padding: 20px;
-        max-width: 600px;
-        width: 100%;
-        max-height: 90vh;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-        color: var(--text);
-        font-family: inherit;
-    }
-    .modal-title {
-        font-size: 1.4rem;
-        color: var(--yellow);
-        margin-bottom: 16px;
-        text-align: center;
-    }
-    .modal-actions {
-        display: flex;
-        gap: 10px;
-        justify-content: flex-end;
-        margin-top: 20px;
-    }
-
-    /* Edit Modal */
-    .edit-modal-content textarea {
-        min-height: 150px;
-        margin-bottom: 10px;
-    }
-    .edit-modal-content .modal-row {
-        margin-bottom: 15px;
-    }
-    .edit-modal-content .preview-toggle {
-        font-size: 0.8rem;
-        color: var(--yellow);
-        cursor: pointer;
-        text-decoration: underline;
-        margin-left: 10px;
-        background: none; border: none; padding: 0;
-    }
-    .edit-modal-content .preview-toggle:hover {
-        color: var(--text);
-        text-decoration: none;
-    }
-    .edit-modal-content .markdown-preview {
-        background: var(--glass);
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        padding: 12px;
-        margin-top: 8px;
-        min-height: 100px;
-        overflow-y: auto;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        font-family: monospace;
-        font-size: 0.9rem;
-    }
-
-    /* --- Loading & Notices --- */
-    .loading {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background: var(--glass);
-        border: 1px solid var(--yellow);
-        padding: 12px 20px;
-        border-radius: 8px;
-        display: none;
-        z-index: 999;
-        font-weight: bold;
-        animation: pulse 1.5s infinite;
-    }
-    .loading.show { display: block; }
-    @keyframes pulse {
-        0% { opacity: 0.7; }
-        50% { opacity: 1; }
-        100% { opacity: 0.7; }
-    }
-
-    .saved-notice {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0, 255, 0, 0.2);
-        color: #0f0;
-        border: 1px solid #0f0;
-        padding: 10px 20px;
-        border-radius: 8px;
-        z-index: 999;
-        opacity: 0;
-        transition: opacity 0.5s;
-    }
-    .saved-notice.show { opacity: 1; }
-
-    /* --- Long Press Menu --- */
-    .longpress-menu {
-        position: absolute;
-        background: rgba(0, 0, 0, 0.95);
-        border: 2px solid var(--yellow);
-        border-radius: 12px;
-        padding: 12px;
-        z-index: 9999;
-        display: none;
-        flex-direction: column;
-        gap: 8px;
-        box-shadow: 0 0 20px rgba(0,0,0,0.7);
-    }
-    .longpress-menu button {
-        width: 100%;
-        text-align: left;
-        background: transparent;
-        border: none;
-        padding: 8px 12px;
-        color: var(--text);
-        font-size: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .longpress-menu button:hover {
-        background: var(--hover-overlay);
-        color: var(--yellow);
-    }
-
-    /* --- Fullscreen Overlay --- */
-    .fullscreen-overlay {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: var(--bg);
-        z-index: 3000;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-        overflow: hidden;
-        flex-direction: column;
-        border: 4px solid var(--yellow);
-        box-shadow: 0 0 50px rgba(255,215,0,0.3);
-        border-radius: 12px;
-    }
-    .fullscreen-overlay.show { display: flex; }
-    .fullscreen-main-content {
-        width: 100%;
-        height: 100%;
-        max-width: 90vw;
-        max-height: 90vh;
-        perspective: 1000px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-    }
-    .fullscreen-card-inner {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        transition: transform .8s ease-in-out;
-        transform-style: preserve-3d;
-        border-radius: 8px;
-    }
-    .fullscreen-card-inner.flipped { transform: rotateY(180deg); }
-
-    .fullscreen-card-face {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        backface-visibility: hidden;
-        display: flex;
-        flex-direction: column;
-        background: var(--glass);
-        backdrop-filter: blur(10px);
-        padding: 20px;
-        font-size: 0.9rem;
-        line-height: 1.5;
-        overflow: hidden;
-        box-shadow: inset 0 0 20px rgba(0,0,0,.5);
-        border-radius: 8px;
-    }
-    .fullscreen-card-face.card-front {
-        background: linear-gradient(135deg, rgba(255,215,0,.15), rgba(255,215,0,.08));
-        border-left: 4px solid var(--yellow);
-    }
-    .fullscreen-card-face.card-back {
-        transform: rotateY(180deg);
-        background: linear-gradient(135deg, rgba(100,150,255,.15), rgba(100,150,255,.08));
-        border-left: 4px solid var(--blue);
-    }
-
-    .fullscreen-question-text {
-        font-weight: bold;
-        margin-bottom: 15px;
-        color: var(--yellow);
-        padding-bottom: 10px;
-        border-bottom: 1px solid var(--border);
-        flex-shrink: 0;
-    }
-    .fullscreen-response-content {
-        flex: 1;
-        overflow-y: auto;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        font-family: monospace;
-        padding-right: 8px;
-    }
-    .fullscreen-response-content h1 { font-size: 1.2rem; }
-    .fullscreen-response-content h2 { font-size: 1.1rem; }
-    .fullscreen-response-content h3 { font-size: 1.0rem; }
-
-    .fullscreen-actions {
-        display: flex;
-        gap: 10px;
-        margin-top: 15px;
-        padding-top: 10px;
-        border-top: 1px solid var(--border);
-        justify-content: flex-end;
-        z-index: 3001;
-        background: rgba(10,10,10, 0.9);
-        margin-left: -20px; margin-right: -20px;
-        padding-left: 20px; padding-right: 20px;
-        padding-bottom: 20px;
-        flex-shrink: 0;
-    }
-    .fullscreen-card-btn {
-        background: var(--glass);
-        color: var(--text);
-        border: 1px solid var(--border);
-        font-size: 1.2rem;
-        padding: 10px 12px;
-        border-radius: 8px;
-        width: 40px; height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease-in-out;
-    }
-    .fullscreen-card-btn:hover {
-        background: var(--yellow);
-        color: var(--bg);
-        transform: scale(1.1);
-        border-color: var(--yellow);
-    }
-    .fullscreen-card-btn.delete { color: var(--red); border-color: var(--red); }
-    .fullscreen-card-btn.delete:hover { background: var(--red); color: var(--bg); }
-    .fullscreen-card-btn.close:hover { background: var(--red); border-color: var(--red); }
+    /* Streaming animations */
+    .streaming-cursor{display:inline-block;width:8px;height:1em;background-color:var(--yellow);margin-left:2px;animation:blink 1s infinite;vertical-align:middle}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+    .streaming-indicator{position:absolute;top:10px;right:10px;color:var(--yellow);font-size:0.8rem;animation:pulse 1.5s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
   </style>
 </head>
 <body>
   <div class="header">
-    <div class="logo" id="logoBtn">AI Mind Map</div>
-    <div style="display:flex; gap:10px; align-items:center;">
-      <button id="settingsOpenBtn" type="button">Settings</button>
-      <button id="runTestsBtn" type="button" class="send-btn" title="Run self-tests">Run tests</button>
+    <div class="logo" id="logoBtn">ai-nspired.com</div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button id="settingsOpenBtn">Settings</button>
+      <button id="runTestsBtn" class="send-btn">Run tests</button>
     </div>
   </div>
 
@@ -548,14 +93,17 @@
           <option value="generate">Generate</option>
         </select>
       </div>
+
       <div class="section">
-        <div class="section-title">Message/Prompt</div>
-        <textarea id="userInput" placeholder="Ask anything..."></textarea>
-        <button id="sendBtn" class="send-btn" type="button">Send</button>
+        <div class="section-title">Message / Prompt</div>
+        <textarea id="userInput" placeholder="you can ask whatever you like..."></textarea>
+        <div style="display:flex;gap:10px">
+          <button id="sendBtn" class="send-btn">send</button>
+        </div>
       </div>
     </div>
 
-    <div class="resize-divider" id="resizeDivider" role="separator"></div>
+    <div class="resize-divider" id="resizeDivider" title="Drag to resize • Double-click to toggle collapse"></div>
 
     <div class="canvas" id="canvas">
       <div class="grid" id="grid"></div>
@@ -565,623 +113,824 @@
   <div class="saved-notice" id="savedNotice">Saved!</div>
   <div class="loading" id="loading">Processing...</div>
 
+  <!-- Settings -->
   <div class="modal" id="settingsModal" aria-hidden="true">
     <div class="modal-content">
-      <div class="modal-title">Settings</div>
-      <div class="section">
-        <div class="section-title">API Base URL</div>
-        <input type="text" id="baseUrl" placeholder="https://your-worker.workers.dev">
+      <div style="font-size:1.2rem;color:var(--yellow);margin-bottom:12px;text-align:center">Settings</div>
+      <div class="section"><div class="section-title">API Base URL</div><input id="baseUrl" placeholder="https://your-worker.workers.dev"/></div>
+      <div class="section"><div class="section-title">Session ID</div><input id="sessionIdInput" readonly/></div>
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <button id="exportBtn">Export</button>
+        <label for="importFile" class="send-btn" style="cursor:pointer">Import</label>
+        <input id="importFile" type="file" accept=".json" style="display:none"/>
       </div>
-      <div class="section">
-        <div class="section-title">Current Session ID</div>
-        <input type="text" id="sessionIdInput" readonly>
-      </div>
-      <div style="display: flex; gap: 10px; margin-top: 15px;">
-        <button id="exportBtn" type="button">💾 Export Mind Map</button>
-        <label for="importFile" class="send-btn" style="cursor:pointer;">Import Mind Map</label>
-        <input type="file" id="importFile" accept=".json" style="display: none;">
-      </div>
-      <div class="modal-actions">
-        <button id="settingsCancelBtn" type="button">Cancel</button>
-        <button id="settingsSaveBtn" class="send-btn" type="button">Save</button>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px">
+        <button id="settingsCancelBtn">Cancel</button>
+        <button id="settingsSaveBtn" class="send-btn">Save</button>
       </div>
     </div>
   </div>
 
+  <!-- Edit -->
   <div class="modal" id="editModal" aria-hidden="true">
-    <div class="modal-content edit-modal-content">
-      <div class="modal-title">Edit Tile <span id="editTileIdDisplay"></span></div>
-      <div class="modal-row">
-        <div class="section-title">Question / Intro</div>
-        <textarea id="editQuestion"></textarea>
-      </div>
-      <div class="modal-row">
-        <div class="section-title">Response Markdown <button id="editTogglePreview" class="preview-toggle" type="button">Preview</button></div>
+    <div class="modal-content">
+      <div style="font-size:1.1rem;color:var(--yellow);margin-bottom:12px">Edit Tile <span id="editTileIdDisplay"></span></div>
+      <div class="section"><div class="section-title">Question / Intro</div><textarea id="editQuestion"></textarea></div>
+      <div class="section">
+        <div class="section-title">Response Markdown <button id="editTogglePreview" type="button">Preview</button></div>
         <textarea id="editResponse"></textarea>
-        <div class="markdown-preview" id="editPreview" style="display:none;"></div>
+        <div class="markdown-preview" id="editPreview" style="display:none"></div>
       </div>
-      <div class="modal-actions">
-        <button id="editCancelBtn" type="button">Cancel</button>
-        <button id="editSaveBtn" class="send-btn" type="button">Save</button>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px">
+        <button id="editCancelBtn">Cancel</button>
+        <button id="editSaveBtn" class="send-btn">Save</button>
       </div>
     </div>
   </div>
 
+  <!-- Fullscreen -->
   <div class="fullscreen-overlay" id="fullscreenOverlay" aria-hidden="true">
     <div class="fullscreen-main-content">
       <div class="fullscreen-card-inner" id="fullscreenInner">
-        <div class="card-face card-front fullscreen-card-face">
+        <div class="fullscreen-card-face card-front">
           <div class="fullscreen-question-text"></div>
           <div class="fullscreen-response-content"></div>
-          <div class="fullscreen-actions">
-            <button class="fullscreen-card-btn" data-action="flip" title="Flip">↻</button>
-            <button class="fullscreen-card-btn" data-action="edit" title="Edit">✏️</button>
-            <button class="fullscreen-card-btn" data-action="followup" title="Follow Up">↪️</button>
-            <button class="fullscreen-card-btn delete" data-action="delete" title="Delete">🗑️</button>
-            <button class="fullscreen-card-btn close" data-action="close" title="Close">×</button>
+          <div style="margin-top:12px;display:flex;gap:10px;justify-content:flex-end">
+            <button class="fullscreen-card-btn" data-action="flip"></button>
+            <button class="fullscreen-card-btn" data-action="edit"></button>
+            <button class="fullscreen-card-btn" data-action="followup"></button>
+            <button class="fullscreen-card-btn" data-action="delete"></button>
+            <button class="fullscreen-card-btn" data-action="close">×</button>
           </div>
         </div>
-        <div class="card-face card-back fullscreen-card-face">
+
+        <div class="fullscreen-card-face card-back">
           <div class="fullscreen-question-text"></div>
           <div class="fullscreen-response-content"></div>
-          <div class="fullscreen-actions">
-            <button class="fullscreen-card-btn" data-action="flip" title="Flip">↻</button>
-            <button class="fullscreen-card-btn" data-action="edit" title="Edit">✏️</button>
-            <button class="fullscreen-card-btn" data-action="followup" title="Follow Up">↪️</button>
-            <button class="fullscreen-card-btn delete" data-action="delete" title="Delete">🗑️</button>
-            <button class="fullscreen-card-btn close" data-action="close" title="Close">×</button>
+          <div style="margin-top:12px;display:flex;gap:10px;justify-content:flex-end">
+            <button class="fullscreen-card-btn" data-action="flip"></button>
+            <button class="fullscreen-card-btn" data-action="edit"></button>
+            <button class="fullscreen-card-btn" data-action="followup"></button>
+            <button class="fullscreen-card-btn" data-action="delete"></button>
+            <button class="fullscreen-card-btn" data-action="close">×</button>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <script>
-    // --- Global Variables ---
-    let pairs = [];
-    let history = [];
-    let sessionId = "main-" + Date.now();
-    let currentFullscreenTileId = null;
-    let accumulatedAIResponse = '';
-    let currentTileIdForStreaming = null;
-    let textDecoder = new TextDecoder('utf-8');
+<script>
+// Core variables
+let pairs = [];
+let history = [];
+let sessionId = "main-" + Date.now();
+let accumulatedAIResponse = "";
+let currentTileIdForStreaming = null;
+let editingTileId = null;
+let currentFullscreenTileId = null;
+const textDecoder = new TextDecoder('utf-8');
 
-    // Resize state
-    let isResizing = false;
-    let startY, startHeightInputPanel;
+// DOM Elements
+const gridElement = document.getElementById('grid');
+const userInputElement = document.getElementById('userInput');
+const modeSelectElement = document.getElementById('modeSelect');
+const baseUrlInput = document.getElementById('baseUrl');
+const sessionIdInput = document.getElementById('sessionIdInput');
+const settingsModal = document.getElementById('settingsModal');
+const editModal = document.getElementById('editModal');
+const editQuestionTextarea = document.getElementById('editQuestion');
+const editResponseTextarea = document.getElementById('editResponse');
+const editPreviewDiv = document.getElementById('editPreview');
+const editTogglePreviewBtn = document.getElementById('editTogglePreview');
+const editTileIdDisplaySpan = document.getElementById('editTileIdDisplay');
+const loadingIndicator = document.getElementById('loading');
+const savedNotice = document.getElementById('savedNotice');
 
-    // DOM References
-    const gridElement = document.getElementById("grid");
-    const userInputElement = document.getElementById("userInput");
-    const modeSelectElement = document.getElementById("modeSelect");
-    const baseUrlInput = document.getElementById("baseUrl");
-    const sessionIdInput = document.getElementById("sessionIdInput");
-    const settingsModal = document.getElementById("settingsModal");
-    const savedNotice = document.getElementById("savedNotice");
-    const loadingIndicator = document.getElementById("loading");
-    const dragDivider = document.getElementById("resizeDivider");
-    const inputPanelElement = document.getElementById("inputPanel");
-    const editModal = document.getElementById("editModal");
-    const editQuestionTextarea = document.getElementById("editQuestion");
-    const editResponseTextarea = document.getElementById("editResponse");
-    const editPreviewDiv = document.getElementById("editPreview");
-    const editTogglePreviewBtn = document.getElementById("editTogglePreview");
-    const editTileIdDisplaySpan = document.getElementById("editTileIdDisplay");
-    const fullscreenOverlay = document.getElementById("fullscreenOverlay");
-    const fullscreenCardInner = document.getElementById("fullscreenInner");
-    const fullscreenQuestionTexts = fullscreenOverlay.querySelectorAll('.fullscreen-question-text');
-    const fullscreenResponseContents = fullscreenOverlay.querySelectorAll('.fullscreen-response-content');
+const resizeDivider = document.getElementById('resizeDivider');
+const inputPanelElement = document.getElementById('inputPanel');
 
-    // Buttons
-    const logoBtn = document.getElementById("logoBtn");
-    const settingsOpenBtn = document.getElementById("settingsOpenBtn");
-    const runTestsBtn = document.getElementById("runTestsBtn");
-    const settingsSaveBtn = document.getElementById("settingsSaveBtn");
-    const settingsCancelBtn = document.getElementById("settingsCancelBtn");
-    const exportBtn = document.getElementById("exportBtn");
-    const importFileInput = document.getElementById("importFile");
-    const sendBtn = document.getElementById("sendBtn");
-    const editSaveBtn = document.getElementById("editSaveBtn");
-    const editCancelBtn = document.getElementById("editCancelBtn");
+const fullscreenOverlay = document.getElementById('fullscreenOverlay');
+const fullscreenCardInner = document.getElementById('fullscreenInner');
+const fullscreenQuestionTexts = fullscreenOverlay.querySelectorAll('.fullscreen-question-text');
+const fullscreenResponseContents = fullscreenOverlay.querySelectorAll('.fullscreen-response-content');
 
-    // Storage Keys
-    const STORAGE_DATA_KEY = "mindmap-data";
-    const STORAGE_BASEURL_KEY = "mindmap-baseUrl";
-    const STORAGE_DIVIDER_HEIGHT_KEY = "mindmap-divider-height";
+// Storage keys
+const STORAGE_DATA_KEY = 'mindmap-data';
+const STORAGE_BASEURL_KEY = 'mindmap-baseUrl';
+const STORAGE_DIVIDER_HEIGHT_KEY = 'mindmap-divider-height';
 
-    // Icons
-    const ICONS = {
-      delete: "🗑️",
-      copy: "📋",
-      followup: "↪️",
-      fullscreen: "⛶",
-      edit: "✏️",
-      close: "×"
-    };
+// Utility functions
+function escapeHTML(str = '') { 
+  const d = document.createElement('div'); 
+  d.appendChild(document.createTextNode(String(str))); 
+  return d.innerHTML; 
+}
 
-    // --- Helpers ---
-    function getBaseUrl() {
-      return (baseUrlInput.value || '').trim().replace(/\/+$/, '');
-    }
+function safeRenderMarkdown(md) { 
+  const html = marked.parse(md || ''); 
+  return DOMPurify.sanitize(html); 
+}
 
-    function escapeHTML(str = '') {
-      const div = document.createElement('div');
-      div.appendChild(document.createTextNode(String(str)));
-      return div.innerHTML;
-    }
+function getBaseUrl() { 
+  return (baseUrlInput.value || '').trim().replace(/\/+$/, ''); 
+}
 
-    function safeRenderMarkdown(md) {
-      const html = marked.parse(md || '');
-      return DOMPurify.sanitize(html);
-    }
+// Update card min-height based on available space
+function updateCardMinHeight() {
+  const canvas = document.getElementById('canvas');
+  if (!canvas) return;
+  
+  const inputHeight = inputPanelElement.getBoundingClientRect().height || 0;
+  const availableHeight = window.innerHeight - inputHeight - 100; // Account for header and margins
+  const targetHeight = Math.max(150, Math.min(availableHeight * 0.4, 400));
+  
+  document.documentElement.style.setProperty('--card-min-height', targetHeight + 'px');
+}
 
-    function updateTileResponseContent(tileId, contentHTML, isStreaming = false) {
-      const tileElement = gridElement.querySelector(`[data-id="${tileId}"]`);
-      if (!tileElement) return;
-      const responseDiv = tileElement.querySelector('.response-content');
-      if (!responseDiv) return;
+// Add new tile pair
+function addPair(p) {
+  const id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `id-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+  pairs.push({ 
+    id, 
+    question: p.question, 
+    response: p.response || '', 
+    sessionId: p.sessionId || sessionId 
+  });
+  renderPair(pairs[pairs.length - 1]);
+  save();
+  updateCardMinHeight();
+  return id;
+}
 
+// Render tile to grid
+function renderPair(p) {
+  let responseHTML = 'Waiting for AI...';
+  if (p.response && p.response !== '...' && !p.response.startsWith('Error:')) {
+    responseHTML = safeRenderMarkdown(p.response);
+  } else if (p.response === '...') {
+    responseHTML = '<div class="streaming-indicator"><span class="streaming-cursor"></span> Streaming...</div>';
+  } else if (p.response && p.response.startsWith('Error:')) {
+    responseHTML = `<p style="color:red">${escapeHTML(p.response)}</p>`;
+  }
+
+  const card = document.createElement('div');
+  card.className = 'flip-card';
+  card.dataset.id = p.id;
+  
+  card.innerHTML = `
+    <div class="flip-card-inner">
+      <div class="card-face card-front">
+        <div class="question-div" data-id="${p.id}">${escapeHTML(p.question)}</div>
+        <div class="card-actions">
+          <button class="card-btn" data-action="show-fullscreen" data-id="${p.id}" title="Fullscreen"></button>
+          <button class="card-btn" data-action="edit" data-id="${p.id}" title="Edit"></button>
+          <button class="card-btn delete" data-action="delete" data-id="${p.id}" title="Delete"></button>
+          <button class="card-btn" data-action="copy" data-id="${p.id}" title="Copy"></button>
+          <button class="card-btn" data-action="followup" data-id="${p.id}" title="Follow Up"></button>
+        </div>
+      </div>
+
+      <div class="card-face card-back">
+        <div class="response-content">${responseHTML}</div>
+        <div class="card-actions">
+          <button class="card-btn" data-action="show-fullscreen" data-id="${p.id}" title="Fullscreen"></button>
+          <button class="card-btn" data-action="edit" data-id="${p.id}" title="Edit"></button>
+          <button class="card-btn" data-action="copy" data-id="${p.id}" title="Copy"></button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Flip on click (excluding buttons)
+  card.addEventListener('click', e => {
+    if (e.target.closest('.card-btn') || e.target.closest('.card-actions')) return;
+    card.classList.toggle('flipped');
+  });
+  
+  gridElement.appendChild(card);
+}
+
+// Update tile response with streaming support
+function updateTileResponseContent(tileId, content, isStreaming = false) {
+  // Update grid card
+  const card = gridElement.querySelector(`[data-id="${tileId}"]`);
+  if (card) {
+    const responseElement = card.querySelector('.card-back .response-content');
+    if (responseElement) {
       if (isStreaming) {
-        responseDiv.textContent += contentHTML;
+        // Append streaming text
+        responseElement.textContent = (responseElement.textContent || '') + content;
+        responseElement.scrollTop = responseElement.scrollHeight;
       } else {
-        responseDiv.innerHTML = contentHTML;
+        // Final markdown render
+        responseElement.innerHTML = content;
       }
     }
-
-    function updateTileQuestionContent(tileId, questionText) {
-      const tileElement = gridElement.querySelector(`[data-id="${tileId}"]`);
-      if (!tileElement) return;
-      const questionDiv = tileElement.querySelector('.card-front > div:first-child');
-      if (questionDiv) questionDiv.textContent = questionText;
-    }
-
-    function addPair(p) {
-      const id = crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now() + '-' + Math.floor(Math.random()*100000);
-      pairs.push({ id, question: p.question, response: p.response || '', sessionId: p.sessionId || sessionId });
-      renderPair(pairs[pairs.length - 1]);
-      save();
-      return id;
-    }
-
-    function renderPair(p) {
-      let responseHTML = 'Waiting for AI...';
-      if (p.response && p.response !== '...' && !p.response.startsWith('Error:')) {
-        responseHTML = safeRenderMarkdown(p.response);
-      } else if (p.response === '...') {
-        responseHTML = '...';
-      } else if (p.response && p.response.startsWith('Error:')) {
-        responseHTML = `<p style="color:red;">${escapeHTML(p.response)}</p>`;
+  }
+  
+  // Update fullscreen if open for this tile
+  if (currentFullscreenTileId === tileId) {
+    fullscreenResponseContents.forEach(el => {
+      if (isStreaming) {
+        // Append streaming text to fullscreen
+        el.textContent = (el.textContent || '') + content;
+      } else {
+        // Final markdown render for fullscreen
+        el.innerHTML = content;
       }
+      // Auto-scroll fullscreen to bottom
+      el.scrollTop = el.scrollHeight;
+    });
+  }
+}
 
-      const c = document.createElement("div");
-      c.className = "flip-card";
-      c.dataset.id = p.id;
-
-      c.innerHTML = `
-        <div class="flip-card-inner">
-          <div class="card-face card-front">
-            <div style="flex:1;overflow:auto;padding:4px;">${escapeHTML(p.question)}</div>
-            <div class="card-actions">
-              <button class="card-btn" data-action="show-fullscreen" title="Fullscreen">${ICONS.fullscreen}</button>
-              <button class="card-btn" data-action="edit" title="Edit">${ICONS.edit}</button>
-              <button class="card-btn delete" data-action="delete" title="Delete">${ICONS.delete}</button>
-              <button class="card-btn" data-action="copy" title="Copy Response">${ICONS.copy}</button>
-              <button class="card-btn" data-action="followup" title="Follow Up">${ICONS.followup}</button>
-            </div>
-          </div>
-          <div class="card-face card-back">
-            <div class="response-content">${responseHTML}</div>
-            <div class="card-actions">
-              <button class="card-btn" data-action="show-fullscreen" title="Fullscreen">${ICONS.fullscreen}</button>
-              <button class="card-btn" data-action="edit" title="Edit">${ICONS.edit}</button>
-              <button class="card-btn" data-action="copy" title="Copy Response">${ICONS.copy}</button>
-            </div>
-          </div>
-        </div>`;
-
-      c.addEventListener('click', e => {
-        if (e.target.closest('.card-btn') || e.target.closest('.card-actions')) return;
-        c.classList.toggle('flipped');
-      });
-
-      gridElement.appendChild(c);
-    }
-
-    // --- API & Streaming ---
-    async function processSSEStream(reader, tileId) {
-      let buffer = '';
-      accumulatedAIResponse = '';
-
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += textDecoder.decode(value, { stream: true });
-
-          let parts = buffer.split('\n\n');
-          buffer = parts.pop() || '';
-
-          for (const part of parts) {
-            if (part.startsWith('data: ')) {
-              const dataStr = part.substring(6);
-              if (dataStr === '[DONE]') return;
-              try {
-                const data = JSON.parse(dataStr);
-                const content = data.choices?.[0]?.delta?.content;
-                if (content) {
-                  accumulatedAIResponse += content;
-                  updateTileResponseContent(tileId, content, true);
-                }
-              } catch (e) {
-                accumulatedAIResponse += dataStr;
-                updateTileResponseContent(tileId, dataStr, true);
-              }
-            }
+// Process streaming response with auto-fullscreen
+async function processSSEStream(reader, tileId) {
+  // Auto-open fullscreen for the streaming tile
+  showFullscreen(tileId);
+  fullscreenOverlay.classList.add('streaming');
+  
+  let buffer = '';
+  accumulatedAIResponse = '';
+  
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      
+      buffer += textDecoder.decode(value, { stream: true });
+      
+      const parts = buffer.split('\n\n');
+      buffer = parts.pop() || '';
+      
+      for (const part of parts) {
+        if (!part) continue;
+        
+        if (part.startsWith('data: ')) {
+          const dataStr = part.substring(6).trim();
+          if (dataStr === '[DONE]') {
+            // Finalize streaming
+            const safeHTML = safeRenderMarkdown(accumulatedAIResponse);
+            updateTileResponseContent(tileId, safeHTML, false);
+            
+            const tile = pairs.find(t => t.id === tileId);
+            if (tile) tile.response = accumulatedAIResponse;
+            save();
+            
+            // Remove streaming indicator
+            fullscreenOverlay.classList.remove('streaming');
+            return;
           }
-        }
-      } catch (err) {
-        console.error(err);
-        updateTileResponseContent(tileId, `<p style="color:red;">Stream error: ${escapeHTML(err.message)}</p>`, false);
-      } finally {
-        if (accumulatedAIResponse) {
-          const safeHTML = safeRenderMarkdown(accumulatedAIResponse);
-          updateTileResponseContent(tileId, safeHTML, false);
-          const tile = pairs.find(t => t.id === tileId);
-          if (tile) tile.response = accumulatedAIResponse;
-          save();
-        }
-      }
-    }
-
-    async function apiFetch(path, payload) {
-      const base = getBaseUrl();
-      if (!base) throw new Error('API Base URL not set.');
-      const url = base + path;
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) {
-        let msg = `HTTP ${res.status}`;
-        try { const json = await res.json(); msg = json.error || json.message || JSON.stringify(json); } catch {}
-        throw new Error(msg);
-      }
-
-      if (res.body) return res.body.getReader();
-
-      // Fallback for non-streaming
-      const text = await res.text();
-      const encoder = new TextEncoder();
-      const stream = new ReadableStream({
-        start(controller) {
-          controller.enqueue(encoder.encode(text));
-          controller.close();
-        }
-      });
-      return stream.getReader();
-    }
-
-    async function sendMessage() {
-      const input = userInputElement.value.trim();
-      if (!input) return;
-      const mode = modeSelectElement.value;
-
-      userInputElement.value = '';
-      loadingIndicator.classList.add("show");
-
-      try {
-        const payload = { sessionId };
-        if (mode === 'chat') payload.message = input;
-        else payload.prompt = input;
-
-        const path = mode === 'code' ? '/api/code' : mode === 'generate' ? '/api/generate' : '/api/chat';
-
-        currentTileIdForStreaming = addPair({ question: input, response: '...' });
-        const reader = await apiFetch(path, payload);
-        await processSSEStream(reader, currentTileIdForStreaming);
-      } catch (err) {
-        if (currentTileIdForStreaming) {
-          const msg = `Error: ${err.message || String(err)}`;
-          updateTileResponseContent(currentTileIdForStreaming, `<p style="color:red;">${escapeHTML(msg)}</p>`, false);
-          const tile = pairs.find(t => t.id === currentTileIdForStreaming);
-          if (tile) tile.response = msg;
-          save();
+          
+          try {
+            const data = JSON.parse(dataStr);
+            const content = data.choices?.[0]?.delta?.content;
+            if (content) {
+              accumulatedAIResponse += content;
+              updateTileResponseContent(tileId, content, true);
+            }
+          } catch (err) {
+            // Fallback for non-JSON data
+            accumulatedAIResponse += dataStr;
+            updateTileResponseContent(tileId, dataStr, true);
+          }
         } else {
-          alert(err.message || String(err));
+          accumulatedAIResponse += part;
+          updateTileResponseContent(tileId, part, true);
         }
-      } finally {
-        loadingIndicator.classList.remove("show");
-        currentTileIdForStreaming = null;
       }
     }
-
-    // --- Tile Actions ---
-    function deletePair(id) {
-      pairs = pairs.filter(p => p.id !== id);
-      document.querySelector(`[data-id="${id}"]`)?.remove();
+  } catch (err) {
+    console.error('Stream error', err);
+    updateTileResponseContent(tileId, `<p style="color:red">Stream error: ${escapeHTML(err.message || String(err))}</p>`, false);
+  } finally {
+    // Final cleanup
+    fullscreenOverlay.classList.remove('streaming');
+    
+    if (accumulatedAIResponse && !accumulatedAIResponse.endsWith('[DONE]')) {
+      const safeHTML = safeRenderMarkdown(accumulatedAIResponse);
+      updateTileResponseContent(tileId, safeHTML, false);
+      
+      const tile = pairs.find(t => t.id === tileId);
+      if (tile) tile.response = accumulatedAIResponse;
       save();
     }
+    
+    updateCardMinHeight();
+  }
+}
 
-    function copyResponse(id) {
-      const el = gridElement.querySelector(`[data-id="${id}"] .response-content`);
-      const text = el ? el.textContent || '' : '';
-      navigator.clipboard.writeText(text).then(() => showSavedNotice('Copied!')).catch(() => alert('Copy failed'));
+// API fetch with streaming support
+async function apiFetch(path, payload) {
+  const base = getBaseUrl();
+  if (!base) throw new Error('API Base URL not set.');
+  
+  const url = base + path;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`;
+    try {
+      const j = await res.json();
+      msg = j.error || j.message || JSON.stringify(j);
+    } catch {}
+    throw new Error(msg);
+  }
+  
+  if (res.body && typeof res.body.getReader === 'function') {
+    return res.body.getReader();
+  }
+  
+  // Fallback for non-streaming responses
+  const text = await res.text().catch(() => '');
+  const enc = new TextEncoder();
+  const chunk = enc.encode(text);
+  const stream = new ReadableStream({
+    start(ctrl) {
+      if (chunk && chunk.length) ctrl.enqueue(chunk);
+      ctrl.close();
     }
+  });
+  
+  return stream.getReader();
+}
 
-    function sendTileToAI(id) {
-      const tile = pairs.find(p => p.id === id);
-      if (!tile) return;
-      const respText = gridElement.querySelector(`[data-id="${id}"] .response-content`)?.textContent || '';
-      userInputElement.value = `\( {tile.question}\n\n---\n\n \){respText.slice(0, 1000)}`;
-      userInputElement.focus();
+// Send message to AI
+async function sendMessage() {
+  const input = (userInputElement.value || '').trim();
+  if (!input) return;
+  
+  const mode = modeSelectElement.value || 'chat';
+  userInputElement.value = '';
+  loadingIndicator.classList.add('show');
+  
+  try {
+    const payload = { sessionId };
+    if (mode === 'chat') {
+      payload.message = input;
+    } else {
+      payload.prompt = input;
     }
-
-    function showFullscreen(id) {
-      const tile = pairs.find(p => p.id === id);
-      if (!tile) return;
-      currentFullscreenTileId = id;
-
-      fullscreenQuestionTexts.forEach(el => el.textContent = tile.question);
-      fullscreenResponseContents.forEach(el => el.innerHTML = tile.response ? safeRenderMarkdown(tile.response) : 'No response yet');
-
-      fullscreenOverlay.classList.add("show");
-      fullscreenOverlay.setAttribute('aria-hidden', 'false');
+    
+    const path = mode === 'code' ? '/api/code' : mode === 'generate' ? '/api/generate' : '/api/chat';
+    
+    // Create new tile for streaming
+    currentTileIdForStreaming = addPair({ question: input, response: '...' });
+    
+    // Get stream reader and process
+    const reader = await apiFetch(path, payload);
+    await processSSEStream(reader, currentTileIdForStreaming);
+  } catch (err) {
+    const msg = err?.message ? err.message : String(err);
+    
+    if (currentTileIdForStreaming) {
+      updateTileResponseContent(currentTileIdForStreaming, `<p style="color:red">Error: ${escapeHTML(msg)}</p>`, false);
+      const tile = pairs.find(x => x.id === currentTileIdForStreaming);
+      if (tile) tile.response = `Error: ${msg}`;
+      save();
+    } else {
+      alert(msg);
     }
+  } finally {
+    loadingIndicator.classList.remove('show');
+    currentTileIdForStreaming = null;
+    updateCardMinHeight();
+  }
+}
 
-    function hideFullscreen() {
-      fullscreenOverlay.classList.remove("show");
-      fullscreenOverlay.setAttribute('aria-hidden', 'true');
-      currentFullscreenTileId = null;
+// Tile actions
+function deletePair(id) {
+  pairs = pairs.filter(p => p.id !== id);
+  const el = document.querySelector(`[data-id="${id}"]`);
+  if (el) el.remove();
+  save();
+  
+  // Close fullscreen if viewing deleted tile
+  if (currentFullscreenTileId === id) {
+    hideFullscreen();
+  }
+}
+
+function copyResponse(id) {
+  const el = document.querySelector(`[data-id="${id}"] .card-back .response-content`);
+  const txt = el ? (el.textContent || '') : '';
+  navigator.clipboard.writeText(txt)
+    .then(() => showSavedNotice('Copied!'))
+    .catch(() => alert('Copy failed'));
+}
+
+function sendTileToAI(id) {
+  const tile = pairs.find(p => p.id === id);
+  if (!tile) return;
+  
+  const resp = document.querySelector(`[data-id="${id}"] .card-back .response-content`)?.textContent || '';
+  userInputElement.value = `${tile.question}\n\n---\n\n${resp.slice(0, 1000)}`;
+  userInputElement.focus();
+}
+
+// Fullscreen functions
+function showFullscreen(id) {
+  const tile = pairs.find(p => p.id === id);
+  if (!tile) return;
+  
+  currentFullscreenTileId = id;
+  
+  // Set question text in both sides
+  fullscreenQuestionTexts.forEach(el => {
+    el.textContent = tile.question || '';
+  });
+  
+  // Set response content in both sides
+  fullscreenResponseContents.forEach(el => {
+    if (currentTileIdForStreaming === id && accumulatedAIResponse) {
+      // Show streaming content
+      el.textContent = accumulatedAIResponse;
+    } else {
+      // Show static content
+      el.innerHTML = tile.response ? safeRenderMarkdown(tile.response) : 'No response yet';
     }
+    // Auto-scroll to bottom
+    el.scrollTop = el.scrollHeight;
+  });
+  
+  // Auto-flip to response side for better viewing
+  fullscreenCardInner.classList.add('flipped');
+  
+  // Show overlay
+  fullscreenOverlay.classList.add('show');
+  fullscreenOverlay.setAttribute('aria-hidden', 'false');
+  
+  updateCardMinHeight();
+}
 
-    function flipFullscreen() {
-      fullscreenCardInner.classList.toggle('flipped');
+function hideFullscreen() {
+  fullscreenOverlay.classList.remove('show');
+  fullscreenOverlay.classList.remove('streaming');
+  fullscreenOverlay.setAttribute('aria-hidden', 'true');
+  currentFullscreenTileId = null;
+  fullscreenCardInner.classList.remove('flipped');
+}
+
+function flipFullscreen() {
+  fullscreenCardInner.classList.toggle('flipped');
+}
+
+// Edit modal functions
+function showEditModal(id) {
+  editingTileId = id;
+  const tile = pairs.find(p => p.id === id);
+  if (!tile) return;
+  
+  editTileIdDisplaySpan.textContent = `#${id.slice(0, 8)}`;
+  editQuestionTextarea.value = tile.question || '';
+  editResponseTextarea.value = tile.response || '';
+  editPreviewDiv.style.display = 'none';
+  editPreviewDiv.innerHTML = '';
+  
+  editModal.classList.add('show');
+  editModal.setAttribute('aria-hidden', 'false');
+  hideFullscreen();
+}
+
+function closeEditModal() {
+  editingTileId = null;
+  editModal.classList.remove('show');
+  editModal.setAttribute('aria-hidden', 'true');
+}
+
+function saveEditedTile() {
+  if (!editingTileId) return closeEditModal();
+  
+  const tile = pairs.find(p => p.id === editingTileId);
+  if (!tile) return closeEditModal();
+  
+  tile.question = (editQuestionTextarea.value || '').trim();
+  tile.response = (editResponseTextarea.value || '').trim();
+  
+  // Update UI
+  const card = gridElement.querySelector(`[data-id="${tile.id}"]`);
+  if (card) {
+    const questionDiv = card.querySelector('.card-front .question-div');
+    if (questionDiv) questionDiv.textContent = tile.question;
+    
+    const responseDiv = card.querySelector('.card-back .response-content');
+    if (responseDiv) responseDiv.innerHTML = safeRenderMarkdown(tile.response);
+  }
+  
+  save();
+  showSavedNotice();
+  closeEditModal();
+  
+  // Update fullscreen if viewing this tile
+  if (currentFullscreenTileId === tile.id) {
+    showFullscreen(tile.id);
+  }
+}
+
+function toggleEditPreview() {
+  if (editPreviewDiv.style.display === 'none') {
+    editPreviewDiv.innerHTML = safeRenderMarkdown(editResponseTextarea.value);
+    editPreviewDiv.style.display = 'block';
+    editTogglePreviewBtn.textContent = 'Hide Preview';
+  } else {
+    editPreviewDiv.style.display = 'none';
+    editTogglePreviewBtn.textContent = 'Preview';
+  }
+}
+
+// Settings functions
+function showSettings() {
+  baseUrlInput.value = localStorage.getItem(STORAGE_BASEURL_KEY) || '';
+  sessionIdInput.value = sessionId;
+  settingsModal.classList.add('show');
+  settingsModal.setAttribute('aria-hidden', 'false');
+}
+
+function closeSettings() {
+  settingsModal.classList.remove('show');
+  settingsModal.setAttribute('aria-hidden', 'true');
+}
+
+function saveSettings() {
+  localStorage.setItem(STORAGE_BASEURL_KEY, (baseUrlInput.value || '').trim());
+  closeSettings();
+  showSavedNotice();
+}
+
+function exportData() {
+  const data = { pairs, history, sessionId };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `mindmap-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 500);
+}
+
+function importData(file) {
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      pairs = data.pairs || [];
+      history = data.history || [];
+      sessionId = data.sessionId || sessionId;
+      
+      gridElement.innerHTML = '';
+      pairs.forEach(renderPair);
+      save();
+      showSavedNotice('Imported!');
+    } catch (err) {
+      alert('Invalid file: ' + (err.message || err));
     }
+  };
+  reader.readAsText(file);
+}
 
-    function showEditModal(id) {
-      const tile = pairs.find(p => p.id === id);
-      if (!tile) return;
+// Storage functions
+function save() {
+  try {
+    localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify({ pairs, history, sessionId }));
+  } catch (e) {
+    console.warn('Failed to save:', e);
+  }
+}
 
-      editTileIdDisplaySpan.textContent = `#${id.slice(0,8)}`;
-      editQuestionTextarea.value = tile.question;
-      editResponseTextarea.value = tile.response || '';
-      editPreviewDiv.style.display = 'none';
-      editModal.classList.add("show");
-      currentFullscreenTileId = id; // reuse variable
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_DATA_KEY);
+    if (raw) {
+      const data = JSON.parse(raw);
+      pairs = data.pairs || [];
+      history = data.history || [];
+      sessionId = data.sessionId || sessionId;
+      pairs.forEach(renderPair);
+    }
+  } catch (e) {
+    console.warn('Failed to load:', e);
+  }
+  
+  // Load base URL
+  const savedUrl = localStorage.getItem(STORAGE_BASEURL_KEY);
+  if (savedUrl) baseUrlInput.value = savedUrl;
+  
+  // Load divider height
+  const savedHeight = localStorage.getItem(STORAGE_DIVIDER_HEIGHT_KEY);
+  if (savedHeight) {
+    applyInputPanelHeight(parseFloat(savedHeight));
+  } else {
+    applyInputPanelHeight(200);
+  }
+  
+  updateCardMinHeight();
+}
+
+// Panel resize functions
+function applyInputPanelHeight(height) {
+  const maxHeight = window.innerHeight * 0.8;
+  const newHeight = Math.max(0, Math.min(height || 0, maxHeight));
+  
+  if (newHeight <= 2) {
+    inputPanelElement.style.height = '0px';
+    inputPanelElement.style.opacity = '0';
+    inputPanelElement.style.overflow = 'hidden';
+  } else {
+    inputPanelElement.style.height = newHeight + 'px';
+    inputPanelElement.style.opacity = '1';
+    inputPanelElement.style.overflow = 'auto';
+    localStorage.setItem(STORAGE_DIVIDER_HEIGHT_KEY, newHeight);
+  }
+  
+  updateCardMinHeight();
+}
+
+// Divider mouse events
+let resizing = false;
+let startY = 0;
+let startHeight = 0;
+
+resizeDivider.addEventListener('mousedown', e => {
+  resizing = true;
+  startY = e.clientY;
+  startHeight = inputPanelElement.getBoundingClientRect().height;
+  document.body.style.userSelect = 'none';
+});
+
+document.addEventListener('mousemove', e => {
+  if (!resizing) return;
+  const delta = e.clientY - startY;
+  applyInputPanelHeight(startHeight + delta);
+});
+
+document.addEventListener('mouseup', () => {
+  if (resizing) {
+    resizing = false;
+    document.body.style.userSelect = '';
+    localStorage.setItem(STORAGE_DIVIDER_HEIGHT_KEY, parseFloat(inputPanelElement.style.height || 0));
+  }
+});
+
+// Divider touch events
+resizeDivider.addEventListener('touchstart', e => {
+  const touch = e.touches && e.touches[0];
+  if (!touch) return;
+  resizing = true;
+  startY = touch.clientY;
+  startHeight = inputPanelElement.getBoundingClientRect().height;
+}, { passive: false });
+
+document.addEventListener('touchmove', e => {
+  if (!resizing) return;
+  const touch = e.touches && e.touches[0];
+  if (!touch) return;
+  const delta = touch.clientY - startY;
+  applyInputPanelHeight(startHeight + delta);
+}, { passive: false });
+
+document.addEventListener('touchend', () => {
+  if (resizing) {
+    resizing = false;
+    localStorage.setItem(STORAGE_DIVIDER_HEIGHT_KEY, parseFloat(inputPanelElement.style.height || 0));
+  }
+});
+
+// Double-click to toggle collapse
+resizeDivider.addEventListener('dblclick', () => {
+  const currentHeight = inputPanelElement.getBoundingClientRect().height;
+  if (currentHeight <= 2) {
+    applyInputPanelHeight(200);
+    localStorage.setItem(STORAGE_DIVIDER_HEIGHT_KEY, 200);
+  } else {
+    applyInputPanelHeight(0);
+    localStorage.setItem(STORAGE_DIVIDER_HEIGHT_KEY, 0);
+  }
+});
+
+// Event delegation for card buttons
+document.addEventListener('click', e => {
+  const button = e.target.closest('[data-action]');
+  if (!button) return;
+  
+  e.stopPropagation();
+  const action = button.dataset.action;
+  const id = button.dataset.id || button.closest('.flip-card')?.dataset.id;
+  
+  switch (action) {
+    case 'show-fullscreen':
+      if (id) showFullscreen(id);
+      break;
+    case 'edit':
+      if (id) showEditModal(id);
+      break;
+    case 'delete':
+      if (id && confirm('Delete this tile?')) deletePair(id);
+      break;
+    case 'copy':
+      if (id) copyResponse(id);
+      break;
+    case 'followup':
+      if (id) sendTileToAI(id);
+      break;
+    case 'flip':
+      flipFullscreen();
+      break;
+    case 'close':
       hideFullscreen();
-    }
+      break;
+  }
+});
 
-    function saveEditedTile() {
-      const tile = pairs.find(p => p.id === currentFullscreenTileId);
-      if (!tile) return;
+// Click question to open fullscreen
+document.addEventListener('click', e => {
+  const questionDiv = e.target.closest('.question-div');
+  if (questionDiv) {
+    const card = questionDiv.closest('.flip-card');
+    if (card) showFullscreen(card.dataset.id);
+  }
+});
 
-      tile.question = editQuestionTextarea.value.trim();
-      tile.response = editResponseTextarea.value.trim();
+// UI event listeners
+document.getElementById('logoBtn').addEventListener('click', () => location.reload());
+document.getElementById('settingsOpenBtn').addEventListener('click', showSettings);
 
-      updateTileQuestionContent(tile.id, tile.question);
-      updateTileResponseContent(tile.id, safeRenderMarkdown(tile.response), false);
+document.getElementById('runTestsBtn').addEventListener('click', () => {
+  try {
+    const id = addPair({ question: 'self-test', response: 'ok' });
+    if (!document.querySelector(`[data-id="${id}"]`)) throw new Error('render failed');
+    deletePair(id);
+    if (document.querySelector(`[data-id="${id}"]`)) throw new Error('delete failed');
+    alert(' Self-tests passed');
+  } catch (e) {
+    alert(' Self-test failed: ' + e.message);
+    console.error(e);
+  }
+});
 
-      if (fullscreenOverlay.classList.contains('show')) {
-        showFullscreen(tile.id);
-      }
+document.getElementById('settingsSaveBtn').addEventListener('click', saveSettings);
+document.getElementById('settingsCancelBtn').addEventListener('click', closeSettings);
+document.getElementById('exportBtn').addEventListener('click', exportData);
 
+document.getElementById('importFile').addEventListener('change', e => {
+  const file = e.target.files && e.target.files[0];
+  if (file) importData(file);
+  e.target.value = '';
+});
+
+document.getElementById('sendBtn').addEventListener('click', sendMessage);
+document.getElementById('editSaveBtn').addEventListener('click', saveEditedTile);
+document.getElementById('editCancelBtn').addEventListener('click', closeEditModal);
+document.getElementById('editTogglePreview').addEventListener('click', toggleEditPreview);
+
+// Close modals by clicking outside
+document.addEventListener('click', e => {
+  if (e.target === settingsModal) closeSettings();
+  if (e.target === editModal) closeEditModal();
+  if (e.target === fullscreenOverlay) hideFullscreen();
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  // Escape to close modals/fullscreen
+  if (e.key === 'Escape') {
+    if (fullscreenOverlay.classList.contains('show')) {
+      hideFullscreen();
+    } else if (editModal.classList.contains('show')) {
       closeEditModal();
-      save();
-      showSavedNotice();
-    }
-
-    function closeEditModal() {
-      editModal.classList.remove("show");
-    }
-
-    function toggleEditPreview() {
-      if (editPreviewDiv.style.display === 'none') {
-        editPreviewDiv.innerHTML = safeRenderMarkdown(editResponseTextarea.value);
-        editPreviewDiv.style.display = 'block';
-        editTogglePreviewBtn.textContent = 'Hide Preview';
-      } else {
-        editPreviewDiv.style.display = 'none';
-        editTogglePreviewBtn.textContent = 'Preview';
-      }
-    }
-
-    // --- Settings ---
-    function showSettings() {
-      baseUrlInput.value = localStorage.getItem(STORAGE_BASEURL_KEY) || '';
-      sessionIdInput.value = sessionId;
-      settingsModal.classList.add("show");
-    }
-
-    function closeSettings() {
-      settingsModal.classList.remove("show");
-    }
-
-    function saveSettings() {
-      localStorage.setItem(STORAGE_BASEURL_KEY, baseUrlInput.value.trim());
+    } else if (settingsModal.classList.contains('show')) {
       closeSettings();
-      showSavedNotice();
     }
-
-    // --- Import / Export ---
-    function exportData() {
-      const data = { pairs, history, sessionId };
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'ai-mindmap-export.json';
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    function importData(file) {
-      const reader = new FileReader();
-      reader.onload = e => {
-        try {
-          const data = JSON.parse(e.target.result);
-          pairs = data.pairs || [];
-          history = data.history || [];
-          sessionId = data.sessionId || "main-" + Date.now();
-          gridElement.innerHTML = '';
-          pairs.forEach(renderPair);
-          save();
-          showSavedNotice();
-        } catch (err) {
-          alert('Invalid file: ' + err.message);
-        }
-      };
-      reader.readAsText(file);
-    }
-
-    // --- Persistence ---
-    function save() {
-      const data = { pairs, history, sessionId };
-      localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify(data));
-    }
-
-    function load() {
-      const raw = localStorage.getItem(STORAGE_DATA_KEY);
-      if (raw) {
-        try {
-          const data = JSON.parse(raw);
-          pairs = data.pairs || [];
-          history = data.history || [];
-          sessionId = data.sessionId || sessionId;
-          pairs.forEach(renderPair);
-        } catch (e) {
-          console.warn("Failed to load data", e);
-        }
-      }
-      const savedUrl = localStorage.getItem(STORAGE_BASEURL_KEY);
-      if (savedUrl) baseUrlInput.value = savedUrl;
-
-      const savedHeight = localStorage.getItem(STORAGE_DIVIDER_HEIGHT_KEY);
-      if (savedHeight) inputPanelElement.style.height = savedHeight;
-    }
-
-    function showSavedNotice(text = "Saved!") {
-      savedNotice.textContent = text;
-      savedNotice.classList.add("show");
-      setTimeout(() => savedNotice.classList.remove("show"), 2000);
-    }
-
-    // --- Self-test ---
-    function runSelfTests() {
-      try {
-        // Basic checks
-        const testId = addPair({ question: "test", response: "ok" });
-        if (!document.querySelector(`[data-id="${testId}"]`)) throw new Error("Card not rendered");
-        deletePair(testId);
-        if (document.querySelector(`[data-id="${testId}"]`)) throw new Error("Card not removed");
-        alert("✅ All self-tests passed!");
-      } catch (e) {
-        alert("❌ Tests failed: " + e.message);
-        console.error(e);
-      }
-    }
-
-    // --- Event Listeners ---
-    logoBtn.addEventListener('click', () => location.reload());
-    settingsOpenBtn.addEventListener('click', showSettings);
-    runTestsBtn.addEventListener('click', runSelfTests);
-    settingsSaveBtn.addEventListener('click', saveSettings);
-    settingsCancelBtn.addEventListener('click', closeSettings);
-    exportBtn.addEventListener('click', exportData);
-    importFileInput.addEventListener('change', e => {
-      if (e.target.files[0]) importData(e.target.files[0]);
-      e.target.value = '';
-    });
-    sendBtn.addEventListener('click', sendMessage);
-    editSaveBtn.addEventListener('click', saveEditedTile);
-    editCancelBtn.addEventListener('click', closeEditModal);
-    editTogglePreviewBtn.addEventListener('click', toggleEditPreview);
-
-    // Delegated click handler
-    document.addEventListener('click', e => {
-      const btn = e.target.closest('[data-action]');
-      if (!btn) return;
-      const action = btn.dataset.action;
-      const id = btn.closest('.flip-card')?.dataset.id || currentFullscreenTileId;
-
-      switch (action) {
-        case 'show-fullscreen': showFullscreen(id); break;
-        case 'flip': flipFullscreen(); break;
-        case 'edit': showEditModal(id); break;
-        case 'delete': if (confirm('Delete this tile?')) deletePair(id); break;
-        case 'copy': copyResponse(id); break;
-        case 'followup': sendTileToAI(id); break;
-        case 'close': hideFullscreen(); break;
-      }
-    });
-
-    // Resize handler
-    dragDivider.addEventListener('mousedown', e => {
-      isResizing = true;
-      startY = e.clientY;
-      startHeightInputPanel = inputPanelElement.getBoundingClientRect().height;
-      document.body.style.userSelect = 'none';
-    });
-
-    document.addEventListener('mousemove', e => {
-      if (!isResizing) return;
-      const delta = e.clientY - startY;
-      const newHeight = startHeightInputPanel + delta;
-      if (newHeight > 100 && newHeight < window.innerHeight - 100) {
-        inputPanelElement.style.height = newHeight + 'px';
-      }
-    });
-
-    document.addEventListener('mouseup', () => {
-      if (isResizing) {
-        isResizing = false;
-        document.body.style.userSelect = '';
-        localStorage.setItem(STORAGE_DIVIDER_HEIGHT_KEY, inputPanelElement.style.height);
-      }
-    });
-
-    // Touch resize
-    dragDivider.addEventListener('touchstart', e => {
-      isResizing = true;
-      startY = e.touches[0].clientY;
-      startHeightInputPanel = inputPanelElement.getBoundingClientRect().height;
+  }
+  
+  // Ctrl/Cmd + Enter to send message
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    if (document.activeElement === userInputElement) {
       e.preventDefault();
-    }, { passive: false });
+      sendMessage();
+    }
+  }
+});
 
-    document.addEventListener('touchmove', e => {
-      if (!isResizing) return;
-      const delta = e.touches[0].clientY - startY;
-      const newHeight = startHeightInputPanel + delta;
-      if (newHeight > 100 && newHeight < window.innerHeight - 100) {
-        inputPanelElement.style.height = newHeight + 'px';
-      }
-    }, { passive: false });
+// Helper functions
+function showSavedNotice(text = 'Saved!') {
+  savedNotice.textContent = text;
+  savedNotice.classList.add('show');
+  setTimeout(() => savedNotice.classList.remove('show'), 2000);
+}
 
-    document.addEventListener('touchend', () => {
-      if (isResizing) {
-        isResizing = false;
-        localStorage.setItem(STORAGE_DIVIDER_HEIGHT_KEY, inputPanelElement.style.height);
-      }
-    });
+// Initialize
+load();
 
-    // Keyboard shortcut
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        sendMessage();
-      }
-    });
-
-    // Click outside modals to close
-    document.addEventListener('click', e => {
-      if (e.target === settingsModal) closeSettings();
-      if (e.target === editModal) closeEditModal();
-      if (e.target === fullscreenOverlay) hideFullscreen();
-    });
-
-    // Init
-    load();
-  </script>
+// Expose for debugging
+window.MindMap = { addPair, pairs };
+</script>
 </body>
 </html>
