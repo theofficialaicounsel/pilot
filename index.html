@@ -7,7 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
   <style>
-    /* Theme & layout */
+   /* Theme & layout */
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#0a0a0a; --glass:rgba(26,26,26,0.86);
@@ -89,14 +89,19 @@ textarea{min-height:80px;resize:vertical}
   background:linear-gradient(135deg, rgba(100,150,255,0.06), rgba(100,150,255,0.02));
 }
 
+/* Fix: Force question text to always be visible and readable */
 .question-div{
   flex:1;
-  overflow:auto;
+  overflow:visible !important;     /* Prevents text from disappearing on load */
   white-space:pre-wrap;
   word-break:break-word;
   padding-right:4px;
   cursor:default;
+  color:var(--text) !important;    /* Ensures color is applied */
+  font-size:1rem;
+  line-height:1.5;
 }
+
 .response-content{
   flex:1;
   overflow:auto;
@@ -146,7 +151,7 @@ textarea{min-height:80px;resize:vertical}
   cursor:pointer;
 }
 
-/* Rest of your original styles (modals, fullscreen, etc.) — unchanged */
+/* Modals, fullscreen, loading, etc. */
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:2000;align-items:center;justify-content:center;padding:20px;overflow:auto}
 .modal.show{display:flex}
 .modal-content{background:var(--glass);border:2px solid var(--yellow);border-radius:12px;padding:18px;width:100%;max-width:960px;max-height:90vh;overflow:auto}
@@ -176,8 +181,8 @@ textarea{min-height:80px;resize:vertical}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
 
 /* Compose modal */
-.compose-text{min-height:300px;max-height:70vh;resize:vertical;width:100%;padding:12px;border-radius:8px;background:var(--bg);border:1px solid var(--border);color:var(--text)}
-  </style>
+.compose-text{min-height:300px;max-height:70vh;resize:vertical;width:100%;padding:12px;border-radius:8px;background:var(--bg);border:1px solid var(--border);color:var(--text)} 
+ </style>
 </head>
 <body>
   <div class="header">
