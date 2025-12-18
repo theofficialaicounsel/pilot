@@ -53,10 +53,6 @@
             background: linear-gradient(135deg, #222 0%, #2a2a2a 100%);
         }
 
-        [data-theme="dark"] #savedNotice {
-            background: var(--success-color);
-        }
-
         * { box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -77,8 +73,13 @@
             padding-bottom: 120px;
         }
 
-        @media (min-width: 600px) { #grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (min-width: 900px) { #grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 600px) {
+            #grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (min-width: 900px) {
+            #grid { grid-template-columns: repeat(3, 1fr); }
+        }
 
         .flip-card {
             height: var(--card-min-height);
@@ -386,7 +387,6 @@
             width: 90%;
             max-width: 500px;
             margin: 20px;
-            box-shadow: var(--shadow-large);
         }
 
         .modal-input, .modal-textarea {
@@ -445,6 +445,9 @@
 
         #cardMenu {
             position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             background: var(--bg-primary);
             border-radius: var(--border-radius);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
@@ -452,12 +455,11 @@
             display: none;
             flex-direction: column;
             gap: 8px;
-            z-index: 10000;
-            min-width: 220px;
+            z-index: 100;
+            min-width: 200px;
         }
 
         #cardMenu.active { display: flex; }
-
         .menu-btn {
             background: none;
             border: none;
@@ -471,11 +473,9 @@
             align-items: center;
             gap: 12px;
         }
-
         .menu-btn:hover { background: rgba(0, 102, 255, 0.1); }
         .menu-btn.delete { color: var(--error-color); }
 
-        /* Dark mode toggle */
         .switch {
             position: relative;
             display: inline-block;
@@ -508,7 +508,6 @@
         input:checked + .slider { background-color: var(--primary-color); }
         input:checked + .slider:before { transform: translateX(24px); }
 
-        /* Help hint */
         #helpHint {
             position: fixed;
             bottom: 20px;
@@ -525,7 +524,6 @@
             z-index: 100;
         }
 
-        /* White-label watermark */
         #brandPlaceholder {
             position: fixed;
             top: 80px;
@@ -537,7 +535,6 @@
             color: rgba(0,102,255,0.08);
             transform: rotate(-12deg);
             user-select: none;
-            opacity: 0.6;
         }
     </style>
 </head>
@@ -678,7 +675,6 @@
     </div>
 
     <script>
-        // 🔧 COMPONENT CLASSES (unchanged from your original, only minor safe additions)
         class EventManager {
             constructor(system) {
                 this.system = system;
@@ -921,7 +917,7 @@
 
                 DomHelper.contentEditable(questionEl, editMode);
                 DomHelper.contentEditable(responseEl, editMode);
-
+                
                 const overlayEl = document.getElementById('fullscreenOverlay');
                 overlayEl.classList.add('active');
                 
@@ -966,7 +962,6 @@
             }
         }
 
-        // 🔧 MAIN SYSTEM CLASS
         class AICardSystem {
             constructor() {
                 this.storage = new StorageService();
@@ -982,8 +977,7 @@
                 };
                 
                 this.state = {
-                    isSelectMode: false,
-                    selecting: false
+                    isSelectMode: false
                 };
                 
                 this.selectedCardMenuId = null;
@@ -994,13 +988,11 @@
             }
 
             async init() {
-                console.log('🎯 AI Cards Initializing...');
                 try {
                     const savedData = this.storage.load(this.storage.keys.DATA);
                     if (savedData && savedData.pairs) {
                         this.data.pairs = savedData.pairs || [];
                         this.data.sessionId = savedData.sessionId || this.data.sessionId;
-                        console.log(`📂 Loaded ${this.data.pairs.length} cards`);
                     }
 
                     const baseUrl = this.storage.load(this.storage.keys.BASEURL);
@@ -1012,15 +1004,13 @@
 
                     this.bindAllEvents();
                     this.renderAllCards();
-                    console.log('✅ AI Cards Initialized');
                 } catch (error) {
-                    console.error('🚨 Initialization failed:', error);
+                    console.error('Initialization failed:', error);
                     this.showError('Initialization error. Check console.');
                 }
             }
 
             bindAllEvents() {
-                // User input
                 this.events.on('#sendBtn', 'click', () => this.handleSendMessage());
                 this.events.on('#userInput', 'keydown', (e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
@@ -1029,14 +1019,12 @@
                     }
                 });
 
-                // Fullscreen controls
                 this.events.on('.fullscreen-close', 'click', () => this.fullscreen.close());
                 this.events.on('.fullscreen-flip', 'click', () => {
                     document.getElementById('fullscreenOverlay').classList.toggle('flipped');
                 });
                 this.events.on('.fullscreen-split', 'click', () => this.handleSplitFromFullscreen());
 
-                // Menu actions
                 this.events.on('#moreMenuBtn', 'click', () => this.openSettings());
                 this.events.on('#modalClose', 'click', () => this.closeModal('moreModal'));
                 this.events.on('#saveApiBtn', 'click', () => this.handleSaveApiUrl());
@@ -1046,21 +1034,17 @@
                     this.storage.save(this.storage.keys.THEME, theme);
                 });
 
-                // Context Actions
                 this.events.on('#modalSummarize', 'click', () => this.handleSummarize());
                 this.events.on('#modalExport', 'click', () => this.handleExport());
                 this.events.on('#modalImport', 'click', () => this.handleImport());
                 this.events.on('#fileInput', 'change', (e) => this.handleImportFile(e));
 
-                // Selection & Merge
                 this.events.on('#cancelSelect', 'click', () => this.exitSelectMode());
                 this.events.on('#mergeSelected', 'click', () => this.handlePromptMerge());
 
-                // Card Menu
                 this.events.on('#cardMenu', 'click', (e) => this.handleCardMenuClick(e));
                 this.events.on(document, 'click', (e) => this.handleOutsideClick(e));
 
-                // Global shortcuts
                 this.events.on(document, 'keydown', (e) => {
                     if (e.key === 'Escape') {
                         this.fullscreen.close();
@@ -1073,7 +1057,6 @@
                     }
                 });
 
-                // Modal confirmations
                 this.events.on('#mergePromptCancel, #mergePromptConfirm', 'click', (e) => this.handleModalConfirm(e));
                 this.events.on('#continuePromptCancel, #continuePromptConfirm', 'click', (e) => this.handleModalConfirm(e));
                 this.events.on('#splitCancel, #splitConfirm', 'click', (e) => this.handleModalConfirm(e));
@@ -1086,7 +1069,15 @@
                 this.helpTimeout = setTimeout(() => hint.style.opacity = '0', 4000);
             }
 
-            // Card operations
+            openSettings() {
+                document.getElementById('modalBaseUrl').value = this.storage.load(this.storage.keys.BASEURL) || '';
+                DomHelper.show(document.getElementById('moreModal'));
+            }
+
+            closeModal(modalId) {
+                DomHelper.hide(document.getElementById(modalId));
+            }
+
             createCard(question, options = {}) {
                 const { response = '', shouldOpenFullscreen = false } = options;
                 
@@ -1112,20 +1103,17 @@
                 const renderer = new CardRenderer(this);
                 const cardEl = renderer.renderCardToGrid(card);
                 
-                // Bind card events
                 cardEl.addEventListener('click', (e) => this.handleCardClick(e, card.id, cardEl));
                 cardEl.addEventListener('dblclick', (e) => {
                     e.preventDefault();
                     this.fullscreen.open(card.id);
                 });
 
-                // Right-click for desktop menu
                 cardEl.addEventListener('contextmenu', (e) => {
                     e.preventDefault();
                     this.showCardMenu(card.id);
                 });
 
-                // Touch events - fixed selection bug
                 let longPressTimer;
                 cardEl.addEventListener('touchstart', (e) => {
                     if (e.touches.length === 1) {
@@ -1206,9 +1194,6 @@
                     document.getElementById('cardMenu').classList.remove('active');
                 }
             }
-
-            // Rest of your original methods unchanged...
-            // (All the handleSendMessage, streamApiResponse, merge, split, continue, etc. are exactly as in your original working code)
 
             handleSendMessage() {
                 const inputEl = document.getElementById('userInput');
@@ -1548,11 +1533,6 @@
                 event.target.value = '';
             }
 
-            openSettings() {
-                document.getElementById('modalBaseUrl').value = this.storage.load(this.storage.keys.BASEURL) || '';
-                DomHelper.show(document.getElementById('moreModal'));
-            }
-
             handleSaveApiUrl() {
                 const baseUrl = document.getElementById('modalBaseUrl').value.trim();
                 if (!baseUrl) return this.showError('Please enter a valid API URL');
@@ -1566,10 +1546,6 @@
                 } else {
                     this.showError('❌ Failed to save API URL');
                 }
-            }
-
-            closeModal(modalId) {
-                DomHelper.hide(document.getElementById(modalId));
             }
 
             handleModalConfirm(event) {
@@ -1633,19 +1609,12 @@
             }
         }
 
-        // Initialization
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 window.aiSystem = new AICardSystem();
                 await window.aiSystem.init();
-                console.log('🚀 Draft by ai-Nspired ready!');
             } catch (error) {
-                console.error('💥 System initialization failed:', error);
-                document.getElementById('grid').innerHTML = `
-                    <div style="text-align:center; padding:40px; color:var(--error-color);">
-                        🚨 System initialization failed. Check console.
-                    </div>
-                `;
+                console.error('Initialization failed:', error);
             }
         });
     </script>
