@@ -455,11 +455,12 @@
             display: none;
             flex-direction: column;
             gap: 8px;
-            z-index: 100;
-            min-width: 200px;
+            z-index: 10000;
+            min-width: 220px;
         }
 
         #cardMenu.active { display: flex; }
+
         .menu-btn {
             background: none;
             border: none;
@@ -473,6 +474,7 @@
             align-items: center;
             gap: 12px;
         }
+
         .menu-btn:hover { background: rgba(0, 102, 255, 0.1); }
         .menu-btn.delete { color: var(--error-color); }
 
@@ -629,7 +631,7 @@
     <div id="mergePromptModal" class="modal-overlay">
         <div class="modal-panel">
             <h3 style="margin:0 0 12px 0; font-size:18px;">🔗 Merge Instructions</h3>
-            <p style="margin:0 0 16px 0; font-size:14px; color:#666;">Optional: How should these be merged?</p>
+            <p style="margin:109 0 16px 0; font-size:14px; color:#666;">Optional: How should these be merged?</p>
             <textarea id="mergePromptText" class="modal-textarea" placeholder="Combine these ideas..."></textarea>
             <div class="modal-actions">
                 <button id="mergePromptCancel" class="modal-btn">Cancel</button>
@@ -1090,7 +1092,8 @@
 
                 this.data.pairs.push(newCard);
                 const cardEl = this.renderCard(newCard);
-                
+ activist
+
                 if (shouldOpenFullscreen) {
                     this.fullscreen.open(newCard.id, { startOnResponse: !!response });
                 }
@@ -1186,7 +1189,11 @@
 
             showCardMenu(cardId) {
                 this.selectedCardMenuId = cardId;
-                document.getElementById('cardMenu').classList.add('active');
+                const menu = document.getElementById('cardMenu');
+                menu.style.top = '50%';
+                menu.style.left = '50%';
+                menu.style.transform = 'translate(-50%, -50%)';
+                menu.classList.add('active');
             }
 
             handleOutsideClick(e) {
