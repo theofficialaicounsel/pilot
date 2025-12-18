@@ -631,7 +631,7 @@
     <div id="mergePromptModal" class="modal-overlay">
         <div class="modal-panel">
             <h3 style="margin:0 0 12px 0; font-size:18px;">🔗 Merge Instructions</h3>
-            <p style="margin:109 0 16px 0; font-size:14px; color:#666;">Optional: How should these be merged?</p>
+            <p style="margin:0 0 16px 0; font-size:14px; color:#666;">Optional: How should these be merged?</p>
             <textarea id="mergePromptText" class="modal-textarea" placeholder="Combine these ideas..."></textarea>
             <div class="modal-actions">
                 <button id="mergePromptCancel" class="modal-btn">Cancel</button>
@@ -1092,8 +1092,7 @@
 
                 this.data.pairs.push(newCard);
                 const cardEl = this.renderCard(newCard);
- activist
-
+                
                 if (shouldOpenFullscreen) {
                     this.fullscreen.open(newCard.id, { startOnResponse: !!response });
                 }
