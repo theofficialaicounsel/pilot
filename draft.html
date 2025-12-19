@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ai-Ndraft</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+    
+    <style>
+        :root {
+            --card-min-height: 220px;
+            --transition-speed: 0.3s;
+            --primary-color: #0066ff;
+            --error-color: #d00;
+            --success-color: #28a745;
+            --border-radius: 16px;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --shadow-large: 0 20px 60px rgba(0, 0, 0, 0.3);
+            --text-primary: #333;
+            --text-secondary: #666;
+            --bg-primary: #fff;
+            --bg-secondary: #f5f5f5;
+            --bg-tertiary: #f8f9fa;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: var(--bg-secondary);
+            overflow-x: hidden;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+
+        #selectionBar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-primary);
+            border-bottom: 1px solid #ddd;
+            padding: 12px 20px;
+            z-index: 1000;
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+        }
+
+        #selectionBar.active { 
+            display: flex; 
+        }
+
+        #mergeSelected {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        #mergeSelected:hover {
+            background: #0052cc;
+        }
+
+        #cancelSelect {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+        }
+
+        #cancelSelect:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .fullscreen-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            z-index: 10000;
+            backdrop-filter: blur(5px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fullscreen-overlay.active {
+            display: flex;
+        }
+
+        .fullscreen-card {
+            width: 95%;
+            max-width: 1000px;
+            height: 95vh;
+            background: var(--bg-primary);
+            border-radius: 20px;
+            box-shadow: var(--shadow-large);
+            perspective: 2000px;
+        }
+
+        .fullscreen-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .fullscreen-overlay.flipped .fullscreen-inner {
+            transform: rotateY(180deg);
+        }
+
+        .fullscreen-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .fullscreen-front {
+            background: var(--bg-primary);
+        }
+
+        .fullscreen-back {
+            background: var(--bg-primary);
+            transform: rotateY(180deg);
+        }
+
+        .fullscreen-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(to right, var(--bg-tertiary), var(--bg-primary));
+        }
+
+        .fullscreen-title {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 18px;
+        }
+
+        .fullscreen-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .fullscreen-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            opacity: 0.7;
+        }
+
+        .fullscreen-btn:hover {
+            opacity: 1;
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .fullscreen-content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            font-size: 16px;
+            line-height: 1.7;
+            outline: none;
+        }
+
+        .fullscreen-content[contenteditable="true"] {
+            background: rgba(0, 102, 255, 0.03);
+            border-radius: var(--border-radius);
+        }
+
+        #grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            padding: 16px;
+            padding-top: 70px;
+            padding-bottom: 120px;
+            min-height: calc(100vh - 140px);
+        }
+
+        @media (min-width: 600px) {
+            #grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 900px) {
+            #grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .flip-card {
+            height: var(--card-min-height);
+            perspective: 1000px;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .flip-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .flip-card.new-arrival {
+            opacity: 0;
+            transform: scale(0.95) translateY(20px);
+            animation: cardArrival 0.5s ease forwards;
+        }
+
+        @keyframes cardArrival {
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-front {
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-tertiary) 100%);
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+            background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%);
+        }
+
+        .question-div,
+        .response-content {
+            padding: 16px;
+            flex: 1;
+            overflow-y: auto;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .question-div {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .flip-card.selected {
+            outline: 4px solid var(--primary-color);
+            outline-offset: -4px;
+            transform: scale(1.02);
+            z-index: 20;
+        }
+
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px 30px;
+            border-radius: var(--border-radius);
+            display: none;
+            z-index: 2000;
+            backdrop-filter: blur(10px);
+        }
+
+        #loading.show {
+            display: block;
+        }
+
+        #savedNotice {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--text-primary);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            opacity: 0;
+            transition: opacity var(--transition-speed);
+            box-shadow: var(--shadow);
+        }
+
+        #savedNotice.show {
+            opacity: 1;
+        }
+
+        #inputPanel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            border-top: 1px solid #ddd;
+            padding: 16px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e1e1e1;
+            border-radius: 12px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color var(--transition-speed);
+        }
+
+        #userInput:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+        }
+
+        #sendBtn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        #sendBtn:hover {
+            background: #0052cc;
+            transform: translateY(-1px);
+        }
+
+        #moreMenuBtn {
+            position: fixed;
+            bottom: 120px;
+            right: 20px;
+            background: var(--bg-primary);
+            border: 1px solid #ddd;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            z-index: 900;
+            transition: all 0.3s;
+        }
+
+        #moreMenuBtn:hover {
+            transform: scale(1.05);
+        }
+
+        #moreModal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        #moreModal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            margin: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .modal-btn {
+            width: 100%;
+            padding: 12px;
+            margin: 6px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: var(--bg-primary);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .modal-btn:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .modal-btn.primary {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .modal-btn.primary:hover {
+            background: #0052cc;
+        }
+
+        #cardMenu {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            padding: 16px;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 100;
+            min-width: 200px;
+        }
+
+        #cardMenu.active {
+            display: flex;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 12px;
+            text-align: left;
+            border-radius: 8px;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .menu-btn:hover {
+            background: rgba(0, 102, 255, 0.1);
+        }
+
+        .menu-btn.delete {
+            color: var(--error-color);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-panel {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            width: 90%;
+            max-width: 500px;
+            margin: 20px;
+        }
+
+        .modal-panel h3 {
+            margin: 0 0 12px 0;
+            font-size: 18px;
+            color: var(--text-primary);
+        }
+
+        .modal-panel p {
+            margin: 0 0 16px 0;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .modal-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            min-height: 120px;
+            resize: vertical;
+            outline: none;
+        }
+
+        .modal-textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 16px;
+        }
+
+        .modal-actions button {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .modal-actions button.primary {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .modal-actions button.primary:hover {
+            background: #0052cc;
+        }
+
+        .modal-actions button:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .streaming-indicator {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 20px;
+        }
+
+        .streaming-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 1em;
+            background: currentColor;
+            animation: blink 1s infinite;
+            margin-left: 2px;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        @media (max-width: 768px) {
+            .fullscreen-card {
+                width: 98%;
+                height: 98vh;
+            }
+
+            .fullscreen-content {
+                padding: 16px;
+            }
+
+            .input-container {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="selectionBar">
+        <button id="cancelSelect">✕</button>
+        <span id="selectCount">0 selected</span>
+        <button id="mergeSelected">Merge Selected</button>
+    </div>
+
+    <div class="fullscreen-overlay" id="fullscreenOverlay">
+        <div class="fullscreen-card">
+            <div class="fullscreen-inner">
+                <div class="fullscreen-face fullscreen-front">
+                    <div class="fullscreen-header">
+                        <span class="fullscreen-title">Question</span>
+                        <div class="fullscreen-controls">
+                            <button class="fullscreen-btn fullscreen-flip">↔️</button>
+                            <button class="fullscreen-btn fullscreen-split hidden">⬇</button>
+                            <button class="fullscreen-btn fullscreen-close">❌</button>
+                        </div>
+                    </div>
+                    <div class="fullscreen-content" id="fsQuestion" contenteditable="false"></div>
+                </div>
+                <div class="fullscreen-face fullscreen-back">
+                    <div class="fullscreen-header">
+                        <span class="fullscreen-title">Response</span>
+                        <div class="fullscreen-controls">
+                            <button class="fullscreen-btn fullscreen-flip">↔️</button>
+                            <button class="fullscreen-btn fullscreen-split hidden">⬇</button>
+                            <button class="fullscreen-btn fullscreen-close">❌</button>
+                        </div>
+                    </div>
+                    <div class="fullscreen-content" id="fsResponse" contenteditable="false"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="grid"></div>
+
+    <div id="loading">💭 Thinking...</div>
+    <div id="savedNotice">💾 Saved!</div>
+
+    <button id="moreMenuBtn">⚙️</button>
+
+    <div id="moreModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="modal-title">Settings & Actions</h3>
+            <input type="url" id="modalBaseUrl" class="modal-input" placeholder="https://api.example.com">
+            <button class="modal-btn primary" id="saveApiBtn">💾 Save API URL</button>
+            <div style="margin-top: 24px; border-top: 1px solid #eee; padding-top: 16px;">
+                <button class="modal-btn" id="modalExport">📤 Export State</button>
+                <button class="modal-btn" id="modalImport">📥 Import State</button>
+            </div>
+            <button class="modal-btn" id="modalClose">✕ Close</button>
+            <input type="file" id="fileInput" class="hidden" accept=".json">
+        </div>
+    </div>
+
+    <div id="cardMenu">
+        <button class="menu-btn" data-action="continue"><span>📝</span><span>Continue</span></button>
+        <button class="menu-btn" data-action="copy"><span>📋</span><span>Copy</span></button>
+        <button class="menu-btn" data-action="edit"><span>✏️</span><span>Edit</span></button>
+        <button class="menu-btn" data-action="split"><span>✂️</span><span>Split</span></button>
+        <button class="menu-btn" data-action="fullscreen"><span>🖼️</span><span>Fullscreen</span></button>
+        <button class="menu-btn delete" data-action="delete"><span>🗑️</span><span>Delete</span></button>
+    </div>
+
+    <div id="mergePromptModal" class="modal-overlay">
+        <div class="modal-panel">
+            <h3>Merge Instructions (optional)</h3>
+            <p>If blank, will intelligently combine</p>
+            <textarea id="mergePromptText" class="modal-textarea" placeholder="How should these be merged?"></textarea>
+            <div class="modal-actions">
+                <button id="mergePromptCancel">Cancel</button>
+                <button id="mergePromptConfirm" class="primary">Merge</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="continuePromptModal" class="modal-overlay">
+        <div class="modal-panel">
+            <h3>Continue Instructions (optional)</h3>
+            <p>If blank, will continue thoughtfully with full context</p>
+            <textarea id="continuePromptText" class="modal-textarea" placeholder="What should the continuation focus on?"></textarea>
+            <div class="modal-actions">
+                <button id="continuePromptCancel">Cancel</button>
+                <button id="continuePromptConfirm" class="primary">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="splitPromptModal" class="modal-overlay">
+        <div class="modal-panel">
+            <h3>Split Instructions (optional)</h3>
+            <p>If blank, will intelligently split into logical sections</p>
+            <textarea id="splitPromptText" class="modal-textarea" placeholder="How should this be split? (e.g., one section per clause, per party, etc.)"></textarea>
+            <div class="modal-actions">
+                <button id="splitPromptCancel">Cancel</button>
+                <button id="splitPromptConfirm" class="primary">Split</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="inputPanel">
+        <div class="input-container">
+            <input type="text" id="userInput" placeholder="Describe what you need...">
+            <button id="sendBtn">📤 Draft</button>
+        </div>
+    </div>
+
+    <script>
+        class AICardSystem {
+            constructor() {
+                this.pairs = [];
+                this.sessionId = `main-${Date.now()}`;
+                this.currentStreamingId = null;
+                this.selectedTiles = new Set();
+                this.isSelectMode = false;
+                this.fullscreenId = null;
+                this.isEditMode = false;
+                this.currentContinueId = null;
+                this.currentCardMenuId = null;
+                this.currentSplitId = null;
+                this.textDecoder = new TextDecoder('utf-8');
+                
+                this.STORAGE_KEYS = {
+                    DATA: 'ai-data',
+                    BASEURL: 'ai-baseurl'
+                };
+                
+                this.init();
+            }
+
+            init() {
+                this.loadFromStorage();
+                this.bindEvents();
+            }
+
+            bindEvents() {
+                document.getElementById('sendBtn').addEventListener('click', () => this.sendMessage());
+                document.getElementById('userInput').addEventListener('keydown', e => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+
+                document.getElementById('moreMenuBtn').addEventListener('click', () => {
+                    document.getElementById('modalBaseUrl').value = localStorage.getItem(this.STORAGE_KEYS.BASEURL) || '';
+                    document.getElementById('moreModal').classList.add('active');
+                });
+                document.getElementById('modalClose').addEventListener('click', () => document.getElementById('moreModal').classList.remove('active'));
+                document.getElementById('saveApiBtn').addEventListener('click', () => {
+                    const url = document.getElementById('modalBaseUrl').value.trim();
+                    if (!url) return;
+                    localStorage.setItem(this.STORAGE_KEYS.BASEURL, url);
+                    document.getElementById('moreModal').classList.remove('active');
+                    this.showNotice('API URL saved');
+                });
+
+                document.getElementById('modalExport').addEventListener('click', () => this.exportState());
+                document.getElementById('modalImport').addEventListener('click', () => document.getElementById('fileInput').click());
+                document.getElementById('fileInput').addEventListener('change', e => this.importState(e));
+
+                document.querySelectorAll('.fullscreen-close').forEach(b => b.addEventListener('click', () => this.closeFullscreen()));
+                document.querySelectorAll('.fullscreen-flip').forEach(b => b.addEventListener('click', () => document.getElementById('fullscreenOverlay').classList.toggle('flipped')));
+                document.querySelectorAll('.fullscreen-split').forEach(b => b.addEventListener('click', () => this.promptSplit(this.fullscreenId)));
+
+                document.getElementById('cancelSelect').addEventListener('click', () => this.exitSelectMode());
+                document.getElementById('mergeSelected').addEventListener('click', () => this.promptMerge());
+
+                document.getElementById('mergePromptCancel').addEventListener('click', () => document.getElementById('mergePromptModal').classList.remove('active'));
+                document.getElementById('mergePromptConfirm').addEventListener('click', () => this.mergeSelectedTiles());
+
+                document.getElementById('continuePromptCancel').addEventListener('click', () => document.getElementById('continuePromptModal').classList.remove('active'));
+                document.getElementById('continuePromptConfirm').addEventListener('click', () => this.performContinue());
+
+                document.getElementById('splitPromptCancel').addEventListener('click', () => document.getElementById('splitPromptModal').classList.remove('active'));
+                document.getElementById('splitPromptConfirm').addEventListener('click', () => this.performSplit());
+
+                document.getElementById('cardMenu').addEventListener('click', e => {
+                    const btn = e.target.closest('.menu-btn');
+                    if (btn) {
+                        const action = btn.dataset.action;
+                        this.handleMenuAction(action, this.currentCardMenuId);
+                        document.getElementById('cardMenu').classList.remove('active');
+                    }
+                });
+
+                document.addEventListener('click', e => {
+                    if (!e.target.closest('#cardMenu')) document.getElementById('cardMenu').classList.remove('active');
+                });
+            }
+
+            handleMenuAction(action, id) {
+                switch (action) {
+                    case 'continue': this.promptContinue(id); break;
+                    case 'copy': this.copyResponse(id); break;
+                    case 'edit': this.startFullscreenEdit(id); break;
+                    case 'split': this.promptSplit(id); break;
+                    case 'fullscreen': this.openFullscreen(id); break;
+                    case 'delete': if (confirm('Delete this card?')) this.deletePair(id); break;
+                }
+            }
+
+            promptContinue(id) {
+                this.currentContinueId = id;
+                document.getElementById('continuePromptText').value = '';
+                document.getElementById('continuePromptModal').classList.add('active');
+            }
+
+            async performContinue() {
+                const card = this.pairs.find(p => p.id === this.currentContinueId);
+                if (!card) return;
+
+                const custom = document.getElementById('continuePromptText').value.trim();
+                const context = `Original request:\n\( {card.question}\n\nPrevious response:\n \){card.response || ''}`;
+                const prompt = custom ? `\( {context}\n\nAdditional instructions:\n \){custom}\n\nContinue from here:` : `${context}\n\nContinue thoughtfully from where you left off:`;
+
+                const newId = this.addPair({ question: `Continue: ${card.question.slice(0,40)}...`, response: '...' }, true);
+                this.currentStreamingId = newId;
+                await this.sendWithPrompt(prompt);
+                document.getElementById('continuePromptModal').classList.remove('active');
+            }
+
+            promptSplit(id) {
+                this.currentSplitId = id;
+                document.getElementById('splitPromptText').value = '';
+                document.getElementById('splitPromptModal').classList.add('active');
+            }
+
+            async performSplit() {
+                const card = this.pairs.find(p => p.id === this.currentSplitId);
+                if (!card) return;
+
+                const custom = document.getElementById('splitPromptText').value.trim();
+                const prompt = custom ? `Split the following text into separate sections according to these instructions: \( {custom}\n\nText to split:\n \){card.response || ''}\n\nOutput each section as a separate block with a clear title.` : `Intelligently split the following text into logical sections. Give each section a clear title.\n\nText:\n${card.response || ''}`;
+
+                // We'll create a temporary streaming card for the split result
+                const tempId = this.addPair({ question: `Splitting: ${card.question.slice(0,40)}...`, response: '...' }, true);
+                this.currentStreamingId = tempId;
+                await this.sendWithPrompt(prompt);
+
+                document.getElementById('splitPromptModal').classList.remove('active');
+            }
+
+            openFullscreen(id, startingOnResponse = false) {
+                const card = this.pairs.find(p => p.id === id);
+                if (!card) return;
+
+                this.isEditMode = false;
+                document.getElementById('fsQuestion').contentEditable = false;
+                document.getElementById('fsResponse').contentEditable = false;
+                document.querySelectorAll('.fullscreen-split').forEach(btn => btn.classList.add('hidden'));
+
+                document.getElementById('fsQuestion').innerHTML = this.safeRenderMarkdown(card.question || '');
+                document.getElementById('fsResponse').innerHTML = card.response && card.response !== '...' 
+                    ? this.safeRenderMarkdown(card.response) 
+                    : '<div class="streaming-indicator"><span class="streaming-cursor"></span> Generating...</div>';
+
+                const overlay = document.getElementById('fullscreenOverlay');
+                overlay.classList.add('active');
+                if (startingOnResponse) overlay.classList.add('flipped');
+                else overlay.classList.remove('flipped');
+
+                this.fullscreenId = id;
+                document.body.style.overflow = 'hidden';
+            }
+
+            closeFullscreen() {
+                if (this.isEditMode) {
+                    const card = this.pairs.find(p => p.id === this.fullscreenId);
+                    if (card) {
+                        card.question = document.getElementById('fsQuestion').innerText.trim();
+                        card.response = document.getElementById('fsResponse').innerHTML;
+                        this.saveToStorage();
+                        this.showNotice('Changes saved');
+                    }
+                    this.isEditMode = false;
+                    document.querySelectorAll('.fullscreen-split').forEach(b => b.classList.add('hidden'));
+                }
+                document.getElementById('fullscreenOverlay').classList.remove('active', 'flipped');
+                this.fullscreenId = null;
+                document.body.style.overflow = 'auto';
+            }
+
+            getBaseUrl() {
+                const url = localStorage.getItem(this.STORAGE_KEYS.BASEURL);
+                if (!url) throw new Error('Set API URL in ⚙️ menu');
+                return url.replace(/\/+$/, '');
+            }
+
+            async sendMessage() {
+                const input = document.getElementById('userInput').value.trim();
+                if (!input) return;
+                document.getElementById('userInput').value = '';
+
+                const id = this.addPair({ question: input, response: '...' }, true);
+                this.currentStreamingId = id;
+                await this.sendWithPrompt(input);
+            }
+
+            async sendWithPrompt(prompt) {
+                try {
+                    document.getElementById('loading').classList.add('show');
+                    const payload = { sessionId: this.sessionId, prompt: prompt };
+                    const reader = await this.apiFetch('/api/generate', payload);
+                    await this.processSSEStream(reader, this.currentStreamingId);
+                } catch (err) {
+                    this.updateResponse(this.currentStreamingId, `<p style="color:red">Error: ${this.escapeHTML(err.message)}</p>`);
+                } finally {
+                    document.getElementById('loading').classList.remove('show');
+                }
+            }
+
+            async apiFetch(path, payload) {
+                const base = this.getBaseUrl();
+                const res = await fetch(base + path, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) {
+                    let msg = `HTTP ${res.status}`;
+                    try { const j = await res.json(); msg = j.error || j.message || msg; } catch {}
+                    throw new Error(msg);
+                }
+                return res.body.getReader();
+            }
+
+            async processSSEStream(reader, tileId) {
+                let buffer = '';
+                let accumulated = '';
+
+                try {
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        buffer += this.textDecoder.decode(value, { stream: true });
+                        const parts = buffer.split(/\r?\n\r?\n/);
+                        buffer = parts.pop() || '';
+
+                        for (const part of parts) {
+                            if (!part.trim()) continue;
+                            const lines = part.split(/\r?\n/);
+                            let jsonData = null;
+
+                            for (const line of lines) {
+                                if (line.startsWith('data:')) {
+                                    const data = line.substring(5).trim();
+                                    if (data === '[DONE]') {
+                                        let clean = accumulated.trim();
+                                        clean = clean.replace(/\n{3,}/g, '\n\n').trim();
+                                        const html = clean ? this.safeRenderMarkdown(clean) : '<em>No content</em>';
+                                        this.updateResponse(tileId, html);
+                                        const card = this.pairs.find(t => t.id === tileId);
+                                        if (card) card.response = clean;
+                                        this.saveToStorage();
+                                        return;
+                                    }
+                                    try { jsonData = JSON.parse(data); } catch {}
+                                }
+                            }
+
+                            if (jsonData?.choices?.[0]?.delta?.content) {
+                                const content = jsonData.choices[0].delta.content;
+                                accumulated += content;
+                                this.updateResponse(tileId, this.safeRenderMarkdown(accumulated), true);
+                            }
+                        }
+                    }
+                } catch (err) {
+                    this.updateResponse(tileId, `<p style="color:red">Error: ${this.escapeHTML(err.message)}</p>`);
+                }
+            }
+
+            updateResponse(tileId, html) {
+                const card = document.querySelector(`[data-id="${tileId}"]`);
+                if (card) {
+                    const resp = card.querySelector('.response-content');
+                    if (resp) {
+                        resp.innerHTML = html;
+                        resp.scrollTop = resp.scrollHeight;
+                    }
+                }
+                if (this.fullscreenId === tileId) {
+                    const fs = document.getElementById('fsResponse');
+                    if (fs) {
+                        fs.innerHTML = html;
+                        fs.scrollTop = fs.scrollHeight;
+                    }
+                }
+            }
+
+            addPair(pairData, fullscreen = false) {
+                const id = crypto.randomUUID?.() || Date.now().toString();
+                const card = { id, question: pairData.question, response: pairData.response || '' };
+                this.pairs.push(card);
+                this.renderPair(card, true);
+                if (fullscreen) this.openFullscreen(id, true);
+                this.saveToStorage();
+                return id;
+            }
+
+            renderPair(p, isNew = false) {
+                const responseHTML = p.response && p.response !== '...'
+                    ? this.safeRenderMarkdown(p.response)
+                    : '<div class="streaming-indicator"><span class="streaming-cursor"></span> Generating...</div>';
+
+                const card = document.createElement('div');
+                card.className = `flip-card ${isNew ? 'new-arrival' : ''}`;
+                card.dataset.id = p.id;
+
+                card.innerHTML = `
+                    <div class="flip-card-inner">
+                        <div class="card-face card-front">
+                            <div class="question-div">${this.safeRenderMarkdown(p.question)}</div>
+                        </div>
+                        <div class="card-face card-back">
+                            <div class="response-content">${responseHTML}</div>
+                        </div>
+                    </div>
+                `;
+
+                let longPressTimer;
+                card.addEventListener('touchstart', e => {
+                    if (e.touches.length === 1) {
+                        longPressTimer = setTimeout(() => this.enterSelectMode(p.id, card), 600);
+                    } else if (e.touches.length === 2) {
+                        e.preventDefault();
+                        this.currentCardMenuId = p.id;
+                        document.getElementById('cardMenu').classList.add('active');
+                    }
+                }, { passive: true });
+                card.addEventListener('touchend', () => clearTimeout(longPressTimer));
+                card.addEventListener('touchmove', () => clearTimeout(longPressTimer));
+
+                card.addEventListener('click', e => {
+                    if (this.isSelectMode) {
+                        e.preventDefault();
+                        this.toggleCardSelection(p.id, card);
+                        return;
+                    }
+                    card.classList.toggle('flipped');
+                });
+
+                card.ondblclick = e => {
+                    e.preventDefault();
+                    this.openFullscreen(p.id);
+                };
+
+                document.getElementById('grid').appendChild(card);
+                if (p.response && p.response !== '...') setTimeout(() => card.classList.add('flipped'), 100);
+            }
+
+            promptMerge() {
+                if (this.selectedTiles.size < 2) return;
+                document.getElementById('mergePromptText').value = '';
+                document.getElementById('mergePromptModal').classList.add('active');
+            }
+
+            async mergeSelectedTiles() {
+                const selected = this.pairs.filter(p => this.selectedTiles.has(p.id));
+                const context = selected.map(t => `Request: ${t.question}\nResponse: ${t.response || ''}`).join('\n\n---\n\n');
+                const custom = document.getElementById('mergePromptText').value.trim();
+                const prompt = custom ? `\( {context}\n\nInstructions for merging:\n \){custom}` : `Intelligently combine the following sections into a cohesive whole:\n\n${context}`;
+
+                const newId = this.addPair({ question: `Merged ${selected.length} cards`, response: '...' }, true);
+                this.currentStreamingId = newId;
+                await this.sendWithPrompt(prompt);
+                document.getElementById('mergePromptModal').classList.remove('active');
+                this.exitSelectMode();
+            }
+
+            deletePair(id) {
+                this.pairs = this.pairs.filter(p => p.id !== id);
+                document.querySelector(`[data-id="${id}"]`)?.remove();
+                if (this.fullscreenId === id) this.closeFullscreen();
+                this.saveToStorage();
+            }
+
+            enterSelectMode(id, card) {
+                this.isSelectMode = true;
+                this.selectedTiles.clear();
+                this.toggleCardSelection(id, card);
+            }
+
+            toggleCardSelection(id, card) {
+                card.classList.toggle('selected');
+                if (this.selectedTiles.has(id)) this.selectedTiles.delete(id);
+                else this.selectedTiles.add(id);
+                this.updateSelectionBar();
+            }
+
+            updateSelectionBar() {
+                const count = this.selectedTiles.size;
+                document.getElementById('selectCount').textContent = `${count} selected`;
+                document.getElementById('mergeSelected').style.display = count >= 2 ? 'block' : 'none';
+                document.getElementById('selectionBar').classList.toggle('active', count > 0);
+            }
+
+            exitSelectMode() {
+                this.isSelectMode = false;
+                this.selectedTiles.clear();
+                document.querySelectorAll('.flip-card.selected').forEach(c => c.classList.remove('selected'));
+                document.getElementById('selectionBar').classList.remove('active');
+            }
+
+            exportState() {
+                const state = { pairs: this.pairs, sessionId: this.sessionId };
+                const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'ai-ndraft.json';
+                a.click();
+                URL.revokeObjectURL(url);
+                this.showNotice('Exported');
+            }
+
+            importState(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = ev => {
+                    try {
+                        const state = JSON.parse(ev.target.result);
+                        this.pairs = state.pairs || [];
+                        this.sessionId = state.sessionId || this.sessionId;
+                        document.getElementById('grid').innerHTML = '';
+                        this.pairs.forEach(p => this.renderPair(p));
+                        this.saveToStorage();
+                        this.showNotice('Imported');
+                    } catch {
+                        this.showNotice('Invalid file');
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            saveToStorage() {
+                localStorage.setItem(this.STORAGE_KEYS.DATA, JSON.stringify({ pairs: this.pairs, sessionId: this.sessionId }));
+            }
+
+            loadFromStorage() {
+                const raw = localStorage.getItem(this.STORAGE_KEYS.DATA);
+                if (raw) {
+                    const data = JSON.parse(raw);
+                    this.pairs = data.pairs || [];
+                    this.sessionId = data.sessionId || this.sessionId;
+                    this.pairs.forEach(p => this.renderPair(p));
+                }
+            }
+
+            safeRenderMarkdown(md) {
+                const html = marked.parse(md || '');
+                return DOMPurify.sanitize(html);
+            }
+
+            escapeHTML(str = '') {
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+
+            showNotice(msg) {
+                const n = document.getElementById('savedNotice');
+                n.textContent = msg;
+                n.classList.add('show');
+                setTimeout(() => n.classList.remove('show'), 2000);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new AICardSystem();
+        });
+    </script>
+</body>
+</html>
