@@ -2,47 +2,53 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ai-Ndraft</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parametric AI Cards</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
-    
+    <script src="https://cdn.jsdelivr.net/npm/responsivevoice@1.0.0/responsivevoice.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
     <style>
         :root {
+            --primary: #c41e3a;
+            --bg: #121212;
+            --card-bg: #1e1e1e;
+            --text: #f5f5f5;
+            --border: #333;
+            --shadow: 0 4px 16px rgba(196,30,58,0.2);
+            --radius: 16px;
             --card-min-height: 220px;
-            --primary: #0066ff;
+        }
+
+        [data-theme="light"] {
             --bg: #f8f9fa;
             --card-bg: #ffffff;
             --text: #222;
-            --border: #e0e0e0;
-            --shadow: 0 4px 12px rgba(0,0,0,0.08);
-            --radius: 16px;
+            --border: #ddd;
+            --shadow: 0 4px 16px rgba(196,30,58,0.15);
         }
 
-        [data-theme="dark"] {
-            --bg: #0d1117;
-            --card-bg: #161b22;
-            --text: #e6edf3;
-            --border: #30363d;
-            --shadow: 0 4px 12px rgba(0,0,0,0.3);
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
-
-        * { box-sizing: border-box; }
 
         body {
-            margin: 0;
             font-family: system-ui, sans-serif;
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
+            padding-top: 70px;
         }
 
         #grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 16px;
-            padding: 16px 16px 120px;
-            padding-top: 70px;
+            padding: 16px;
+            padding-bottom: 120px;
         }
 
         .flip-card {
@@ -51,7 +57,8 @@
             border-radius: var(--radius);
             overflow: hidden;
             box-shadow: var(--shadow);
-            background: var(--card-bg);
+            transition: all 0.3s ease;
+            position: relative;
         }
 
         .flip-card.new {
@@ -60,7 +67,9 @@
             animation: appear 0.4s ease forwards;
         }
 
-        @keyframes appear { to { opacity: 1; transform: scale(1); } }
+        @keyframes appear {
+            to { opacity: 1; transform: scale(1); }
+        }
 
         .flip-card-inner {
             width: 100%;
@@ -69,7 +78,9 @@
             transform-style: preserve-3d;
         }
 
-        .flipped .flip-card-inner { transform: rotateY(180deg); }
+        .flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
 
         .card-face {
             position: absolute;
@@ -81,9 +92,45 @@
             overflow-y: auto;
             font-size: 15px;
             line-height: 1.6;
+            background: var(--card-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
         }
 
-        .card-back { transform: rotateY(180deg); }
+        .card-back {
+            transform: rotateY(180deg);
+        }
+
+        .card-header {
+            position: sticky;
+            top: 0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            padding-bottom: 8px;
+            background: inherit;
+            z-index: 10;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 8px;
+        }
+
+        .card-actions button {
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px;
+            opacity: 0.7;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .card-actions button:hover {
+            opacity: 1;
+            background: rgba(196,30,58,0.1);
+        }
 
         .flip-card.selected {
             outline: 4px solid var(--primary);
@@ -106,7 +153,9 @@
             box-shadow: var(--shadow);
         }
 
-        #selectionBar.active { display: flex; }
+        #selectionBar.active {
+            display: flex;
+        }
 
         #mergeSelected {
             background: var(--primary);
@@ -115,21 +164,28 @@
             padding: 8px 16px;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 20px;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        #mergeSelected:hover {
+            background: #a1172f;
         }
 
         .fullscreen-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             display: none;
             z-index: 10000;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(8px);
         }
 
-        .fullscreen-overlay.active { display: flex; }
+        .fullscreen-overlay.active {
+            display: flex;
+        }
 
         .fullscreen-card {
             width: 95%;
@@ -139,6 +195,9 @@
             border-radius: 20px;
             overflow: hidden;
             perspective: 2000px;
+            border: 1px solid var(--border);
+            color: var(--text);
+            position: relative;
         }
 
         .fullscreen-inner {
@@ -149,7 +208,9 @@
             transform-style: preserve-3d;
         }
 
-        .fullscreen-overlay.flipped .fullscreen-inner { transform: rotateY(180deg); }
+        .fullscreen-overlay.flipped .fullscreen-inner {
+            transform: rotateY(180deg);
+        }
 
         .fullscreen-face {
             position: absolute;
@@ -157,28 +218,43 @@
             backface-visibility: hidden;
             display: flex;
             flex-direction: column;
+            background: var(--card-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 24px;
+            overflow-y: auto;
         }
 
-        .fullscreen-back { transform: rotateY(180deg); }
+        .fullscreen-back {
+            transform: rotateY(180deg);
+        }
 
         .fullscreen-header {
+            position: sticky;
+            top: 0;
             padding: 16px 24px;
             border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background: var(--card-bg);
+            z-index: 10;
         }
 
         .fullscreen-btn {
             background: none;
             border: none;
-            font-size: 28px;
+            font-size: 24px;
             cursor: pointer;
             padding: 8px;
             opacity: 0.7;
+            color: var(--text);
+            transition: all 0.2s;
         }
 
-        .fullscreen-btn:hover { opacity: 1; }
+        .fullscreen-btn:hover {
+            opacity: 1;
+        }
 
         .fullscreen-content {
             flex: 1;
@@ -188,9 +264,25 @@
             line-height: 1.7;
         }
 
-        .streaming { text-align: center; color: #888; padding: 20px; margin-top: 20px; }
-        .cursor { display: inline-block; width: 3px; height: 1em; background: currentColor; animation: blink 1s infinite; vertical-align: middle; }
-        @keyframes blink { 50% { opacity: 0; } }
+        .streaming {
+            text-align: center;
+            color: #aaa;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 3px;
+            height: 1em;
+            background: currentColor;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
 
         #inputPanel {
             position: fixed;
@@ -200,58 +292,78 @@
             background: var(--card-bg);
             border-top: 1px solid var(--border);
             padding: 16px;
-            box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
-        }
-
-        .input-container {
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
             display: flex;
-            gap: 12px;
-            max-width: 1200px;
-            margin: 0 auto;
             align-items: center;
+            gap: 12px;
+            z-index: 100;
         }
 
         #userInput {
             flex: 1;
-            padding: 14px;
+            padding: 12px;
             border: 1px solid var(--border);
             border-radius: 12px;
             font-size: 16px;
             background: var(--bg);
+            color: var(--text);
+            transition: all 0.2s;
+        }
+
+        #userInput:focus {
+            outline: none;
+            border-color: var(--primary);
         }
 
         #sendBtn {
             background: var(--primary);
             color: white;
             border: none;
-            padding: 14px 20px;
+            padding: 12px 20px;
             border-radius: 12px;
             cursor: pointer;
-            font-size: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 100px;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        #sendBtn:hover {
+            background: #a1172f;
+            transform: translateY(-2px);
         }
 
         #moreBtn {
             position: fixed;
-            bottom: 120px;
+            bottom: 80px;
             right: 20px;
             width: 56px;
             height: 56px;
             border-radius: 50%;
             background: var(--card-bg);
             border: 1px solid var(--border);
-            font-size: 28px;
+            font-size: 24px;
             cursor: pointer;
             box-shadow: var(--shadow);
             z-index: 900;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.2s;
+        }
+
+        #moreBtn:hover {
+            transform: rotate(90deg);
         }
 
         .modal {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.6);
             display: none;
             align-items: center;
             justify-content: center;
@@ -259,7 +371,9 @@
             backdrop-filter: blur(5px);
         }
 
-        .modal.active { display: flex; }
+        .modal.active {
+            display: flex;
+        }
 
         .modal-content {
             background: var(--card-bg);
@@ -268,6 +382,10 @@
             width: 90%;
             max-width: 600px;
             box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            color: var(--text);
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         textarea {
@@ -279,14 +397,22 @@
             font-family: inherit;
             font-size: 15px;
             background: var(--bg);
+            color: var(--text);
             resize: vertical;
             margin-bottom: 16px;
+            transition: all 0.2s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
         }
 
         .modal-actions {
             display: flex;
             gap: 12px;
             justify-content: flex-end;
+            flex-wrap: wrap;
         }
 
         .modal-actions button {
@@ -294,8 +420,9 @@
             border-radius: 8px;
             cursor: pointer;
             border: none;
-            font-size: 18px;
+            font-size: 16px;
             min-width: 50px;
+            transition: all 0.2s;
         }
 
         .modal-actions button.primary {
@@ -303,10 +430,18 @@
             color: white;
         }
 
+        .modal-actions button.primary:hover {
+            background: #a1172f;
+        }
+
         .modal-actions button.secondary {
             background: transparent;
             color: var(--text);
             border: 1px solid var(--border);
+        }
+
+        .modal-actions button.secondary:hover {
+            background: rgba(196,30,58,0.1);
         }
 
         #cardMenu {
@@ -322,26 +457,32 @@
             flex-direction: column;
             gap: 12px;
             z-index: 100;
+            border: 1px solid var(--border);
         }
 
-        #cardMenu.active { display: flex; }
+        #cardMenu.active {
+            display: flex;
+        }
 
         .menu-btn {
             background: none;
             border: none;
-            font-size: 32px;
+            font-size: 24px;
             cursor: pointer;
-            padding: 16px;
+            padding: 12px;
             border-radius: 12px;
-            width: 72px;
-            height: 72px;
+            width: 60px;
+            height: 60px;
             display: flex;
             align-items: center;
             justify-content: center;
+            color: var(--text);
+            transition: all 0.2s;
         }
 
         .menu-btn:hover {
-            background: rgba(0,102,255,0.1);
+            background: rgba(196,30,58,0.1);
+            transform: scale(1.1);
         }
 
         #loading {
@@ -355,38 +496,165 @@
             border-radius: 12px;
             display: none;
             z-index: 2000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
 
-        #loading.show { display: block; }
+        #loading.show {
+            display: block;
+        }
 
         #brandPlaceholder {
             position: fixed;
-            top: 80px;
+            top: 20px;
             left: 16px;
             z-index: 100;
             pointer-events: none;
-            font-size: 36px;
+            font-size: 24px;
             font-weight: 900;
-            color: rgba(0,102,255,0.08);
+            color: rgba(196,30,58,0.3);
             transform: rotate(-12deg);
             user-select: none;
         }
 
-        /* Smaller cooler icons in settings modal */
-        #moreModal .modal-actions button {
-            font-size: 24px;
-            padding: 12px;
-            min-width: auto;
+        .style-panel {
+            position: fixed;
+            bottom: 80px;
+            right: 80px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            z-index: 950;
+            width: 320px;
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .style-panel.active {
+            display: flex;
+        }
+
+        .style-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .style-section h4 {
+            font-size: 14px;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .style-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .style-btn {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text);
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .style-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .color-picker {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .color-picker label {
+            font-size: 12px;
+            min-width: 80px;
+        }
+
+        .color-picker input {
+            width: 60px;
+            height: 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .color-picker input:hover {
+            transform: scale(1.05);
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .slider-container label {
+            font-size: 12px;
+            min-width: 80px;
+        }
+
+        .slider-container input {
+            flex: 1;
+        }
+
+        .advanced-styles {
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .advanced-styles.active {
+            display: flex;
+        }
+
+        .toggle-advanced {
+            font-size: 12px;
+            color: var(--primary);
+            cursor: pointer;
+            text-decoration: underline;
+            align-self: flex-end;
+        }
+
+        .css-editor {
+            width: 100%;
+            min-height: 100px;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: var(--bg);
+            color: var(--text);
+            resize: vertical;
         }
     </style>
 </head>
 <body>
-    <div id="brandPlaceholder">fishhead ranch</div>
+    <div id="brandPlaceholder">draft by ai-nspired</div>
 
     <div id="selectionBar">
-        <button id="cancelSelect">✕</button>
+        <button id="cancelSelect"><i class="fas fa-times"></i>x</button>
         <span id="selectCount">0</span>
-        <button id="mergeSelected">Combine</button>
+        <button id="mergeSelected"><i class="fas fa-layer-group"></i> voltron</button>
     </div>
 
     <div class="fullscreen-overlay" id="fullscreenOverlay">
@@ -394,15 +662,15 @@
             <div class="fullscreen-inner">
                 <div class="fullscreen-face">
                     <div class="fullscreen-header">
-                        <button class="fullscreen-btn fullscreen-flip">↔</button>
-                        <button class="fullscreen-btn fullscreen-close">✕</button>
+                        <button class="fullscreen-btn fullscreen-flip"><i class="fas fa-sync-alt"></i></button>
+                        <button class="fullscreen-btn fullscreen-close"><i class="fas fa-times"></i></button>
                     </div>
                     <div class="fullscreen-content" id="fsQuestion"></div>
                 </div>
                 <div class="fullscreen-face fullscreen-back">
                     <div class="fullscreen-header">
-                        <button class="fullscreen-btn fullscreen-flip">↔</button>
-                        <button class="fullscreen-btn fullscreen-close">✕</button>
+                        <button class="fullscreen-btn fullscreen-flip"><i class="fas fa-sync-alt"></i></button>
+                        <button class="fullscreen-btn fullscreen-close"><i class="fas fa-times"></i></button>
                     </div>
                     <div class="fullscreen-content" id="fsResponse"></div>
                 </div>
@@ -412,33 +680,104 @@
 
     <div id="grid"></div>
 
-    <div id="loading">Thinking...</div>
+    <div id="loading">Processing...</div>
 
-    <button id="moreBtn">⚙</button>
+    <button id="moreBtn"><i class="fas fa-cog"></i></button>
 
     <div class="modal" id="moreModal">
         <div class="modal-content">
-            <input type="url" id="modalBaseUrl" placeholder="API Base URL">
+            <h3>Settings</h3>
             <div class="modal-actions">
-                <button id="toggleThemeBtn" title="Toggle Theme">🌙</button>
-                <button id="modalExport" title="Export">📤</button>
-                <button id="modalImport" title="Import">📥</button>
-                <button id="saveApiBtn" class="primary" title="Save API">✓</button>
-                <button id="modalClose" class="secondary" title="Close">✕</button>
+                <button id="toggleThemeBtn" title="Toggle Theme"><i class="fas fa-moon"></i></button>
+                <button id="toggleASRBtn" title="Toggle Speech Input"><i class="fas fa-microphone"></i></button>
+                <button id="toggleTTSBtn" title="Toggle Auto Read"><i class="fas fa-volume-up"></i></button>
+                <button id="modalExport" title="Export"><i class="fas fa-file-export"></i></button>
+                <button id="modalImport" title="Import"><i class="fas fa-file-import"></i></button>
+                <button id="modalClose" class="secondary" title="Close"><i class="fas fa-times"></i></button>
             </div>
             <input type="file" id="fileInput" style="display:none;" accept=".json">
         </div>
     </div>
 
     <div id="cardMenu">
-        <button class="menu-btn" data-action="continue" title="Continue">↻</button>
-        <button class="menu-btn" data-action="copy" title="Copy Response">📋</button>
-        <button class="menu-btn" data-action="ai-edit" title="AI Edit">✨</button>
-        <button class="menu-btn" data-action="manual-edit-response" title="Edit Response">✏</button>
-        <button class="menu-btn" data-action="manual-edit-question" title="Edit Question">📝</button>
-        <button class="menu-btn" data-action="split" title="Split">✂</button>
-        <button class="menu-btn" data-action="fullscreen" title="Fullscreen">⛶</button>
-        <button class="menu-btn" data-action="delete" title="Delete">🗑</button>
+        <button class="menu-btn" data-action="continue" title="Continue"><i class="fas fa-redo"></i></button>
+        <button class="menu-btn" data-action="copy" title="Copy Response"><i class="fas fa-copy"></i></button>
+        <button class="menu-btn" data-action="ai-edit" title="AI Edit"><i class="fas fa-magic"></i></button>
+        <button class="menu-btn" data-action="manual-edit-response" title="Edit Response"><i class="fas fa-edit"></i></button>
+        <button class="menu-btn" data-action="manual-edit-question" title="Edit Question"><i class="fas fa-pencil-alt"></i></button>
+        <button class="menu-btn" data-action="style" title="Style Card"><i class="fas fa-paint-brush"></i></button>
+        <button class="menu-btn" data-action="split" title="Split"><i class="fas fa-cut"></i></button>
+        <button class="menu-btn" data-action="fullscreen" title="Fullscreen"><i class="fas fa-expand"></i></button>
+        <button class="menu-btn" data-action="delete" title="Delete"><i class="fas fa-trash"></i></button>
+    </div>
+
+    <div class="style-panel" id="stylePanel">
+        <div class="style-section">
+            <h4>Text Style</h4>
+            <div class="style-controls">
+                <button class="style-btn" data-style="bold"><i class="fas fa-bold"></i> Bold</button>
+                <button class="style-btn" data-style="italic"><i class="fas fa-italic"></i> Italic</button>
+                <button class="style-btn" data-style="underline"><i class="fas fa-underline"></i> Underline</button>
+                <button class="style-btn" data-style="strikethrough"><i class="fas fa-strikethrough"></i> Strike</button>
+            </div>
+        </div>
+
+        <div class="style-section">
+            <h4>Text Size</h4>
+            <div class="style-controls">
+                <button class="style-btn" data-style="text-sm">Small</button>
+                <button class="style-btn" data-style="text-base">Normal</button>
+                <button class="style-btn" data-style="text-lg">Large</button>
+                <button class="style-btn" data-style="text-xl">X-Large</button>
+            </div>
+        </div>
+
+        <div class="style-section">
+            <h4>Colors</h4>
+            <div class="color-picker">
+                <label for="textColorPicker">Text:</label>
+                <input type="color" id="textColorPicker" value="#f5f5f5">
+            </div>
+            <div class="color-picker">
+                <label for="bgColorPicker">Background:</label>
+                <input type="color" id="bgColorPicker" value="#1e1e1e">
+            </div>
+            <div class="color-picker">
+                <label for="borderColorPicker">Border:</label>
+                <input type="color" id="borderColorPicker" value="#333">
+            </div>
+        </div>
+
+        <div class="style-section">
+            <h4>Spacing</h4>
+            <div class="slider-container">
+                <label for="paddingSlider">Padding:</label>
+                <input type="range" id="paddingSlider" min="8" max="32" value="16">
+                <span id="paddingValue">16px</span>
+            </div>
+            <div class="slider-container">
+                <label for="borderRadiusSlider">Radius:</label>
+                <input type="range" id="borderRadiusSlider" min="4" max="24" value="16">
+                <span id="borderRadiusValue">16px</span>
+            </div>
+            <div class="slider-container">
+                <label for="borderWidthSlider">Border:</label>
+                <input type="range" id="borderWidthSlider" min="0" max="4" value="1">
+                <span id="borderWidthValue">1px</span>
+            </div>
+        </div>
+
+        <div class="style-section">
+            <span class="toggle-advanced" id="toggleAdvanced">+ Advanced CSS</span>
+            <div class="advanced-styles" id="advancedStyles">
+                <textarea class="css-editor" id="customCSS" placeholder="Enter custom CSS rules..."></textarea>
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button id="applyStyles" class="primary"><i class="fas fa-check"></i> Apply</button>
+            <button id="cancelStyles" class="secondary"><i class="fas fa-times"></i> Cancel</button>
+        </div>
     </div>
 
     <div class="modal" id="textEditorModal">
@@ -446,19 +785,19 @@
             <h3>Edit</h3>
             <textarea id="textEditorArea"></textarea>
             <div class="modal-actions">
-                <button id="textEditorCancel" class="secondary">✕</button>
-                <button id="textEditorSave" class="primary">✓</button>
+                <button id="textEditorCancel" class="secondary"><i class="fas fa-times"></i></button>
+                <button id="textEditorSave" class="primary"><i class="fas fa-check"></i></button>
             </div>
         </div>
     </div>
 
     <div class="modal" id="mergePromptModal">
         <div class="modal-content">
-            <h3>Merge</h3>
+            <h3>Merge Cards</h3>
             <textarea id="mergePromptText" placeholder="Optional instructions"></textarea>
             <div class="modal-actions">
-                <button id="mergePromptCancel" class="secondary">✕</button>
-                <button id="mergePromptConfirm" class="primary">Combine</button>
+                <button id="mergePromptCancel" class="secondary"><i class="fas fa-times"></i></button>
+                <button id="mergePromptConfirm" class="primary"><i class="fas fa-check"></i></button>
             </div>
         </div>
     </div>
@@ -468,8 +807,8 @@
             <h3>Continue</h3>
             <textarea id="continuePromptText" placeholder="Optional instructions"></textarea>
             <div class="modal-actions">
-                <button id="continuePromptCancel" class="secondary">✕</button>
-                <button id="continuePromptConfirm" class="primary">Go</button>
+                <button id="continuePromptCancel" class="secondary"><i class="fas fa-times"></i></button>
+                <button id="continuePromptConfirm" class="primary"><i class="fas fa-check"></i></button>
             </div>
         </div>
     </div>
@@ -479,8 +818,8 @@
             <h3>Split</h3>
             <textarea id="splitPromptText" placeholder="Optional instructions"></textarea>
             <div class="modal-actions">
-                <button id="splitPromptCancel" class="secondary">✕</button>
-                <button id="splitPromptConfirm" class="primary">Go</button>
+                <button id="splitPromptCancel" class="secondary"><i class="fas fa-times"></i></button>
+                <button id="splitPromptConfirm" class="primary"><i class="fas fa-check"></i></button>
             </div>
         </div>
     </div>
@@ -490,20 +829,39 @@
             <h3>AI Edit</h3>
             <textarea id="editPromptText" placeholder="What changes?"></textarea>
             <div class="modal-actions">
-                <button id="editPromptCancel" class="secondary">✕</button>
-                <button id="editPromptConfirm" class="primary">Go</button>
+                <button id="editPromptCancel" class="secondary"><i class="fas fa-times"></i></button>
+                <button id="editPromptConfirm" class="primary"><i class="fas fa-check"></i></button>
             </div>
         </div>
     </div>
 
     <div id="inputPanel">
-        <div class="input-container">
-            <input type="text" id="userInput" placeholder="Describe...">
-            <button id="sendBtn">Send</button>
-        </div>
+        <input type="text" id="userInput" placeholder="describe what you want">
+        <button id="sendBtn"><i class="fas fa-paper-plane"></i> send</button>
     </div>
 
     <script>
+        const PROXY_URL = "https://ai-proxy.ai-n.workers.dev/api/generate";
+
+        const SYSTEM_PROMPT = `You are a helpful AI assistant. You can also apply styling to responses using special commands:
+
+        Available styling commands:
+        - !bg-color:hex! - Set background color
+        - !text-color:hex! - Set text color
+        - !border-color:hex! - Set border color
+        - !padding:px! - Set padding
+        - !border-radius:px! - Set border radius
+        - !font-size:px! - Set font size
+        - !font-weight:value! - Set font weight (normal/bold)
+        - !font-style:value! - Set font style (normal/italic)
+        - !text-decoration:value! - Set text decoration (none/underline)
+        - !custom-css:rules! - Apply custom CSS
+
+        Example:
+        !bg-color:#ffebee! !text-color:#c62828! !padding:20px! Here's your styled response...
+
+        Respond in clean markdown when helpful.`;
+
         class App {
             constructor() {
                 this.cards = [];
@@ -518,35 +876,116 @@
                 this.currentEditId = null;
                 this.editingCardId = null;
                 this.editingField = null;
+                this.currentStylingCard = null;
                 this.decoder = new TextDecoder();
+                this.recognizing = false;
+                this.recognition = null;
+                this.aiSpeechEnabled = true;
+                this.autoReadEnabled = false;
                 this.init();
             }
 
             init() {
                 this.load();
                 this.bind();
-                const theme = localStorage.getItem('theme') || 'light';
+                this.initASR();
+                this.updateTalkButton();
+                this.setupSliders();
+
+                const theme = localStorage.getItem('theme') || 'dark';
                 document.body.dataset.theme = theme;
+
+                const savedASR = localStorage.getItem('aiSpeechEnabled');
+                if (savedASR !== null) {
+                    this.aiSpeechEnabled = savedASR === 'true';
+                }
+
+                const savedAutoRead = localStorage.getItem('autoReadEnabled');
+                if (savedAutoRead !== null) {
+                    this.autoReadEnabled = savedAutoRead === 'true';
+                }
+            }
+
+            setupSliders() {
+                const updateSliderValue = (sliderId, valueId) => {
+                    const slider = document.getElementById(sliderId);
+                    const value = document.getElementById(valueId);
+                    value.textContent = slider.value + sliderId.includes('Width') ? 'px' : 'px';
+                    slider.oninput = () => {
+                        value.textContent = slider.value + sliderId.includes('Width') ? 'px' : 'px';
+                    };
+                };
+
+                updateSliderValue('paddingSlider', 'paddingValue');
+                updateSliderValue('borderRadiusSlider', 'borderRadiusValue');
+                updateSliderValue('borderWidthSlider', 'borderWidthValue');
+            }
+
+            initASR() {
+                if ("webkitSpeechRecognition" in window) {
+                    this.recognition = new webkitSpeechRecognition();
+                    this.recognition.continuous = false;
+                    this.recognition.interimResults = false;
+                    this.recognition.lang = "en-US";
+
+                    this.recognition.onstart = () => {
+                        this.recognizing = true;
+                        this.updateTalkButton();
+                    };
+
+                    this.recognition.onend = () => {
+                        this.recognizing = false;
+                        this.updateTalkButton();
+                    };
+
+                    this.recognition.onresult = (event) => {
+                        const transcript = event.results[0][0].transcript;
+                        document.getElementById('userInput').value = transcript;
+                        this.send();
+                    };
+
+                    this.recognition.onerror = (event) => {
+                        console.error("Speech recognition error:", event.error);
+                        this.recognizing = false;
+                        this.updateTalkButton();
+                    };
+                }
+            }
+
+            updateTalkButton() {
+                const talkBtn = document.getElementById('sendBtn');
+                if (this.recognizing) {
+                    talkBtn.innerHTML = '<i class="fas fa-stop"></i> Stop';
+                } else if (this.aiSpeechEnabled && "webkitSpeechRecognition" in window) {
+                    talkBtn.innerHTML = '<i class="fas fa-microphone"></i> Speak';
+                } else {
+                    talkBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send';
+                }
             }
 
             bind() {
-                document.getElementById('sendBtn').onclick = () => this.send();
-                document.getElementById('userInput').onkeydown = e => { 
-                    if (e.key === 'Enter' && !e.shiftKey) { 
-                        e.preventDefault(); 
-                        this.send(); 
-                    } 
+                document.getElementById('sendBtn').onclick = () => {
+                    if (this.recognizing) {
+                        this.recognition.stop();
+                    } else if (this.aiSpeechEnabled && "webkitSpeechRecognition" in window) {
+                        this.recognition.start();
+                    } else {
+                        this.send();
+                    }
+                };
+
+                document.getElementById('userInput').onkeydown = e => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.send();
+                    }
                 };
 
                 document.getElementById('moreBtn').onclick = () => {
-                    document.getElementById('modalBaseUrl').value = localStorage.getItem('api') || '';
                     document.getElementById('moreModal').classList.add('active');
                 };
 
-                document.getElementById('modalClose').onclick = () => document.getElementById('moreModal').classList.remove('active');
-                document.getElementById('saveApiBtn').onclick = () => {
-                    const url = document.getElementById('modalBaseUrl').value.trim();
-                    if (url) localStorage.setItem('api', url);
+                document.getElementById('modalClose').onclick = () => {
                     document.getElementById('moreModal').classList.remove('active');
                 };
 
@@ -557,29 +996,64 @@
                     localStorage.setItem('theme', newTheme);
                 };
 
+                document.getElementById('toggleASRBtn').onclick = () => {
+                    this.aiSpeechEnabled = !this.aiSpeechEnabled;
+                    localStorage.setItem('aiSpeechEnabled', this.aiSpeechEnabled);
+                    this.updateTalkButton();
+                };
+
+                document.getElementById('toggleTTSBtn').onclick = () => {
+                    this.autoReadEnabled = !this.autoReadEnabled;
+                    localStorage.setItem('autoReadEnabled', this.autoReadEnabled);
+                    const btn = document.getElementById('toggleTTSBtn');
+                    btn.style.opacity = this.autoReadEnabled ? '1' : '0.5';
+                };
+
                 document.getElementById('modalExport').onclick = () => this.export();
                 document.getElementById('modalImport').onclick = () => document.getElementById('fileInput').click();
                 document.getElementById('fileInput').onchange = e => this.import(e);
 
-                document.querySelectorAll('.fullscreen-close').forEach(b => b.onclick = () => this.closeFS());
-                document.querySelectorAll('.fullscreen-flip').forEach(b => b.onclick = () => document.getElementById('fullscreenOverlay').classList.toggle('flipped'));
+                document.querySelectorAll('.fullscreen-close').forEach(b => {
+                    b.onclick = () => this.closeFS();
+                });
+
+                document.querySelectorAll('.fullscreen-flip').forEach(b => {
+                    b.onclick = () => document.getElementById('fullscreenOverlay').classList.toggle('flipped');
+                });
 
                 document.getElementById('cancelSelect').onclick = () => this.exitSelect();
-                document.getElementById('mergeSelected').onclick = () => document.getElementById('mergePromptModal').classList.add('active');
+                document.getElementById('mergeSelected').onclick = () => {
+                    document.getElementById('mergePromptModal').classList.add('active');
+                };
 
-                document.getElementById('mergePromptCancel').onclick = () => document.getElementById('mergePromptModal').classList.remove('active');
+                document.getElementById('mergePromptCancel').onclick = () => {
+                    document.getElementById('mergePromptModal').classList.remove('active');
+                };
+
                 document.getElementById('mergePromptConfirm').onclick = () => this.merge();
 
-                document.getElementById('continuePromptCancel').onclick = () => document.getElementById('continuePromptModal').classList.remove('active');
+                document.getElementById('continuePromptCancel').onclick = () => {
+                    document.getElementById('continuePromptModal').classList.remove('active');
+                };
+
                 document.getElementById('continuePromptConfirm').onclick = () => this.continue();
 
-                document.getElementById('splitPromptCancel').onclick = () => document.getElementById('splitPromptModal').classList.remove('active');
+                document.getElementById('splitPromptCancel').onclick = () => {
+                    document.getElementById('splitPromptModal').classList.remove('active');
+                };
+
                 document.getElementById('splitPromptConfirm').onclick = () => this.split();
 
-                document.getElementById('editPromptCancel').onclick = () => document.getElementById('editPromptModal').classList.remove('active');
+                document.getElementById('editPromptCancel').onclick = () => {
+                    document.getElementById('editPromptModal').classList.remove('active');
+                };
+
                 document.getElementById('editPromptConfirm').onclick = () => this.performEdit();
 
-                document.getElementById('textEditorCancel').onclick = () => document.getElementById('textEditorModal').classList.remove('active');
+                document.getElementById('textEditorCancel').onclick = () => {
+                    document.getElementById('textEditorModal').classList.remove('active');
+                };
+
                 document.getElementById('textEditorSave').onclick = () => this.saveManualEdit();
 
                 document.getElementById('cardMenu').onclick = e => {
@@ -589,18 +1063,229 @@
                         if (action.startsWith('manual-edit-')) {
                             const field = action === 'manual-edit-question' ? 'q' : 'r';
                             this.editText(this.currentMenuId, field);
+                        } else if (action === 'style') {
+                            this.showStylePanel(this.currentMenuId);
                         } else {
                             this.handle(action);
                         }
                         document.getElementById('cardMenu').classList.remove('active');
                     }
                 };
+
+                // Style panel handlers
+                document.getElementById('applyStyles').onclick = () => this.applyStyles();
+                document.getElementById('cancelStyles').onclick = () => this.hideStylePanel();
+
+                document.getElementById('toggleAdvanced').onclick = () => {
+                    document.getElementById('advancedStyles').classList.toggle('active');
+                };
+
+                document.querySelectorAll('.style-btn').forEach(btn => {
+                    btn.onclick = () => {
+                        btn.classList.toggle('active');
+                    };
+                });
             }
 
-            get api() {
-                const url = localStorage.getItem('api');
-                if (!url) throw new Error('Set API URL');
-                return url.replace(/\/+$/, '');
+            showStylePanel(cardId) {
+                this.currentStylingCard = cardId;
+                const card = this.cards.find(c => c.id === cardId);
+                if (!card) return;
+
+                const panel = document.getElementById('stylePanel');
+
+                // Reset all controls
+                document.querySelectorAll('.style-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById('textColorPicker').value = '#f5f5f5';
+                document.getElementById('bgColorPicker').value = '#1e1e1e';
+                document.getElementById('borderColorPicker').value = '#333';
+                document.getElementById('paddingSlider').value = 16;
+                document.getElementById('paddingValue').textContent = '16px';
+                document.getElementById('borderRadiusSlider').value = 16;
+                document.getElementById('borderRadiusValue').textContent = '16px';
+                document.getElementById('borderWidthSlider').value = 1;
+                document.getElementById('borderWidthValue').textContent = '1px';
+                document.getElementById('customCSS').value = '';
+
+                // Set current values if card has styles
+                if (card.styles) {
+                    // Text styles
+                    if (card.styles.fontWeight === 'bold') {
+                        document.querySelector('.style-btn[data-style="bold"]').classList.add('active');
+                    }
+                    if (card.styles.fontStyle === 'italic') {
+                        document.querySelector('.style-btn[data-style="italic"]').classList.add('active');
+                    }
+                    if (card.styles.textDecoration === 'underline') {
+                        document.querySelector('.style-btn[data-style="underline"]').classList.add('active');
+                    }
+                    if (card.styles.textDecoration === 'line-through') {
+                        document.querySelector('.style-btn[data-style="strikethrough"]').classList.add('active');
+                    }
+
+                    // Text size
+                    if (card.styles.fontSize) {
+                        const sizeMap = {
+                            '12px': 'text-sm',
+                            '15px': 'text-base',
+                            '18px': 'text-lg',
+                            '21px': 'text-xl'
+                        };
+                        const sizeClass = sizeMap[card.styles.fontSize];
+                        if (sizeClass) {
+                            document.querySelector(`.style-btn[data-style="${sizeClass}"]`)?.classList.add('active');
+                        }
+                    }
+
+                    // Colors
+                    if (card.styles.color) {
+                        document.getElementById('textColorPicker').value = card.styles.color;
+                    }
+                    if (card.styles.backgroundColor) {
+                        document.getElementById('bgColorPicker').value = card.styles.backgroundColor;
+                    }
+                    if (card.styles.borderColor) {
+                        document.getElementById('borderColorPicker').value = card.styles.borderColor;
+                    }
+
+                    // Spacing
+                    if (card.styles.padding) {
+                        const padding = parseInt(card.styles.padding);
+                        document.getElementById('paddingSlider').value = padding;
+                        document.getElementById('paddingValue').textContent = padding + 'px';
+                    }
+                    if (card.styles.borderRadius) {
+                        const radius = parseInt(card.styles.borderRadius);
+                        document.getElementById('borderRadiusSlider').value = radius;
+                        document.getElementById('borderRadiusValue').textContent = radius + 'px';
+                    }
+                    if (card.styles.borderWidth) {
+                        const width = parseInt(card.styles.borderWidth);
+                        document.getElementById('borderWidthSlider').value = width;
+                        document.getElementById('borderWidthValue').textContent = width + 'px';
+                    }
+
+                    // Custom CSS
+                    if (card.styles.customCSS) {
+                        document.getElementById('customCSS').value = card.styles.customCSS;
+                    }
+                }
+
+                // Position panel near the card
+                const cardEl = document.querySelector(`[data-id="${cardId}"]`);
+                if (cardEl) {
+                    const rect = cardEl.getBoundingClientRect();
+                    panel.style.top = `${rect.top + window.scrollY}px`;
+                    panel.style.left = `${rect.right + window.scrollX + 10}px`;
+                }
+
+                panel.classList.add('active');
+            }
+
+            hideStylePanel() {
+                document.getElementById('stylePanel').classList.remove('active');
+                this.currentStylingCard = null;
+            }
+
+            applyStyles() {
+                if (!this.currentStylingCard) return;
+
+                const card = this.cards.find(c => c.id === this.currentStylingCard);
+                if (!card) return;
+
+                const styles = {
+                    // Text styles
+                    fontWeight: document.querySelector('.style-btn[data-style="bold"]').classList.contains('active') ? 'bold' : 'normal',
+                    fontStyle: document.querySelector('.style-btn[data-style="italic"]').classList.contains('active') ? 'italic' : 'normal',
+                    textDecoration: document.querySelector('.style-btn[data-style="underline"]').classList.contains('active') ? 'underline' :
+                                  document.querySelector('.style-btn[data-style="strikethrough"]').classList.contains('active') ? 'line-through' : 'none',
+
+                    // Text size
+                    fontSize: document.querySelector('.style-btn[data-style="text-sm"]').classList.contains('active') ? '12px' :
+                             document.querySelector('.style-btn[data-style="text-lg"]').classList.contains('active') ? '18px' :
+                             document.querySelector('.style-btn[data-style="text-xl"]').classList.contains('active') ? '21px' : '15px',
+
+                    // Colors
+                    color: document.getElementById('textColorPicker').value,
+                    backgroundColor: document.getElementById('bgColorPicker').value,
+                    borderColor: document.getElementById('borderColorPicker').value,
+
+                    // Spacing
+                    padding: document.getElementById('paddingSlider').value + 'px',
+                    borderRadius: document.getElementById('borderRadiusSlider').value + 'px',
+                    borderWidth: document.getElementById('borderWidthSlider').value + 'px',
+                    borderStyle: 'solid',
+
+                    // Custom CSS
+                    customCSS: document.getElementById('customCSS').value
+                };
+
+                // Apply styles to card
+                card.styles = styles;
+                this.updateCardStyles(this.currentStylingCard, styles);
+                this.save();
+                this.hideStylePanel();
+            }
+
+            updateCardStyles(cardId, styles) {
+                const cardEl = document.querySelector(`[data-id="${cardId}"]`);
+                if (!cardEl) return;
+
+                const faces = cardEl.querySelectorAll('.card-face');
+                const cardInner = cardEl.querySelector('.flip-card-inner');
+
+                // Apply styles to card faces
+                faces.forEach(face => {
+                    // Text styles
+                    face.style.fontWeight = styles.fontWeight;
+                    face.style.fontStyle = styles.fontStyle;
+                    face.style.textDecoration = styles.textDecoration === 'none' ? '' : styles.textDecoration;
+                    face.style.fontSize = styles.fontSize;
+
+                    // Colors
+                    face.style.color = styles.color;
+                    face.style.backgroundColor = styles.backgroundColor;
+                });
+
+                // Apply border and spacing to card
+                cardEl.style.borderColor = styles.borderColor;
+                cardEl.style.borderWidth = styles.borderWidth;
+                cardEl.style.borderStyle = styles.borderStyle;
+                cardEl.style.borderRadius = styles.borderRadius;
+
+                // Apply padding to card inner
+                cardInner.style.padding = styles.padding;
+
+                // Apply custom CSS if provided
+                if (styles.customCSS) {
+                    const styleId = `custom-style-${cardId}`;
+                    let styleEl = document.getElementById(styleId);
+
+                    if (!styleEl) {
+                        styleEl = document.createElement('style');
+                        styleEl.id = styleId;
+                        document.head.appendChild(styleEl);
+                    }
+
+                    styleEl.textContent = `
+                        [data-id="${cardId}"] ${styles.customCSS}
+                    `;
+                }
+            }
+
+            parseStyleCommands(text) {
+                const styles = {};
+                const commands = text.match(/!(\w+):([^!]+)!/g) || [];
+
+                commands.forEach(cmd => {
+                    const [full, prop, value] = cmd.match(/!(\w+):([^!]+)!/);
+                    styles[prop] = value.trim();
+                });
+
+                // Remove style commands from text
+                const cleanText = text.replace(/!\w+:[^!]+!/g, '').trim();
+
+                return { styles, cleanText };
             }
 
             async send() {
@@ -616,8 +1301,8 @@
             async request(prompt) {
                 try {
                     document.getElementById('loading').classList.add('show');
-                    const payload = { sessionId: this.sessionId, prompt };
-                    const reader = await this.fetch('/api/generate', payload);
+                    const payload = { sessionId: this.sessionId, prompt: SYSTEM_PROMPT + "\n\n" + prompt };
+                    const reader = await this.fetchProxy(payload);
                     await this.stream(reader);
                 } catch (e) {
                     this.update(this.streamingId, `<p style="color:red">Error: ${e.message}</p>`);
@@ -627,8 +1312,8 @@
                 }
             }
 
-            async fetch(path, payload) {
-                const res = await fetch(this.api + path, {
+            async fetchProxy(payload) {
+                const res = await fetch(PROXY_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -667,11 +1352,26 @@
             }
 
             finalize(id, text) {
-                const html = text ? this.md(text) : '<em>Empty</em>';
+                const { styles, cleanText } = this.parseStyleCommands(text);
+                const html = cleanText ? this.md(cleanText) : '<em>Empty</em>';
+
                 this.update(id, html);
+
                 const card = this.cards.find(c => c.id === id);
-                if (card) card.r = text;
+                if (card) {
+                    card.r = cleanText;
+                    if (Object.keys(styles).length > 0) {
+                        card.styles = styles;
+                        this.updateCardStyles(id, styles);
+                    }
+                }
+
                 this.save();
+
+                // Auto-read if enabled
+                if (this.autoReadEnabled) {
+                    setTimeout(() => this.readCard(id), 500);
+                }
             }
 
             update(id, html) {
@@ -691,7 +1391,7 @@
 
             add(data, fs = false) {
                 const id = crypto.randomUUID();
-                const card = { id, q: data.q, r: data.r || '' };
+                const card = { id, q: data.q, r: data.r || '', styles: {} };
                 this.cards.push(card);
                 this.render(card, true);
                 if (fs) this.openFS(id, true);
@@ -704,12 +1404,15 @@
                 el.className = `flip-card ${newCard ? 'new' : ''}`;
                 el.dataset.id = card.id;
 
-                const rhtml = (card.r === '...') 
-                    ? '<div class="streaming"><span class="cursor"></span></div>' 
+                const rhtml = (card.r === '...')
+                    ? '<div class="streaming"><span class="cursor"></span></div>'
                     : this.md(card.r);
 
                 el.innerHTML = `
                     <div class="flip-card-inner">
+                        <div class="card-header">
+                            <button class="tts-btn" title="Read Aloud"><i class="fas fa-volume-up"></i></button>
+                        </div>
                         <div class="card-face">${this.md(card.q)}</div>
                         <div class="card-face card-back">
                             <div class="response-content">${rhtml}</div>
@@ -717,15 +1420,34 @@
                     </div>
                 `;
 
+                // Apply custom styles if they exist
+                if (card.styles && Object.keys(card.styles).length > 0) {
+                    this.updateCardStyles(card.id, card.styles);
+                }
+
+                // Add event listeners
+                el.querySelector('.tts-btn').onclick = (e) => {
+                    e.stopPropagation();
+                    this.readCard(card.id);
+                };
+
                 let timer;
                 el.ontouchstart = e => {
                     if (e.touches.length === 1) timer = setTimeout(() => this.enterSelect(card.id, el), 600);
-                    if (e.touches.length === 2) { e.preventDefault(); this.currentMenuId = card.id; document.getElementById('cardMenu').classList.add('active'); }
+                    if (e.touches.length === 2) {
+                        e.preventDefault();
+                        this.currentMenuId = card.id;
+                        document.getElementById('cardMenu').classList.add('active');
+                    }
                 };
                 el.ontouchend = el.ontouchmove = () => clearTimeout(timer);
 
                 el.onclick = e => {
-                    if (this.selectMode) { e.preventDefault(); this.toggleSelect(card.id, el); return; }
+                    if (this.selectMode) {
+                        e.preventDefault();
+                        this.toggleSelect(card.id, el);
+                        return;
+                    }
                     el.classList.toggle('flipped');
                 };
                 el.ondblclick = () => this.openFS(card.id);
@@ -743,7 +1465,28 @@
                 if (action === 'ai-edit') this.promptEdit(card.id);
                 if (action === 'split') this.promptSplit(card.id);
                 if (action === 'fullscreen') this.openFS(card.id);
-                if (action === 'delete') if (confirm('Delete?')) this.del(card.id);
+                if (action === 'delete') if (confirm('Delete this card?')) this.del(card.id);
+            }
+
+            readCard(cardId) {
+                const card = this.cards.find(c => c.id === cardId);
+                if (!card) return;
+
+                const textToRead = card.r || card.q;
+                if (responsiveVoice.isPlaying()) {
+                    responsiveVoice.cancel();
+                } else {
+                    responsiveVoice.speak(this.sanitizeTextForSpeech(textToRead), "US English Female");
+                }
+            }
+
+            sanitizeTextForSpeech(text) {
+                return text
+                    .replace(/\*\*(.*?)\*\*/g, "$1")
+                    .replace(/\*(.*?)\*/g, "$1")
+                    .replace(/`(.*?)`/g, "$1")
+                    .replace(/```(.*?)```/g, "Here is the code: $1")
+                    .replace(/!.*?!/g, "");
             }
 
             editText(id, field) {
@@ -762,14 +1505,16 @@
 
                 if (this.editingField === 'q') {
                     card.q = text;
-                    document.querySelector(`[data-id="${this.editingCardId}"] .card-face:first-child`).innerHTML = this.md(text);
+                    const qEl = document.querySelector(`[data-id="${this.editingCardId}"] .card-face:first-child`);
+                    if (qEl) qEl.innerHTML = this.md(text);
                     if (this.fullscreenId === this.editingCardId) {
                         document.getElementById('fsQuestion').innerHTML = this.md(text);
                     }
                 } else {
                     card.r = text;
                     const html = this.md(text);
-                    document.querySelector(`[data-id="${this.editingCardId}"] .response-content`).innerHTML = html;
+                    const rEl = document.querySelector(`[data-id="${this.editingCardId}"] .response-content`);
+                    if (rEl) rEl.innerHTML = html;
                     if (this.fullscreenId === this.editingCardId) {
                         document.getElementById('fsResponse').innerHTML = html;
                     }
@@ -790,8 +1535,8 @@
                 if (!card) return;
 
                 const custom = document.getElementById('continuePromptText').value.trim();
-                const context = `User request: \( {card.q}\n\nPrevious response:\n \){card.r || ''}`;
-                const prompt = custom 
+                const context = `User request: ${card.q}\n\nPrevious response:\n${card.r || ''}`;
+                const prompt = custom
                     ? `${context}\n\nAdditional instructions: ${custom}\n\nContinue the response:`
                     : `${context}\n\nContinue the response naturally from where it left off:`;
 
@@ -812,8 +1557,8 @@
                 if (!card) return;
 
                 const custom = document.getElementById('splitPromptText').value.trim();
-                const prompt = custom 
-                    ? `Split the text below according to these instructions: \( {custom}\n\nText:\n \){card.r}`
+                const prompt = custom
+                    ? `Split the text below according to these instructions: ${custom}\n\nText:\n${card.r}`
                     : `Split the following text into clear, logical sections with descriptive titles:\n\n${card.r}`;
 
                 const id = this.add({ q: `Split from: ${card.q.slice(0, 30)}...`, r: '...' }, true);
@@ -833,7 +1578,7 @@
                 if (!card) return;
 
                 const instructions = document.getElementById('editPromptText').value.trim() || 'Improve clarity, flow, and structure';
-                const prompt = `Original request: \( {card.q}\n\nCurrent response:\n \){card.r || ''}\n\nInstructions: ${instructions}\n\nOutput only the revised response:`;
+                const prompt = `Original request: ${card.q}\n\nCurrent response:\n${card.r || ''}\n\nInstructions: ${instructions}\n\nOutput only the revised response:`;
 
                 const id = this.add({ q: `Edited: ${card.q.slice(0, 30)}...`, r: '...' }, true);
                 this.streamingId = id;
@@ -931,7 +1676,7 @@ Final merged response (output only the content):`;
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'ai-ndraft.json';
+                a.download = 'parametric-cards.json';
                 a.click();
                 URL.revokeObjectURL(url);
             }
@@ -955,8 +1700,8 @@ Final merged response (output only the content):`;
                 r.readAsText(file);
             }
 
-            save() { 
-                localStorage.setItem('data', JSON.stringify({ cards: this.cards, sessionId: this.sessionId })); 
+            save() {
+                localStorage.setItem('data', JSON.stringify({ cards: this.cards, sessionId: this.sessionId }));
             }
 
             load() {
@@ -973,10 +1718,22 @@ Final merged response (output only the content):`;
                 }
             }
 
-            md(t) { return t ? DOMPurify.sanitize(marked.parse(t)) : ''; }
+            md(t) {
+                return t ? DOMPurify.sanitize(marked.parse(t)) : '';
+            }
         }
 
-        document.addEventListener('DOMContentLoaded', () => new App());
+        document.addEventListener('DOMContentLoaded', () => {
+            const app = new App();
+
+            // Set initial auto-read button state
+            const autoReadBtn = document.getElementById('toggleTTSBtn');
+            if (app.autoReadEnabled) {
+                autoReadBtn.style.opacity = '1';
+            } else {
+                autoReadBtn.style.opacity = '0.5';
+            }
+        });
     </script>
 </body>
 </html>
