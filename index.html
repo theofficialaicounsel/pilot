@@ -649,12 +649,12 @@
     </style>
 </head>
 <body>
-    <div id="brandPlaceholder">draft by ai-nspired</div>
+    <div id="brandPlaceholder">ai-nspired drafting</div>
 
     <div id="selectionBar">
-        <button id="cancelSelect"><i class="fas fa-times"></i>x</button>
+        <button id="cancelSelect"><i class="fas fa-times"></i></button>
         <span id="selectCount">0</span>
-        <button id="mergeSelected"><i class="fas fa-layer-group"></i> voltron</button>
+        <button id="mergeSelected"><i class="fas fa-layer-group"></i> Combine</button>
     </div>
 
     <div class="fullscreen-overlay" id="fullscreenOverlay">
@@ -703,6 +703,7 @@
         <button class="menu-btn" data-action="continue" title="Continue"><i class="fas fa-redo"></i></button>
         <button class="menu-btn" data-action="copy" title="Copy Response"><i class="fas fa-copy"></i></button>
         <button class="menu-btn" data-action="ai-edit" title="AI Edit"><i class="fas fa-magic"></i></button>
+        <button class="menu-btn" data-action="ai-theme" title="AI Theme"><i class="fas fa-palette"></i></button>
         <button class="menu-btn" data-action="manual-edit-response" title="Edit Response"><i class="fas fa-edit"></i></button>
         <button class="menu-btn" data-action="manual-edit-question" title="Edit Question"><i class="fas fa-pencil-alt"></i></button>
         <button class="menu-btn" data-action="style" title="Style Card"><i class="fas fa-paint-brush"></i></button>
@@ -835,905 +836,1005 @@
         </div>
     </div>
 
-    <div id="inputPanel">
-        <input type="text" id="userInput" placeholder="describe what you want">
-        <button id="sendBtn"><i class="fas fa-paper-plane"></i> send</button>
+    <!-- AI Theme Modal -->
+    <div class="modal" id="aiThemeModal">
+        <div class="modal-content">
+            <h3>AI Theme This Card</h3>
+            <textarea id="aiThemePrompt" placeholder="Describe any theme (Kill Bill, cyberpunk, vintage Polaroid, luxury gold, vaporwave...)"></textarea>
+            <div class="modal-actions">
+                <button class="secondary" id="cancelAITheme">Cancel</button>
+                <button class="primary" id="applyAITheme">Apply</button>
+            </div>
+        </div>
     </div>
 
-    <script>
-        const PROXY_URL = "https://ai-proxy.ai-n.workers.dev/api/generate";
+    <div id="inputPanel">
+        <input type="text" id="userInput" placeholder="What's up? 🫓">
+        <button id="sendBtn"><i class="fas fa-paper-plane"></i> Send</button>
+    </div>
 
-        const SYSTEM_PROMPT = `You are a helpful AI assistant. You can also apply styling to responses using special commands:
+<script>
+const PROXY_URL = "https://ai-proxy.ai-n.workers.dev/api/generate";
 
-        Available styling commands:
-        - !bg-color:hex! - Set background color
-        - !text-color:hex! - Set text color
-        - !border-color:hex! - Set border color
-        - !padding:px! - Set padding
-        - !border-radius:px! - Set border radius
-        - !font-size:px! - Set font size
-        - !font-weight:value! - Set font weight (normal/bold)
-        - !font-style:value! - Set font style (normal/italic)
-        - !text-decoration:value! - Set text decoration (none/underline)
-        - !custom-css:rules! - Apply custom CSS
+const DEFAULT_THEME = {
+    name: 'parametric cards',
+    primary: '#c41e3a',
+    bg: '#121212',
+    cardBg: '#1e1e1e',
+    text: '#f5f5f5',
+    border: '#333'
+};
 
-        Example:
-        !bg-color:#ffebee! !text-color:#c62828! !padding:20px! Here's your styled response...
+const SYSTEM_PROMPT = `You are a helpful, casual AI assistant.
 
-        Respond in clean markdown when helpful.`;
+You can ALSO control styling using special commands that must appear BEFORE the visible text. Users will usually talk in plain language ("make it xtina-red", "white label this"), you decide which commands to emit.
 
-        class App {
-            constructor() {
-                this.cards = [];
-                this.sessionId = "s-" + Date.now();
-                this.streamingId = null;
-                this.selected = new Set();
-                this.selectMode = false;
-                this.fullscreenId = null;
-                this.currentMenuId = null;
-                this.currentContinueId = null;
-                this.currentSplitId = null;
-                this.currentEditId = null;
-                this.editingCardId = null;
-                this.editingField = null;
-                this.currentStylingCard = null;
-                this.decoder = new TextDecoder();
-                this.recognizing = false;
-                this.recognition = null;
-                this.aiSpeechEnabled = true;
-                this.autoReadEnabled = false;
-                this.init();
-            }
+Page-wide theme (affects whole app shell):
+- !page-theme:name,bg,cardBg,text,border,primary!
+  Example:
+  !page-theme:xtina,#2b0004,#1a0003,#ffe8f0,#552233,#ff1744!
 
-            init() {
-                this.load();
-                this.bind();
-                this.initASR();
+Per-card styling (only affects that answer card):
+- !bg-color:hex!          e.g. !bg-color:#2b0004!
+- !text-color:hex!        e.g. !text-color:#ffe8f0!
+- !border-color:hex!
+- !padding:px!
+- !border-radius:px!
+- !font-size:px!
+- !font-weight:value!     (normal,bold)
+- !font-style:value!      (normal,italic)
+- !text-decoration:value! (none,underline,line-through)
+- !custom-css:rules!      (simple CSS fragment, the app will scope it)
+
+User language is plain:
+- "xtina red, pale text"  -> you pick matching colors.
+- "white-label neutral"   -> light bg, white cards, dark text, generic name.
+- "sticky note"           -> yellow card, black text, small rounded corners.
+
+ALWAYS put the style commands at the top of your response, then a blank line, then the markdown content. Respond in clean markdown when helpful.`;
+
+class App {
+    constructor() {
+        this.cards = [];
+        this.sessionId = "s-" + Date.now();
+        this.streamingId = null;
+        this.selected = new Set();
+        this.selectMode = false;
+        this.fullscreenId = null;
+        this.currentMenuId = null;
+        this.currentContinueId = null;
+        this.currentSplitId = null;
+        this.currentEditId = null;
+        this.editingCardId = null;
+        this.editingField = null;
+        this.currentStylingCard = null;
+        this.decoder = new TextDecoder();
+        this.recognizing = false;
+        this.recognition = null;
+        this.aiSpeechEnabled = true;
+        this.autoReadEnabled = false;
+        this.theme = { ...DEFAULT_THEME };
+        this.init();
+    }
+
+    init() {
+        this.load();
+        this.bind();
+        this.initASR();
+        this.updateTalkButton();
+        this.setupSliders();
+
+        const themePref = localStorage.getItem('themeMode') || 'dark';
+        document.body.dataset.theme = themePref;
+
+        const savedASR = localStorage.getItem('aiSpeechEnabled');
+        if (savedASR !== null) {
+            this.aiSpeechEnabled = savedASR === 'true';
+        }
+
+        const savedAutoRead = localStorage.getItem('autoReadEnabled');
+        if (savedAutoRead !== null) {
+            this.autoReadEnabled = savedAutoRead === 'true';
+        }
+
+        // Apply theme on first load
+        this.applyTheme(this.theme);
+    }
+
+    setupSliders() {
+        const updateSliderValue = (sliderId, valueId) => {
+            const slider = document.getElementById(sliderId);
+            const value = document.getElementById(valueId);
+            value.textContent = slider.value + 'px';
+            slider.oninput = () => {
+                value.textContent = slider.value + 'px';
+            };
+        };
+
+        updateSliderValue('paddingSlider', 'paddingValue');
+        updateSliderValue('borderRadiusSlider', 'borderRadiusValue');
+        updateSliderValue('borderWidthSlider', 'borderWidthValue');
+    }
+
+    initASR() {
+        if ("webkitSpeechRecognition" in window) {
+            this.recognition = new webkitSpeechRecognition();
+            this.recognition.continuous = false;
+            this.recognition.interimResults = false;
+            this.recognition.lang = "en-US";
+
+            this.recognition.onstart = () => {
+                this.recognizing = true;
                 this.updateTalkButton();
-                this.setupSliders();
+            };
 
-                const theme = localStorage.getItem('theme') || 'dark';
-                document.body.dataset.theme = theme;
+            this.recognition.onend = () => {
+                this.recognizing = false;
+                this.updateTalkButton();
+            };
 
-                const savedASR = localStorage.getItem('aiSpeechEnabled');
-                if (savedASR !== null) {
-                    this.aiSpeechEnabled = savedASR === 'true';
-                }
+            this.recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                const inputEl = document.getElementById('userInput');
+                inputEl.value = transcript;
+                this.maybeShowHint(transcript);
+                this.send();
+            };
 
-                const savedAutoRead = localStorage.getItem('autoReadEnabled');
-                if (savedAutoRead !== null) {
-                    this.autoReadEnabled = savedAutoRead === 'true';
-                }
+            this.recognition.onerror = (event) => {
+                console.error("Speech recognition error:", event.error);
+                this.recognizing = false;
+                this.updateTalkButton();
+            };
+        }
+    }
+
+    updateTalkButton() {
+        const talkBtn = document.getElementById('sendBtn');
+        if (this.recognizing) {
+            talkBtn.innerHTML = '<i class="fas fa-stop"></i> Stop';
+        } else if (this.aiSpeechEnabled && "webkitSpeechRecognition" in window) {
+            talkBtn.innerHTML = '<i class="fas fa-microphone"></i> Speak';
+        } else {
+            talkBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send';
+        }
+    }
+
+    // tiny "hidden onboarding": if user types 'brand', suggest what they can do
+    maybeShowHint(text) {
+        const t = text.toLowerCase();
+        if (t.includes('brand') || t.includes('theme')) {
+            const grid = document.getElementById('grid');
+            const hint = document.createElement('div');
+            hint.style.fontSize = '12px';
+            hint.style.opacity = '0.7';
+            hint.style.margin = '4px 8px';
+            hint.textContent = 'Tip: you can say things like "switch this to xtina red branding" or "make this white-label neutral" and the AI will restyle the page and cards.';
+            grid.prepend(hint);
+            setTimeout(() => hint.remove(), 8000);
+        }
+    }
+
+    bind() {
+        document.getElementById('sendBtn').onclick = () => {
+            if (this.recognizing) {
+                this.recognition.stop();
+            } else if (this.aiSpeechEnabled && "webkitSpeechRecognition" in window) {
+                this.recognition.start();
+            } else {
+                this.send();
             }
+        };
 
-            setupSliders() {
-                const updateSliderValue = (sliderId, valueId) => {
-                    const slider = document.getElementById(sliderId);
-                    const value = document.getElementById(valueId);
-                    value.textContent = slider.value + sliderId.includes('Width') ? 'px' : 'px';
-                    slider.oninput = () => {
-                        value.textContent = slider.value + sliderId.includes('Width') ? 'px' : 'px';
-                    };
-                };
-
-                updateSliderValue('paddingSlider', 'paddingValue');
-                updateSliderValue('borderRadiusSlider', 'borderRadiusValue');
-                updateSliderValue('borderWidthSlider', 'borderWidthValue');
+        const inputEl = document.getElementById('userInput');
+        inputEl.onkeydown = e => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.send();
             }
+        };
+        inputEl.oninput = () => this.maybeShowHint(inputEl.value);
 
-            initASR() {
-                if ("webkitSpeechRecognition" in window) {
-                    this.recognition = new webkitSpeechRecognition();
-                    this.recognition.continuous = false;
-                    this.recognition.interimResults = false;
-                    this.recognition.lang = "en-US";
+        document.getElementById('moreBtn').onclick = () => {
+            document.getElementById('moreModal').classList.add('active');
+        };
 
-                    this.recognition.onstart = () => {
-                        this.recognizing = true;
-                        this.updateTalkButton();
-                    };
+        document.getElementById('modalClose').onclick = () => {
+            document.getElementById('moreModal').classList.remove('active');
+        };
 
-                    this.recognition.onend = () => {
-                        this.recognizing = false;
-                        this.updateTalkButton();
-                    };
+        document.getElementById('toggleThemeBtn').onclick = () => {
+            const current = document.body.dataset.theme;
+            const newThemeMode = current === 'dark' ? 'light' : 'dark';
+            document.body.dataset.theme = newThemeMode;
+            localStorage.setItem('themeMode', newThemeMode);
+        };
 
-                    this.recognition.onresult = (event) => {
-                        const transcript = event.results[0][0].transcript;
-                        document.getElementById('userInput').value = transcript;
-                        this.send();
-                    };
+        document.getElementById('toggleASRBtn').onclick = () => {
+            this.aiSpeechEnabled = !this.aiSpeechEnabled;
+            localStorage.setItem('aiSpeechEnabled', this.aiSpeechEnabled);
+            this.updateTalkButton();
+        };
 
-                    this.recognition.onerror = (event) => {
-                        console.error("Speech recognition error:", event.error);
-                        this.recognizing = false;
-                        this.updateTalkButton();
-                    };
-                }
-            }
+        document.getElementById('toggleTTSBtn').onclick = () => {
+            this.autoReadEnabled = !this.autoReadEnabled;
+            localStorage.setItem('autoReadEnabled', this.autoReadEnabled);
+            const btn = document.getElementById('toggleTTSBtn');
+            btn.style.opacity = this.autoReadEnabled ? '1' : '0.5';
+        };
 
-            updateTalkButton() {
-                const talkBtn = document.getElementById('sendBtn');
-                if (this.recognizing) {
-                    talkBtn.innerHTML = '<i class="fas fa-stop"></i> Stop';
-                } else if (this.aiSpeechEnabled && "webkitSpeechRecognition" in window) {
-                    talkBtn.innerHTML = '<i class="fas fa-microphone"></i> Speak';
+        document.getElementById('modalExport').onclick = () => this.export();
+        document.getElementById('modalImport').onclick = () => document.getElementById('fileInput').click();
+        document.getElementById('fileInput').onchange = e => this.import(e);
+
+        document.querySelectorAll('.fullscreen-close').forEach(b => {
+            b.onclick = () => this.closeFS();
+        });
+
+        document.querySelectorAll('.fullscreen-flip').forEach(b => {
+            b.onclick = () => document.getElementById('fullscreenOverlay').classList.toggle('flipped');
+        });
+
+        document.getElementById('cancelSelect').onclick = () => this.exitSelect();
+        document.getElementById('mergeSelected').onclick = () => {
+            document.getElementById('mergePromptModal').classList.add('active');
+        };
+
+        document.getElementById('mergePromptCancel').onclick = () => {
+            document.getElementById('mergePromptModal').classList.remove('active');
+        };
+
+        document.getElementById('mergePromptConfirm').onclick = () => this.merge();
+
+        document.getElementById('continuePromptCancel').onclick = () => {
+            document.getElementById('continuePromptModal').classList.remove('active');
+        };
+
+        document.getElementById('continuePromptConfirm').onclick = () => this.continue();
+
+        document.getElementById('splitPromptCancel').onclick = () => {
+            document.getElementById('splitPromptModal').classList.remove('active');
+        };
+
+        document.getElementById('splitPromptConfirm').onclick = () => this.split();
+
+        document.getElementById('editPromptCancel').onclick = () => {
+            document.getElementById('editPromptModal').classList.remove('active');
+        };
+
+        document.getElementById('editPromptConfirm').onclick = () => this.performEdit();
+
+        document.getElementById('textEditorCancel').onclick = () => {
+            document.getElementById('textEditorModal').classList.remove('active');
+        };
+
+        document.getElementById('textEditorSave').onclick = () => this.saveManualEdit();
+
+        document.getElementById('cardMenu').onclick = e => {
+            const btn = e.target.closest('.menu-btn');
+            if (btn) {
+                const action = btn.dataset.action;
+                if (action.startsWith('manual-edit-')) {
+                    const field = action === 'manual-edit-question' ? 'q' : 'r';
+                    this.editText(this.currentMenuId, field);
+                } else if (action === 'style') {
+                    this.showStylePanel(this.currentMenuId);
                 } else {
-                    talkBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send';
+                    this.handle(action);
+                }
+                document.getElementById('cardMenu').classList.remove('active');
+            }
+        };
+
+        document.getElementById('applyStyles').onclick = () => this.applyStyles();
+        document.getElementById('cancelStyles').onclick = () => this.hideStylePanel();
+
+        document.getElementById('toggleAdvanced').onclick = () => {
+            document.getElementById('advancedStyles').classList.toggle('active');
+        };
+
+        document.querySelectorAll('.style-btn').forEach(btn => {
+            btn.onclick = () => {
+                btn.classList.toggle('active');
+            };
+        });
+    }
+
+    // Global theme: apply to CSS vars + brand text
+    applyTheme(theme) {
+        this.theme = { ...(this.theme || {}), ...theme };
+
+        document.documentElement.style.setProperty('--primary', this.theme.primary || DEFAULT_THEME.primary);
+        document.documentElement.style.setProperty('--bg', this.theme.bg || DEFAULT_THEME.bg);
+        document.documentElement.style.setProperty('--card-bg', this.theme.cardBg || DEFAULT_THEME.cardBg);
+        document.documentElement.style.setProperty('--text', this.theme.text || DEFAULT_THEME.text);
+        document.documentElement.style.setProperty('--border', this.theme.border || DEFAULT_THEME.border);
+
+        const brand = document.getElementById('brandPlaceholder');
+        if (brand && this.theme.name) {
+            brand.textContent = `🫓${this.theme.name}🫓`;
+        }
+    }
+
+    showStylePanel(cardId) {
+        this.currentStylingCard = cardId;
+        const card = this.cards.find(c => c.id === cardId);
+        if (!card) return;
+
+        const panel = document.getElementById('stylePanel');
+
+        document.querySelectorAll('.style-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('textColorPicker').value = '#f5f5f5';
+        document.getElementById('bgColorPicker').value = '#1e1e1e';
+        document.getElementById('borderColorPicker').value = '#333';
+        document.getElementById('paddingSlider').value = 16;
+        document.getElementById('paddingValue').textContent = '16px';
+        document.getElementById('borderRadiusSlider').value = 16;
+        document.getElementById('borderRadiusValue').textContent = '16px';
+        document.getElementById('borderWidthSlider').value = 1;
+        document.getElementById('borderWidthValue').textContent = '1px';
+        document.getElementById('customCSS').value = '';
+
+        if (card.styles) {
+            if (card.styles.fontWeight === 'bold') {
+                document.querySelector('.style-btn[data-style="bold"]').classList.add('active');
+            }
+            if (card.styles.fontStyle === 'italic') {
+                document.querySelector('.style-btn[data-style="italic"]').classList.add('active');
+            }
+            if (card.styles.textDecoration === 'underline') {
+                document.querySelector('.style-btn[data-style="underline"]').classList.add('active');
+            }
+            if (card.styles.textDecoration === 'line-through') {
+                document.querySelector('.style-btn[data-style="strikethrough"]').classList.add('active');
+            }
+
+            if (card.styles.fontSize) {
+                const sizeMap = {
+                    '12px': 'text-sm',
+                    '15px': 'text-base',
+                    '18px': 'text-lg',
+                    '21px': 'text-xl'
+                };
+                const sizeClass = sizeMap[card.styles.fontSize];
+                if (sizeClass) {
+                    document.querySelector(`.style-btn[data-style="${sizeClass}"]`)?.classList.add('active');
                 }
             }
 
-            bind() {
-                document.getElementById('sendBtn').onclick = () => {
-                    if (this.recognizing) {
-                        this.recognition.stop();
-                    } else if (this.aiSpeechEnabled && "webkitSpeechRecognition" in window) {
-                        this.recognition.start();
-                    } else {
-                        this.send();
-                    }
-                };
+            if (card.styles.color) {
+                document.getElementById('textColorPicker').value = card.styles.color;
+            }
+            if (card.styles.backgroundColor) {
+                document.getElementById('bgColorPicker').value = card.styles.backgroundColor;
+            }
+            if (card.styles.borderColor) {
+                document.getElementById('borderColorPicker').value = card.styles.borderColor;
+            }
 
-                document.getElementById('userInput').onkeydown = e => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        this.send();
-                    }
-                };
+            if (card.styles.padding) {
+                const padding = parseInt(card.styles.padding);
+                document.getElementById('paddingSlider').value = padding;
+                document.getElementById('paddingValue').textContent = padding + 'px';
+            }
+            if (card.styles.borderRadius) {
+                const radius = parseInt(card.styles.borderRadius);
+                document.getElementById('borderRadiusSlider').value = radius;
+                document.getElementById('borderRadiusValue').textContent = radius + 'px';
+            }
+            if (card.styles.borderWidth) {
+                const width = parseInt(card.styles.borderWidth);
+                document.getElementById('borderWidthSlider').value = width;
+                document.getElementById('borderWidthValue').textContent = width + 'px';
+            }
 
-                document.getElementById('moreBtn').onclick = () => {
-                    document.getElementById('moreModal').classList.add('active');
-                };
+            if (card.styles.customCSS) {
+                document.getElementById('customCSS').value = card.styles.customCSS;
+            }
+        }
 
-                document.getElementById('modalClose').onclick = () => {
-                    document.getElementById('moreModal').classList.remove('active');
-                };
+        const cardEl = document.querySelector(`[data-id="${cardId}"]`);
+        if (cardEl) {
+            const rect = cardEl.getBoundingClientRect();
+            panel.style.top = `${rect.top + window.scrollY}px`;
+            panel.style.left = `${rect.right + window.scrollX + 10}px`;
+        }
 
-                document.getElementById('toggleThemeBtn').onclick = () => {
-                    const current = document.body.dataset.theme;
-                    const newTheme = current === 'dark' ? 'light' : 'dark';
-                    document.body.dataset.theme = newTheme;
-                    localStorage.setItem('theme', newTheme);
-                };
+        panel.classList.add('active');
+    }
 
-                document.getElementById('toggleASRBtn').onclick = () => {
-                    this.aiSpeechEnabled = !this.aiSpeechEnabled;
-                    localStorage.setItem('aiSpeechEnabled', this.aiSpeechEnabled);
-                    this.updateTalkButton();
-                };
+    hideStylePanel() {
+        document.getElementById('stylePanel').classList.remove('active');
+        this.currentStylingCard = null;
+    }
 
-                document.getElementById('toggleTTSBtn').onclick = () => {
-                    this.autoReadEnabled = !this.autoReadEnabled;
-                    localStorage.setItem('autoReadEnabled', this.autoReadEnabled);
-                    const btn = document.getElementById('toggleTTSBtn');
-                    btn.style.opacity = this.autoReadEnabled ? '1' : '0.5';
-                };
+    applyStyles() {
+        if (!this.currentStylingCard) return;
 
-                document.getElementById('modalExport').onclick = () => this.export();
-                document.getElementById('modalImport').onclick = () => document.getElementById('fileInput').click();
-                document.getElementById('fileInput').onchange = e => this.import(e);
+        const card = this.cards.find(c => c.id === this.currentStylingCard);
+        if (!card) return;
 
-                document.querySelectorAll('.fullscreen-close').forEach(b => {
-                    b.onclick = () => this.closeFS();
-                });
+        const styles = {
+            fontWeight: document.querySelector('.style-btn[data-style="bold"]').classList.contains('active') ? 'bold' : 'normal',
+            fontStyle: document.querySelector('.style-btn[data-style="italic"]').classList.contains('active') ? 'italic' : 'normal',
+            textDecoration: document.querySelector('.style-btn[data-style="underline"]').classList.contains('active') ? 'underline' :
+                document.querySelector('.style-btn[data-style="strikethrough"]').classList.contains('active') ? 'line-through' : 'none',
+            fontSize: document.querySelector('.style-btn[data-style="text-sm"]').classList.contains('active') ? '12px' :
+                document.querySelector('.style-btn[data-style="text-lg"]').classList.contains('active') ? '18px' :
+                document.querySelector('.style-btn[data-style="text-xl"]').classList.contains('active') ? '21px' : '15px',
+            color: document.getElementById('textColorPicker').value,
+            backgroundColor: document.getElementById('bgColorPicker').value,
+            borderColor: document.getElementById('borderColorPicker').value,
+            padding: document.getElementById('paddingSlider').value + 'px',
+            borderRadius: document.getElementById('borderRadiusSlider').value + 'px',
+            borderWidth: document.getElementById('borderWidthSlider').value + 'px',
+            borderStyle: 'solid',
+            customCSS: document.getElementById('customCSS').value
+        };
 
-                document.querySelectorAll('.fullscreen-flip').forEach(b => {
-                    b.onclick = () => document.getElementById('fullscreenOverlay').classList.toggle('flipped');
-                });
+        card.styles = styles;
+        this.updateCardStyles(this.currentStylingCard, styles);
+        this.save();
+        this.hideStylePanel();
+    }
 
-                document.getElementById('cancelSelect').onclick = () => this.exitSelect();
-                document.getElementById('mergeSelected').onclick = () => {
-                    document.getElementById('mergePromptModal').classList.add('active');
-                };
+    updateCardStyles(cardId, styles) {
+        const cardEl = document.querySelector(`[data-id="${cardId}"]`);
+        if (!cardEl) return;
 
-                document.getElementById('mergePromptCancel').onclick = () => {
-                    document.getElementById('mergePromptModal').classList.remove('active');
-                };
+        const faces = cardEl.querySelectorAll('.card-face');
+        const cardInner = cardEl.querySelector('.flip-card-inner');
 
-                document.getElementById('mergePromptConfirm').onclick = () => this.merge();
+        faces.forEach(face => {
+            face.style.fontWeight = styles.fontWeight || '';
+            face.style.fontStyle = styles.fontStyle || '';
+            face.style.textDecoration = styles.textDecoration === 'none' ? '' : (styles.textDecoration || '');
+            face.style.fontSize = styles.fontSize || '';
 
-                document.getElementById('continuePromptCancel').onclick = () => {
-                    document.getElementById('continuePromptModal').classList.remove('active');
-                };
+            if (styles.color) face.style.color = styles.color;
+            if (styles.backgroundColor) face.style.backgroundColor = styles.backgroundColor;
+        });
 
-                document.getElementById('continuePromptConfirm').onclick = () => this.continue();
+        if (styles.borderColor) cardEl.style.borderColor = styles.borderColor;
+        if (styles.borderWidth) cardEl.style.borderWidth = styles.borderWidth;
+        if (styles.borderStyle) cardEl.style.borderStyle = styles.borderStyle;
+        if (styles.borderRadius) cardEl.style.borderRadius = styles.borderRadius;
 
-                document.getElementById('splitPromptCancel').onclick = () => {
-                    document.getElementById('splitPromptModal').classList.remove('active');
-                };
+        if (cardInner && styles.padding) {
+            cardInner.style.padding = styles.padding;
+        }
 
-                document.getElementById('splitPromptConfirm').onclick = () => this.split();
+        if (styles.customCSS) {
+            const styleId = `custom-style-${cardId}`;
+            let styleEl = document.getElementById(styleId);
 
-                document.getElementById('editPromptCancel').onclick = () => {
-                    document.getElementById('editPromptModal').classList.remove('active');
-                };
+            if (!styleEl) {
+                styleEl = document.createElement('style');
+                styleEl.id = styleId;
+                document.head.appendChild(styleEl);
+            }
 
-                document.getElementById('editPromptConfirm').onclick = () => this.performEdit();
+            styleEl.textContent = `
+                [data-id="${cardId}"] ${styles.customCSS}
+            `;
+        }
+    }
 
-                document.getElementById('textEditorCancel').onclick = () => {
-                    document.getElementById('textEditorModal').classList.remove('active');
-                };
+    // parse AI commands -> card styles + optional page theme
+    parseStyleCommands(text) {
+        const styles = {};
+        let themeUpdate = null;
 
-                document.getElementById('textEditorSave').onclick = () => this.saveManualEdit();
+        const cmdRegex = /!(bg-color|text-color|border-color|padding|border-radius|font-size|font-weight|font-style|text-decoration|custom-css|page-theme):([^!]+)!/gi;
 
-                document.getElementById('cardMenu').onclick = e => {
-                    const btn = e.target.closest('.menu-btn');
-                    if (btn) {
-                        const action = btn.dataset.action;
-                        if (action.startsWith('manual-edit-')) {
-                            const field = action === 'manual-edit-question' ? 'q' : 'r';
-                            this.editText(this.currentMenuId, field);
-                        } else if (action === 'style') {
-                            this.showStylePanel(this.currentMenuId);
-                        } else {
-                            this.handle(action);
-                        }
-                        document.getElementById('cardMenu').classList.remove('active');
-                    }
-                };
+        let match;
+        while ((match = cmdRegex.exec(text)) !== null) {
+            const [, prop, rawValue] = match;
+            const value = rawValue.trim();
 
-                // Style panel handlers
-                document.getElementById('applyStyles').onclick = () => this.applyStyles();
-                document.getElementById('cancelStyles').onclick = () => this.hideStylePanel();
-
-                document.getElementById('toggleAdvanced').onclick = () => {
-                    document.getElementById('advancedStyles').classList.toggle('active');
-                };
-
-                document.querySelectorAll('.style-btn').forEach(btn => {
-                    btn.onclick = () => {
-                        btn.classList.toggle('active');
+            switch (prop) {
+                case 'page-theme': {
+                    const [name, bg, cardBg, textColor, border, primary] = value.split(',').map(v => v.trim());
+                    themeUpdate = {
+                        name: name || this.theme.name,
+                        bg: bg || this.theme.bg,
+                        cardBg: cardBg || this.theme.cardBg,
+                        text: textColor || this.theme.text,
+                        border: border || this.theme.border,
+                        primary: primary || this.theme.primary
                     };
-                });
-            }
-
-            showStylePanel(cardId) {
-                this.currentStylingCard = cardId;
-                const card = this.cards.find(c => c.id === cardId);
-                if (!card) return;
-
-                const panel = document.getElementById('stylePanel');
-
-                // Reset all controls
-                document.querySelectorAll('.style-btn').forEach(btn => btn.classList.remove('active'));
-                document.getElementById('textColorPicker').value = '#f5f5f5';
-                document.getElementById('bgColorPicker').value = '#1e1e1e';
-                document.getElementById('borderColorPicker').value = '#333';
-                document.getElementById('paddingSlider').value = 16;
-                document.getElementById('paddingValue').textContent = '16px';
-                document.getElementById('borderRadiusSlider').value = 16;
-                document.getElementById('borderRadiusValue').textContent = '16px';
-                document.getElementById('borderWidthSlider').value = 1;
-                document.getElementById('borderWidthValue').textContent = '1px';
-                document.getElementById('customCSS').value = '';
-
-                // Set current values if card has styles
-                if (card.styles) {
-                    // Text styles
-                    if (card.styles.fontWeight === 'bold') {
-                        document.querySelector('.style-btn[data-style="bold"]').classList.add('active');
-                    }
-                    if (card.styles.fontStyle === 'italic') {
-                        document.querySelector('.style-btn[data-style="italic"]').classList.add('active');
-                    }
-                    if (card.styles.textDecoration === 'underline') {
-                        document.querySelector('.style-btn[data-style="underline"]').classList.add('active');
-                    }
-                    if (card.styles.textDecoration === 'line-through') {
-                        document.querySelector('.style-btn[data-style="strikethrough"]').classList.add('active');
-                    }
-
-                    // Text size
-                    if (card.styles.fontSize) {
-                        const sizeMap = {
-                            '12px': 'text-sm',
-                            '15px': 'text-base',
-                            '18px': 'text-lg',
-                            '21px': 'text-xl'
-                        };
-                        const sizeClass = sizeMap[card.styles.fontSize];
-                        if (sizeClass) {
-                            document.querySelector(`.style-btn[data-style="${sizeClass}"]`)?.classList.add('active');
-                        }
-                    }
-
-                    // Colors
-                    if (card.styles.color) {
-                        document.getElementById('textColorPicker').value = card.styles.color;
-                    }
-                    if (card.styles.backgroundColor) {
-                        document.getElementById('bgColorPicker').value = card.styles.backgroundColor;
-                    }
-                    if (card.styles.borderColor) {
-                        document.getElementById('borderColorPicker').value = card.styles.borderColor;
-                    }
-
-                    // Spacing
-                    if (card.styles.padding) {
-                        const padding = parseInt(card.styles.padding);
-                        document.getElementById('paddingSlider').value = padding;
-                        document.getElementById('paddingValue').textContent = padding + 'px';
-                    }
-                    if (card.styles.borderRadius) {
-                        const radius = parseInt(card.styles.borderRadius);
-                        document.getElementById('borderRadiusSlider').value = radius;
-                        document.getElementById('borderRadiusValue').textContent = radius + 'px';
-                    }
-                    if (card.styles.borderWidth) {
-                        const width = parseInt(card.styles.borderWidth);
-                        document.getElementById('borderWidthSlider').value = width;
-                        document.getElementById('borderWidthValue').textContent = width + 'px';
-                    }
-
-                    // Custom CSS
-                    if (card.styles.customCSS) {
-                        document.getElementById('customCSS').value = card.styles.customCSS;
-                    }
+                    break;
                 }
+                case 'bg-color':
+                    styles.backgroundColor = value;
+                    break;
+                case 'text-color':
+                    styles.color = value;
+                    break;
+                case 'border-color':
+                    styles.borderColor = value;
+                    styles.borderStyle = styles.borderStyle || 'solid';
+                    styles.borderWidth = styles.borderWidth || '1px';
+                    break;
+                case 'padding':
+                    styles.padding = value.endsWith('px') ? value : `${value}px`;
+                    break;
+                case 'border-radius':
+                    styles.borderRadius = value.endsWith('px') ? value : `${value}px`;
+                    break;
+                case 'font-size':
+                    styles.fontSize = value.endsWith('px') ? value : `${value}px`;
+                    break;
+                case 'font-weight':
+                    styles.fontWeight = value;
+                    break;
+                case 'font-style':
+                    styles.fontStyle = value;
+                    break;
+                case 'text-decoration':
+                    styles.textDecoration = value;
+                    break;
+                case 'custom-css':
+                    styles.customCSS = value;
+                    break;
+            }
+        }
 
-                // Position panel near the card
-                const cardEl = document.querySelector(`[data-id="${cardId}"]`);
-                if (cardEl) {
-                    const rect = cardEl.getBoundingClientRect();
-                    panel.style.top = `${rect.top + window.scrollY}px`;
-                    panel.style.left = `${rect.right + window.scrollX + 10}px`;
+        const cleanText = text.replace(cmdRegex, '').trim();
+        return { styles, themeUpdate, cleanText };
+    }
+
+    async send() {
+        const inputEl = document.getElementById('userInput');
+        const input = inputEl.value.trim();
+        if (!input) return;
+        this.maybeShowHint(input);
+        inputEl.value = '';
+
+        const id = this.add({ q: input, r: '...' }, true);
+        this.streamingId = id;
+        await this.request(input);
+    }
+
+    async request(prompt) {
+        try {
+            document.getElementById('loading').classList.add('show');
+            const payload = { sessionId: this.sessionId, prompt: SYSTEM_PROMPT + "\n\nUser: " + prompt };
+            const reader = await this.fetchProxy(payload);
+            await this.stream(reader);
+        } catch (e) {
+            this.update(this.streamingId, `<p style="color:red">Error: ${e.message}</p>`);
+        } finally {
+            document.getElementById('loading').classList.remove('show');
+            this.streamingId = null;
+        }
+    }
+
+    async fetchProxy(payload) {
+        const res = await fetch(PROXY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
+        return res.body.getReader();
+    }
+
+    async stream(reader) {
+        let buffer = '', acc = '';
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += this.decoder.decode(value, { stream: true });
+            const parts = buffer.split('\n\n');
+            buffer = parts.pop() || '';
+            for (const part of parts) {
+                const line = part.split('\n').find(l => l.startsWith('data:'));
+                if (!line) continue;
+                const data = line.slice(6).trim();
+                if (data === '[DONE]') {
+                    const clean = acc.trim();
+                    this.finalize(this.streamingId, clean);
+                    return;
                 }
-
-                panel.classList.add('active');
-            }
-
-            hideStylePanel() {
-                document.getElementById('stylePanel').classList.remove('active');
-                this.currentStylingCard = null;
-            }
-
-            applyStyles() {
-                if (!this.currentStylingCard) return;
-
-                const card = this.cards.find(c => c.id === this.currentStylingCard);
-                if (!card) return;
-
-                const styles = {
-                    // Text styles
-                    fontWeight: document.querySelector('.style-btn[data-style="bold"]').classList.contains('active') ? 'bold' : 'normal',
-                    fontStyle: document.querySelector('.style-btn[data-style="italic"]').classList.contains('active') ? 'italic' : 'normal',
-                    textDecoration: document.querySelector('.style-btn[data-style="underline"]').classList.contains('active') ? 'underline' :
-                                  document.querySelector('.style-btn[data-style="strikethrough"]').classList.contains('active') ? 'line-through' : 'none',
-
-                    // Text size
-                    fontSize: document.querySelector('.style-btn[data-style="text-sm"]').classList.contains('active') ? '12px' :
-                             document.querySelector('.style-btn[data-style="text-lg"]').classList.contains('active') ? '18px' :
-                             document.querySelector('.style-btn[data-style="text-xl"]').classList.contains('active') ? '21px' : '15px',
-
-                    // Colors
-                    color: document.getElementById('textColorPicker').value,
-                    backgroundColor: document.getElementById('bgColorPicker').value,
-                    borderColor: document.getElementById('borderColorPicker').value,
-
-                    // Spacing
-                    padding: document.getElementById('paddingSlider').value + 'px',
-                    borderRadius: document.getElementById('borderRadiusSlider').value + 'px',
-                    borderWidth: document.getElementById('borderWidthSlider').value + 'px',
-                    borderStyle: 'solid',
-
-                    // Custom CSS
-                    customCSS: document.getElementById('customCSS').value
-                };
-
-                // Apply styles to card
-                card.styles = styles;
-                this.updateCardStyles(this.currentStylingCard, styles);
-                this.save();
-                this.hideStylePanel();
-            }
-
-            updateCardStyles(cardId, styles) {
-                const cardEl = document.querySelector(`[data-id="${cardId}"]`);
-                if (!cardEl) return;
-
-                const faces = cardEl.querySelectorAll('.card-face');
-                const cardInner = cardEl.querySelector('.flip-card-inner');
-
-                // Apply styles to card faces
-                faces.forEach(face => {
-                    // Text styles
-                    face.style.fontWeight = styles.fontWeight;
-                    face.style.fontStyle = styles.fontStyle;
-                    face.style.textDecoration = styles.textDecoration === 'none' ? '' : styles.textDecoration;
-                    face.style.fontSize = styles.fontSize;
-
-                    // Colors
-                    face.style.color = styles.color;
-                    face.style.backgroundColor = styles.backgroundColor;
-                });
-
-                // Apply border and spacing to card
-                cardEl.style.borderColor = styles.borderColor;
-                cardEl.style.borderWidth = styles.borderWidth;
-                cardEl.style.borderStyle = styles.borderStyle;
-                cardEl.style.borderRadius = styles.borderRadius;
-
-                // Apply padding to card inner
-                cardInner.style.padding = styles.padding;
-
-                // Apply custom CSS if provided
-                if (styles.customCSS) {
-                    const styleId = `custom-style-${cardId}`;
-                    let styleEl = document.getElementById(styleId);
-
-                    if (!styleEl) {
-                        styleEl = document.createElement('style');
-                        styleEl.id = styleId;
-                        document.head.appendChild(styleEl);
-                    }
-
-                    styleEl.textContent = `
-                        [data-id="${cardId}"] ${styles.customCSS}
-                    `;
-                }
-            }
-
-            parseStyleCommands(text) {
-                const styles = {};
-                const commands = text.match(/!(\w+):([^!]+)!/g) || [];
-
-                commands.forEach(cmd => {
-                    const [full, prop, value] = cmd.match(/!(\w+):([^!]+)!/);
-                    styles[prop] = value.trim();
-                });
-
-                // Remove style commands from text
-                const cleanText = text.replace(/!\w+:[^!]+!/g, '').trim();
-
-                return { styles, cleanText };
-            }
-
-            async send() {
-                const input = document.getElementById('userInput').value.trim();
-                if (!input) return;
-                document.getElementById('userInput').value = '';
-
-                const id = this.add({ q: input, r: '...' }, true);
-                this.streamingId = id;
-                await this.request(input);
-            }
-
-            async request(prompt) {
                 try {
-                    document.getElementById('loading').classList.add('show');
-                    const payload = { sessionId: this.sessionId, prompt: SYSTEM_PROMPT + "\n\n" + prompt };
-                    const reader = await this.fetchProxy(payload);
-                    await this.stream(reader);
-                } catch (e) {
-                    this.update(this.streamingId, `<p style="color:red">Error: ${e.message}</p>`);
-                } finally {
-                    document.getElementById('loading').classList.remove('show');
-                    this.streamingId = null;
-                }
-            }
-
-            async fetchProxy(payload) {
-                const res = await fetch(PROXY_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
-                return res.body.getReader();
-            }
-
-            async stream(reader) {
-                let buffer = '', acc = '';
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    buffer += this.decoder.decode(value, { stream: true });
-                    const parts = buffer.split('\n\n');
-                    buffer = parts.pop() || '';
-                    for (const part of parts) {
-                        const line = part.split('\n').find(l => l.startsWith('data:'));
-                        if (!line) continue;
-                        const data = line.slice(6).trim();
-                        if (data === '[DONE]') {
-                            const clean = acc.trim();
-                            this.finalize(this.streamingId, clean);
-                            return;
-                        }
-                        try {
-                            const json = JSON.parse(data);
-                            const c = json.choices?.[0]?.delta?.content;
-                            if (c) {
-                                acc += c;
-                                this.update(this.streamingId, this.md(acc));
-                            }
-                        } catch {}
+                    const json = JSON.parse(data);
+                    const c = json.choices?.[0]?.delta?.content;
+                    if (c) {
+                        acc += c;
+                        this.update(this.streamingId, this.md(acc));
                     }
-                }
+                } catch {}
             }
+        }
+    }
 
-            finalize(id, text) {
-                const { styles, cleanText } = this.parseStyleCommands(text);
-                const html = cleanText ? this.md(cleanText) : '<em>Empty</em>';
+    finalize(id, text) {
+        const { styles, themeUpdate, cleanText } = this.parseStyleCommands(text);
+        const html = cleanText ? this.md(cleanText) : '<em>Empty</em>';
 
-                this.update(id, html);
+        this.update(id, html);
 
-                const card = this.cards.find(c => c.id === id);
-                if (card) {
-                    card.r = cleanText;
-                    if (Object.keys(styles).length > 0) {
-                        card.styles = styles;
-                        this.updateCardStyles(id, styles);
-                    }
-                }
-
-                this.save();
-
-                // Auto-read if enabled
-                if (this.autoReadEnabled) {
-                    setTimeout(() => this.readCard(id), 500);
-                }
+        const card = this.cards.find(c => c.id === id);
+        if (card) {
+            card.r = cleanText;
+            card.styles = { ...(card.styles || {}), ...styles };
+            if (Object.keys(card.styles).length > 0) {
+                this.updateCardStyles(id, card.styles);
             }
+        }
 
-            update(id, html) {
-                const gridEl = document.querySelector(`[data-id="${id}"] .response-content`);
-                const fsEl = document.getElementById('fsResponse');
-                const fullHtml = html + (this.streamingId === id ? '<div class="streaming"><span class="cursor"></span></div>' : '');
+        if (themeUpdate) {
+            this.applyTheme(themeUpdate);
+        }
 
-                if (gridEl) {
-                    gridEl.innerHTML = fullHtml;
-                    gridEl.scrollTop = gridEl.scrollHeight;
-                }
-                if (this.fullscreenId === id && fsEl) {
-                    fsEl.innerHTML = fullHtml;
-                    fsEl.scrollTop = fsEl.scrollHeight;
-                }
+        this.save();
+
+        if (this.autoReadEnabled) {
+            setTimeout(() => this.readCard(id), 500);
+        }
+    }
+
+    update(id, html) {
+        const gridEl = document.querySelector(`[data-id="${id}"] .response-content`);
+        const fsEl = document.getElementById('fsResponse');
+        const fullHtml = html + (this.streamingId === id ? '<div class="streaming"><span class="cursor"></span></div>' : '');
+
+        if (gridEl) {
+            gridEl.innerHTML = fullHtml;
+            gridEl.scrollTop = gridEl.scrollHeight;
+        }
+        if (this.fullscreenId === id && fsEl) {
+            fsEl.innerHTML = fullHtml;
+            fsEl.scrollTop = fsEl.scrollHeight;
+        }
+    }
+
+    add(data, fs = false) {
+        const id = crypto.randomUUID();
+        const card = { id, q: data.q, r: data.r || '', styles: data.styles || {} };
+        this.cards.push(card);
+        this.render(card, true);
+        if (fs) this.openFS(id, true);
+        this.save();
+        return id;
+    }
+
+    render(card, newCard = false) {
+        const el = document.createElement('div');
+        el.className = `flip-card ${newCard ? 'new' : ''}`;
+        el.dataset.id = card.id;
+
+        const rhtml = (card.r === '...')
+            ? '<div class="streaming"><span class="cursor"></span></div>'
+            : this.md(card.r);
+
+        el.innerHTML = `
+            <div class="flip-card-inner">
+                <div class="card-header">
+                    <button class="tts-btn" title="Read Aloud"><i class="fas fa-volume-up"></i></button>
+                </div>
+                <div class="card-face">${this.md(card.q)}</div>
+                <div class="card-face card-back">
+                    <div class="response-content">${rhtml}</div>
+                </div>
+            </div>
+        `;
+
+        if (card.styles && Object.keys(card.styles).length > 0) {
+            this.updateCardStyles(card.id, card.styles);
+        }
+
+        el.querySelector('.tts-btn').onclick = (e) => {
+            e.stopPropagation();
+            this.readCard(card.id);
+        };
+
+        let timer;
+        el.ontouchstart = e => {
+            if (e.touches.length === 1) timer = setTimeout(() => this.enterSelect(card.id, el), 600);
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                this.currentMenuId = card.id;
+                document.getElementById('cardMenu').classList.add('active');
             }
+        };
+        el.ontouchend = el.ontouchmove = () => clearTimeout(timer);
 
-            add(data, fs = false) {
-                const id = crypto.randomUUID();
-                const card = { id, q: data.q, r: data.r || '', styles: {} };
-                this.cards.push(card);
-                this.render(card, true);
-                if (fs) this.openFS(id, true);
-                this.save();
-                return id;
+        el.onclick = e => {
+            if (this.selectMode) {
+                e.preventDefault();
+                this.toggleSelect(card.id, el);
+                return;
             }
+            el.classList.toggle('flipped');
+        };
+        el.ondblclick = () => this.openFS(card.id);
 
-            render(card, newCard = false) {
-                const el = document.createElement('div');
-                el.className = `flip-card ${newCard ? 'new' : ''}`;
-                el.dataset.id = card.id;
+        document.getElementById('grid').appendChild(el);
+        if (card.r && card.r !== '...') setTimeout(() => el.classList.add('flipped'), 100);
+    }
 
-                const rhtml = (card.r === '...')
-                    ? '<div class="streaming"><span class="cursor"></span></div>'
-                    : this.md(card.r);
+    handle(action) {
+        const card = this.cards.find(c => c.id === this.currentMenuId);
+        if (!card) return;
 
-                el.innerHTML = `
-                    <div class="flip-card-inner">
-                        <div class="card-header">
-                            <button class="tts-btn" title="Read Aloud"><i class="fas fa-volume-up"></i></button>
-                        </div>
-                        <div class="card-face">${this.md(card.q)}</div>
-                        <div class="card-face card-back">
-                            <div class="response-content">${rhtml}</div>
-                        </div>
-                    </div>
-                `;
+        if (action === 'continue') this.promptContinue(card.id);
+        if (action === 'copy') navigator.clipboard.writeText(card.r || '');
+        if (action === 'ai-edit') this.promptEdit(card.id);
+        if (action === 'split') this.promptSplit(card.id);
+        if (action === 'fullscreen') this.openFS(card.id);
+        if (action === 'delete') if (confirm('Delete this card?')) this.del(card.id);
+    }
 
-                // Apply custom styles if they exist
-                if (card.styles && Object.keys(card.styles).length > 0) {
-                    this.updateCardStyles(card.id, card.styles);
-                }
+    readCard(cardId) {
+        const card = this.cards.find(c => c.id === cardId);
+        if (!card) return;
 
-                // Add event listeners
-                el.querySelector('.tts-btn').onclick = (e) => {
-                    e.stopPropagation();
-                    this.readCard(card.id);
-                };
+        const textToRead = card.r || card.q;
+        if (responsiveVoice.isPlaying()) {
+            responsiveVoice.cancel();
+        } else {
+            responsiveVoice.speak(this.sanitizeTextForSpeech(textToRead), "US English Female");
+        }
+    }
 
-                let timer;
-                el.ontouchstart = e => {
-                    if (e.touches.length === 1) timer = setTimeout(() => this.enterSelect(card.id, el), 600);
-                    if (e.touches.length === 2) {
-                        e.preventDefault();
-                        this.currentMenuId = card.id;
-                        document.getElementById('cardMenu').classList.add('active');
-                    }
-                };
-                el.ontouchend = el.ontouchmove = () => clearTimeout(timer);
+    sanitizeTextForSpeech(text) {
+        return text
+            .replace(/\*\*(.*?)\*\*/g, "$1")
+            .replace(/\*(.*?)\*/g, "$1")
+            .replace(/`(.*?)`/g, "$1")
+            .replace(/``````/g, "Here is the code: $1")
+            .replace(/!(bg-color|text-color|border-color|padding|border-radius|font-size|font-weight|font-style|text-decoration|custom-css|page-theme):[^!]+!/gi, "");
+    }
 
-                el.onclick = e => {
-                    if (this.selectMode) {
-                        e.preventDefault();
-                        this.toggleSelect(card.id, el);
-                        return;
-                    }
-                    el.classList.toggle('flipped');
-                };
-                el.ondblclick = () => this.openFS(card.id);
+    editText(id, field) {
+        const card = this.cards.find(c => c.id === id);
+        if (!card) return;
+        this.editingCardId = id;
+        this.editingField = field;
+        document.getElementById('textEditorArea').value = field === 'q' ? card.q : card.r;
+        document.getElementById('textEditorModal').classList.add('active');
+    }
 
-                document.getElementById('grid').appendChild(el);
-                if (card.r && card.r !== '...') setTimeout(() => el.classList.add('flipped'), 100);
+    saveManualEdit() {
+        const text = document.getElementById('textEditorArea').value.trim();
+        const card = this.cards.find(c => c.id === this.editingCardId);
+        if (!card) return;
+
+        if (this.editingField === 'q') {
+            card.q = text;
+            const qEl = document.querySelector(`[data-id="${this.editingCardId}"] .card-face:first-child`);
+            if (qEl) qEl.innerHTML = this.md(text);
+            if (this.fullscreenId === this.editingCardId) {
+                document.getElementById('fsQuestion').innerHTML = this.md(text);
             }
-
-            handle(action) {
-                const card = this.cards.find(c => c.id === this.currentMenuId);
-                if (!card) return;
-
-                if (action === 'continue') this.promptContinue(card.id);
-                if (action === 'copy') navigator.clipboard.writeText(card.r || '');
-                if (action === 'ai-edit') this.promptEdit(card.id);
-                if (action === 'split') this.promptSplit(card.id);
-                if (action === 'fullscreen') this.openFS(card.id);
-                if (action === 'delete') if (confirm('Delete this card?')) this.del(card.id);
+        } else {
+            card.r = text;
+            const html = this.md(text);
+            const rEl = document.querySelector(`[data-id="${this.editingCardId}"] .response-content`);
+            if (rEl) rEl.innerHTML = html;
+            if (this.fullscreenId === this.editingCardId) {
+                document.getElementById('fsResponse').innerHTML = html;
             }
+        }
 
-            readCard(cardId) {
-                const card = this.cards.find(c => c.id === cardId);
-                if (!card) return;
+        this.save();
+        document.getElementById('textEditorModal').classList.remove('active');
+    }
 
-                const textToRead = card.r || card.q;
-                if (responsiveVoice.isPlaying()) {
-                    responsiveVoice.cancel();
-                } else {
-                    responsiveVoice.speak(this.sanitizeTextForSpeech(textToRead), "US English Female");
-                }
-            }
+    promptContinue(id) {
+        this.currentContinueId = id;
+        document.getElementById('continuePromptText').value = '';
+        document.getElementById('continuePromptModal').classList.add('active');
+    }
 
-            sanitizeTextForSpeech(text) {
-                return text
-                    .replace(/\*\*(.*?)\*\*/g, "$1")
-                    .replace(/\*(.*?)\*/g, "$1")
-                    .replace(/`(.*?)`/g, "$1")
-                    .replace(/```(.*?)```/g, "Here is the code: $1")
-                    .replace(/!.*?!/g, "");
-            }
+    async continue() {
+        const card = this.cards.find(c => c.id === this.currentContinueId);
+        if (!card) return;
 
-            editText(id, field) {
-                const card = this.cards.find(c => c.id === id);
-                if (!card) return;
-                this.editingCardId = id;
-                this.editingField = field;
-                document.getElementById('textEditorArea').value = field === 'q' ? card.q : card.r;
-                document.getElementById('textEditorModal').classList.add('active');
-            }
+        const custom = document.getElementById('continuePromptText').value.trim();
+        const context = `User request: ${card.q}\n\nPrevious response:\n${card.r || ''}`;
+        const prompt = custom
+            ? `${context}\n\nAdditional instructions: ${custom}\n\nContinue the response:`
+            : `${context}\n\nContinue the response naturally from where it left off:`;
 
-            saveManualEdit() {
-                const text = document.getElementById('textEditorArea').value.trim();
-                const card = this.cards.find(c => c.id === this.editingCardId);
-                if (!card) return;
+        const id = this.add({ q: `Continued from: ${card.q.slice(0, 30)}...`, r: '...' }, true);
+        this.streamingId = id;
+        await this.request(prompt);
+        document.getElementById('continuePromptModal').classList.remove('active');
+    }
 
-                if (this.editingField === 'q') {
-                    card.q = text;
-                    const qEl = document.querySelector(`[data-id="${this.editingCardId}"] .card-face:first-child`);
-                    if (qEl) qEl.innerHTML = this.md(text);
-                    if (this.fullscreenId === this.editingCardId) {
-                        document.getElementById('fsQuestion').innerHTML = this.md(text);
-                    }
-                } else {
-                    card.r = text;
-                    const html = this.md(text);
-                    const rEl = document.querySelector(`[data-id="${this.editingCardId}"] .response-content`);
-                    if (rEl) rEl.innerHTML = html;
-                    if (this.fullscreenId === this.editingCardId) {
-                        document.getElementById('fsResponse').innerHTML = html;
-                    }
-                }
+    promptSplit(id) {
+        this.currentSplitId = id;
+        document.getElementById('splitPromptText').value = '';
+        document.getElementById('splitPromptModal').classList.add('active');
+    }
 
-                this.save();
-                document.getElementById('textEditorModal').classList.remove('active');
-            }
+    async split() {
+        const card = this.cards.find(c => c.id === this.currentSplitId);
+        if (!card) return;
 
-            promptContinue(id) {
-                this.currentContinueId = id;
-                document.getElementById('continuePromptText').value = '';
-                document.getElementById('continuePromptModal').classList.add('active');
-            }
+        const custom = document.getElementById('splitPromptText').value.trim();
+        const prompt = custom
+            ? `Split the text below according to these instructions: ${custom}\n\nText:\n${card.r}`
+            : `Split the following text into clear, logical sections with descriptive titles:\n\n${card.r}`;
 
-            async continue() {
-                const card = this.cards.find(c => c.id === this.currentContinueId);
-                if (!card) return;
+        const id = this.add({ q: `Split from: ${card.q.slice(0, 30)}...`, r: '...' }, true);
+        this.streamingId = id;
+        await this.request(prompt);
+        document.getElementById('splitPromptModal').classList.remove('active');
+    }
 
-                const custom = document.getElementById('continuePromptText').value.trim();
-                const context = `User request: ${card.q}\n\nPrevious response:\n${card.r || ''}`;
-                const prompt = custom
-                    ? `${context}\n\nAdditional instructions: ${custom}\n\nContinue the response:`
-                    : `${context}\n\nContinue the response naturally from where it left off:`;
+    promptEdit(id) {
+        this.currentEditId = id;
+        document.getElementById('editPromptText').value = '';
+        document.getElementById('editPromptModal').classList.add('active');
+    }
 
-                const id = this.add({ q: `Continued from: ${card.q.slice(0, 30)}...`, r: '...' }, true);
-                this.streamingId = id;
-                await this.request(prompt);
-                document.getElementById('continuePromptModal').classList.remove('active');
-            }
+    async performEdit() {
+        const card = this.cards.find(c => c.id === this.currentEditId);
+        if (!card) return;
 
-            promptSplit(id) {
-                this.currentSplitId = id;
-                document.getElementById('splitPromptText').value = '';
-                document.getElementById('splitPromptModal').classList.add('active');
-            }
+        const instructions = document.getElementById('editPromptText').value.trim() || 'Improve clarity, flow, and structure';
+        const prompt = `Original request: ${card.q}\n\nCurrent response:\n${card.r || ''}\n\nInstructions: ${instructions}\n\nOutput only the revised response:`;
 
-            async split() {
-                const card = this.cards.find(c => c.id === this.currentSplitId);
-                if (!card) return;
+        const id = this.add({ q: `Edited: ${card.q.slice(0, 30)}...`, r: '...' }, true);
+        this.streamingId = id;
+        await this.request(prompt);
+        document.getElementById('editPromptModal').classList.remove('active');
+    }
 
-                const custom = document.getElementById('splitPromptText').value.trim();
-                const prompt = custom
-                    ? `Split the text below according to these instructions: ${custom}\n\nText:\n${card.r}`
-                    : `Split the following text into clear, logical sections with descriptive titles:\n\n${card.r}`;
+    merge() {
+        if (this.selected.size < 2) return;
 
-                const id = this.add({ q: `Split from: ${card.q.slice(0, 30)}...`, r: '...' }, true);
-                this.streamingId = id;
-                await this.request(prompt);
-                document.getElementById('splitPromptModal').classList.remove('active');
-            }
+        const sel = Array.from(this.selected).map(id => this.cards.find(c => c.id === id));
+        const content = sel.map(c => c.r || '').join('\n\n');
+        const custom = document.getElementById('mergePromptText').value.trim();
 
-            promptEdit(id) {
-                this.currentEditId = id;
-                document.getElementById('editPromptText').value = '';
-                document.getElementById('editPromptModal').classList.add('active');
-            }
-
-            async performEdit() {
-                const card = this.cards.find(c => c.id === this.currentEditId);
-                if (!card) return;
-
-                const instructions = document.getElementById('editPromptText').value.trim() || 'Improve clarity, flow, and structure';
-                const prompt = `Original request: ${card.q}\n\nCurrent response:\n${card.r || ''}\n\nInstructions: ${instructions}\n\nOutput only the revised response:`;
-
-                const id = this.add({ q: `Edited: ${card.q.slice(0, 30)}...`, r: '...' }, true);
-                this.streamingId = id;
-                await this.request(prompt);
-                document.getElementById('editPromptModal').classList.remove('active');
-            }
-
-            merge() {
-                if (this.selected.size < 2) return;
-
-                const sel = Array.from(this.selected).map(id => this.cards.find(c => c.id === id));
-                const content = sel.map(c => c.r || '').join('\n\n');
-                const custom = document.getElementById('mergePromptText').value.trim();
-
-                let prompt;
-                if (custom) {
-                    prompt = `Merge the following texts into one cohesive response based on these instructions: ${custom}
+        let prompt;
+        if (custom) {
+            prompt = `Merge the following texts into one cohesive response based on these instructions: ${custom}
 
 Texts to merge:
 ${content}
 
 Merged response (output only the final content):`;
-                } else {
-                    prompt = `The following are multiple response drafts. Combine them into one single, coherent, well-written response. Keep all key details and improve the overall flow.
+        } else {
+            prompt = `The following are multiple response drafts. Combine them into one single, coherent, well-written response. Keep all key details and improve the overall flow.
 
 Drafts:
 ${content}
 
 Final merged response (output only the content):`;
-                }
-
-                const id = this.add({ q: `Merged ${sel.length} cards`, r: '...' }, true);
-                this.streamingId = id;
-                this.request(prompt);
-                document.getElementById('mergePromptModal').classList.remove('active');
-                this.exitSelect();
-            }
-
-            openFS(id, back = false) {
-                const card = this.cards.find(c => c.id === id);
-                if (!card) return;
-
-                document.getElementById('fsQuestion').innerHTML = this.md(card.q);
-                const responseEl = document.getElementById('fsResponse');
-                const baseHtml = (card.r && card.r !== '...') ? this.md(card.r) : '<div class="streaming"><span class="cursor"></span></div>';
-                responseEl.innerHTML = baseHtml + (this.streamingId === id ? '<div class="streaming"><span class="cursor"></span></div>' : '');
-
-                const ov = document.getElementById('fullscreenOverlay');
-                ov.classList.add('active');
-                if (back) ov.classList.add('flipped');
-                else ov.classList.remove('flipped');
-                this.fullscreenId = id;
-                document.body.style.overflow = 'hidden';
-            }
-
-            closeFS() {
-                document.getElementById('fullscreenOverlay').classList.remove('active', 'flipped');
-                this.fullscreenId = null;
-                document.body.style.overflow = '';
-            }
-
-            del(id) {
-                this.cards = this.cards.filter(c => c.id !== id);
-                document.querySelector(`[data-id="${id}"]`)?.remove();
-                if (this.fullscreenId === id) this.closeFS();
-                this.save();
-            }
-
-            enterSelect(id, el) {
-                this.selectMode = true;
-                this.selected.clear();
-                this.toggleSelect(id, el);
-            }
-
-            toggleSelect(id, el) {
-                el.classList.toggle('selected');
-                if (this.selected.has(id)) this.selected.delete(id);
-                else this.selected.add(id);
-
-                document.getElementById('selectCount').textContent = this.selected.size;
-                document.getElementById('mergeSelected').style.display = this.selected.size >= 2 ? 'block' : 'none';
-                document.getElementById('selectionBar').classList.toggle('active', this.selected.size > 0);
-            }
-
-            exitSelect() {
-                this.selectMode = false;
-                this.selected.clear();
-                document.querySelectorAll('.flip-card.selected').forEach(e => e.classList.remove('selected'));
-                document.getElementById('selectionBar').classList.remove('active');
-            }
-
-            export() {
-                const data = { cards: this.cards, sessionId: this.sessionId };
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'parametric-cards.json';
-                a.click();
-                URL.revokeObjectURL(url);
-            }
-
-            import(e) {
-                const file = e.target.files[0];
-                if (!file) return;
-                const r = new FileReader();
-                r.onload = ev => {
-                    try {
-                        const d = JSON.parse(ev.target.result);
-                        this.cards = d.cards || [];
-                        this.sessionId = d.sessionId || this.sessionId;
-                        document.getElementById('grid').innerHTML = '';
-                        this.cards.forEach(c => this.render(c));
-                        this.save();
-                    } catch (err) {
-                        alert('Import failed');
-                    }
-                };
-                r.readAsText(file);
-            }
-
-            save() {
-                localStorage.setItem('data', JSON.stringify({ cards: this.cards, sessionId: this.sessionId }));
-            }
-
-            load() {
-                const raw = localStorage.getItem('data');
-                if (raw) {
-                    try {
-                        const d = JSON.parse(raw);
-                        this.cards = d.cards || [];
-                        this.sessionId = d.sessionId || this.sessionId;
-                        this.cards.forEach(c => this.render(c));
-                    } catch (err) {
-                        console.error('Load failed:', err);
-                    }
-                }
-            }
-
-            md(t) {
-                return t ? DOMPurify.sanitize(marked.parse(t)) : '';
-            }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const app = new App();
+        const id = this.add({ q: `Merged ${sel.length} cards`, r: '...' }, true);
+        this.streamingId = id;
+        this.request(prompt);
+        document.getElementById('mergePromptModal').classList.remove('active');
+        this.exitSelect();
+    }
 
-            // Set initial auto-read button state
-            const autoReadBtn = document.getElementById('toggleTTSBtn');
-            if (app.autoReadEnabled) {
-                autoReadBtn.style.opacity = '1';
-            } else {
-                autoReadBtn.style.opacity = '0.5';
+    openFS(id, back = false) {
+        const card = this.cards.find(c => c.id === id);
+        if (!card) return;
+
+        document.getElementById('fsQuestion').innerHTML = this.md(card.q);
+        const responseEl = document.getElementById('fsResponse');
+        const baseHtml = (card.r && card.r !== '...') ? this.md(card.r) : '<div class="streaming"><span class="cursor"></span></div>';
+        responseEl.innerHTML = baseHtml + (this.streamingId === id ? '<div class="streaming"><span class="cursor"></span></div>' : '');
+
+        const ov = document.getElementById('fullscreenOverlay');
+        ov.classList.add('active');
+        if (back) ov.classList.add('flipped');
+        else ov.classList.remove('flipped');
+        this.fullscreenId = id;
+        document.body.style.overflow = 'hidden';
+    }
+
+    closeFS() {
+        document.getElementById('fullscreenOverlay').classList.remove('active', 'flipped');
+        this.fullscreenId = null;
+        document.body.style.overflow = '';
+    }
+
+    del(id) {
+        this.cards = this.cards.filter(c => c.id !== id);
+        document.querySelector(`[data-id="${id}"]`)?.remove();
+        if (this.fullscreenId === id) this.closeFS();
+        this.save();
+    }
+
+    enterSelect(id, el) {
+        this.selectMode = true;
+        this.selected.clear();
+        this.toggleSelect(id, el);
+    }
+
+    toggleSelect(id, el) {
+        el.classList.toggle('selected');
+        if (this.selected.has(id)) this.selected.delete(id);
+        else this.selected.add(id);
+
+        document.getElementById('selectCount').textContent = this.selected.size;
+        document.getElementById('mergeSelected').style.display = this.selected.size >= 2 ? 'block' : 'none';
+        document.getElementById('selectionBar').classList.toggle('active', this.selected.size > 0);
+    }
+
+    exitSelect() {
+        this.selectMode = false;
+        this.selected.clear();
+        document.querySelectorAll('.flip-card.selected').forEach(e => e.classList.remove('selected'));
+        document.getElementById('selectionBar').classList.remove('active');
+    }
+
+    export() {
+        const data = { cards: this.cards, sessionId: this.sessionId, theme: this.theme };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'parametric-cards.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    import(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const r = new FileReader();
+        r.onload = ev => {
+            try {
+                const d = JSON.parse(ev.target.result);
+                this.cards = d.cards || [];
+                this.sessionId = d.sessionId || this.sessionId;
+                this.theme = d.theme || { ...DEFAULT_THEME };
+                document.getElementById('grid').innerHTML = '';
+                this.applyTheme(this.theme);
+                this.cards.forEach(c => this.render(c));
+                this.save();
+            } catch (err) {
+                alert('Import failed');
             }
-        });
-    </script>
+        };
+        r.readAsText(file);
+    }
+
+    save() {
+        localStorage.setItem('data', JSON.stringify({
+            cards: this.cards,
+            sessionId: this.sessionId,
+            theme: this.theme
+        }));
+    }
+
+    load() {
+        const raw = localStorage.getItem('data');
+        if (raw) {
+            try {
+                const d = JSON.parse(raw);
+                this.cards = d.cards || [];
+                this.sessionId = d.sessionId || this.sessionId;
+                this.theme = d.theme || { ...DEFAULT_THEME };
+                this.cards.forEach(c => this.render(c));
+            } catch (err) {
+                console.error('Load failed:', err);
+            }
+        }
+    }
+
+    md(t) {
+        return t ? DOMPurify.sanitize(marked.parse(t)) : '';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const app = new App();
+    const autoReadBtn = document.getElementById('toggleTTSBtn');
+    autoReadBtn.style.opacity = app.autoReadEnabled ? '1' : '0.5';
+});
+</script>
+
 </body>
 </html>
