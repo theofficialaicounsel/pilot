@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ai-Ndraft</title>
+    <title>ai-Ndraft Pro</title>
+    
+    <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/responsivevoice@1.0.0/responsivevoice.min.js"></script>
@@ -19,6 +21,7 @@
             --shadow: 0 4px 16px rgba(196,30,58,0.2);
             --radius: 16px;
             --card-min-height: 220px;
+            --view-cols: 1;
         }
 
         [data-theme="light"] {
@@ -29,1812 +32,1627 @@
             --shadow: 0 4px 16px rgba(196,30,58,0.15);
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
+        body.view-grid { --view-cols: 2; }
+        body.view-full { --view-cols: 1; }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: system-ui, sans-serif;
+            font-family: system-ui, -apple-system, sans-serif;
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
-            padding-top: 70px;
+            padding-top: 60px; /* Space for top buttons */
+            padding-bottom: 80px; /* Space for input */
+            transition: background 0.3s, color 0.3s;
         }
 
-        #grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 16px;
-            padding: 16px;
-            padding-bottom: 120px;
-        }
+        /* --- LAYOUT FIXES --- */
 
-        .flip-card {
-            min-height: var(--card-min-height);
-            perspective: 1000px;
-            border-radius: var(--radius);
-            overflow: hidden;
-            box-shadow: var(--shadow);
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .flip-card.new {
-            opacity: 0;
-            transform: scale(0.95);
-            animation: appear 0.4s ease forwards;
-        }
-
-        @keyframes appear {
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        .flip-card-inner {
-            width: 100%;
-            height: 100%;
-            transition: transform 0.6s;
-            transform-style: preserve-3d;
-        }
-
-        .flipped .flip-card-inner {
-            transform: rotateY(180deg);
-        }
-
-        .card-face {
-            position: absolute;
-            inset: 0;
-            backface-visibility: hidden;
-            display: flex;
-            flex-direction: column;
-            padding: 16px;
-            overflow-y: auto;
-            font-size: 15px;
-            line-height: 1.6;
-            background: var(--card-bg);
-            color: var(--text);
-            border: 1px solid var(--border);
-            transition: all 0.3s ease;
-        }
-
-        .card-back {
-            transform: rotateY(180deg);
-        }
-
-        .card-header {
-            position: sticky;
-            top: 0;
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-            padding-bottom: 8px;
-            background: inherit;
-            z-index: 10;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 8px;
-        }
-
-        .card-actions button {
-            background: none;
-            border: none;
-            color: var(--text);
-            font-size: 16px;
-            cursor: pointer;
-            padding: 4px;
-            opacity: 0.7;
-            border-radius: 4px;
-            transition: all 0.2s;
-        }
-
-        .card-actions button:hover {
-            opacity: 1;
-            background: rgba(196,30,58,0.1);
-        }
-
-        .flip-card.selected {
-            outline: 4px solid var(--primary);
-            outline-offset: -4px;
-            transform: scale(1.02);
-        }
-
-        #selectionBar {
+        /* Top Bar Area (Logo + Buttons) */
+        #topBar {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: var(--card-bg);
-            border-bottom: 1px solid var(--border);
-            padding: 12px;
-            z-index: 1000;
-            display: none;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: var(--shadow);
-        }
-
-        #selectionBar.active {
-            display: flex;
-        }
-
-        #mergeSelected {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.2s;
-        }
-
-        #mergeSelected:hover {
-            background: #a1172f;
-        }
-
-        .fullscreen-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.95);
-            display: none;
-            z-index: 10000;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(8px);
-        }
-
-        .fullscreen-overlay.active {
-            display: flex;
-        }
-
-        .fullscreen-card {
-            width: 95%;
-            max-width: 1000px;
-            height: 95vh;
-            background: var(--card-bg);
-            border-radius: 20px;
-            overflow: hidden;
-            perspective: 2000px;
-            border: 1px solid var(--border);
-            color: var(--text);
-            position: relative;
-        }
-
-        .fullscreen-inner {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            transition: transform 0.6s;
-            transform-style: preserve-3d;
-        }
-
-        .fullscreen-overlay.flipped .fullscreen-inner {
-            transform: rotateY(180deg);
-        }
-
-        .fullscreen-face {
-            position: absolute;
-            inset: 0;
-            backface-visibility: hidden;
-            display: flex;
-            flex-direction: column;
-            background: var(--card-bg);
-            color: var(--text);
-            border: 1px solid var(--border);
-            padding: 24px;
-            overflow-y: auto;
-        }
-
-        .fullscreen-back {
-            transform: rotateY(180deg);
-        }
-
-        .fullscreen-header {
-            position: sticky;
-            top: 0;
-            padding: 16px 24px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--card-bg);
-            z-index: 10;
-        }
-
-        .fullscreen-btn {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 8px;
-            opacity: 0.7;
-            color: var(--text);
-            transition: all 0.2s;
-        }
-
-        .fullscreen-btn:hover {
-            opacity: 1;
-        }
-
-        .fullscreen-content {
-            flex: 1;
-            padding: 24px;
-            overflow-y: auto;
-            font-size: 16px;
-            line-height: 1.7;
-        }
-
-        .streaming {
-            text-align: center;
-            color: #aaa;
-            padding: 20px;
-            margin-top: 20px;
-        }
-
-        .cursor {
-            display: inline-block;
-            width: 3px;
-            height: 1em;
-            background: currentColor;
-            animation: blink 1s infinite;
-            vertical-align: middle;
-        }
-
-        @keyframes blink {
-            50% { opacity: 0; }
-        }
-
-        #inputPanel {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--card-bg);
-            border-top: 1px solid var(--border);
-            padding: 16px;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            z-index: 100;
-        }
-
-        #userInput {
-            flex: 1;
-            padding: 12px;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            font-size: 16px;
-            background: var(--bg);
-            color: var(--text);
-            transition: all 0.2s;
-        }
-
-        #userInput:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        #sendBtn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            min-width: 100px;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-
-        #sendBtn:hover {
-            background: #a1172f;
-            transform: translateY(-2px);
-        }
-
-        #moreBtn {
-            position: fixed;
-            bottom: 80px;
-            right: 20px;
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            font-size: 24px;
-            cursor: pointer;
-            box-shadow: var(--shadow);
-            z-index: 900;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-
-        #moreBtn:hover {
-            transform: rotate(90deg);
-        }
-
-        .modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.6);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            backdrop-filter: blur(5px);
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: var(--card-bg);
-            border-radius: var(--radius);
-            padding: 24px;
-            width: 90%;
-            max-width: 600px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-            color: var(--text);
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        textarea {
-            width: 100%;
-            min-height: 180px;
-            padding: 12px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-family: inherit;
-            font-size: 15px;
-            background: var(--bg);
-            color: var(--text);
-            resize: vertical;
-            margin-bottom: 16px;
-            transition: all 0.2s;
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-            flex-wrap: wrap;
-        }
-
-        .modal-actions button {
-            padding: 10px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            border: none;
-            font-size: 16px;
-            min-width: 50px;
-            transition: all 0.2s;
-        }
-
-        .modal-actions button.primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .modal-actions button.primary:hover {
-            background: #a1172f;
-        }
-
-        .modal-actions button.secondary {
-            background: transparent;
-            color: var(--text);
-            border: 1px solid var(--border);
-        }
-
-        .modal-actions button.secondary:hover {
-            background: rgba(196,30,58,0.1);
-        }
-
-        #cardMenu {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--card-bg);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            padding: 16px;
-            display: none;
-            flex-direction: column;
-            gap: 12px;
-            z-index: 100;
-            border: 1px solid var(--border);
-        }
-
-        #cardMenu.active {
-            display: flex;
-        }
-
-        .menu-btn {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 12px;
-            border-radius: 12px;
-            width: 60px;
+            top: 0; left: 0; right: 0;
             height: 60px;
+            padding: 0 16px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            color: var(--text);
-            transition: all 0.2s;
-        }
-
-        .menu-btn:hover {
-            background: rgba(196,30,58,0.1);
-            transform: scale(1.1);
-        }
-
-        #loading {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%,-50%);
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 20px 40px;
-            border-radius: 12px;
-            display: none;
-            z-index: 2000;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
-
-        #loading.show {
-            display: block;
+            justify-content: space-between;
+            z-index: 50;
+            background: linear-gradient(to bottom, var(--bg), transparent);
+            pointer-events: none; /* Let clicks pass through to grid if needed */
         }
 
         #brandPlaceholder {
-            position: fixed;
-            top: 20px;
-            left: 16px;
-            z-index: 100;
             pointer-events: none;
-            font-size: 24px;
             font-weight: 900;
-            color: rgba(196,30,58,0.3);
-            transform: rotate(-12deg);
-            user-select: none;
-        }
-
-        .style-panel {
-            position: fixed;
-            bottom: 80px;
-            right: 80px;
-            background: var(--card-bg);
-            border-radius: var(--radius);
-            padding: 20px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-            z-index: 950;
-            width: 320px;
-            display: none;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .style-panel.active {
-            display: flex;
-        }
-
-        .style-section {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .style-section h4 {
-            font-size: 14px;
-            opacity: 0.8;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .style-controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .style-btn {
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background: transparent;
-            color: var(--text);
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .style-btn.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        .color-picker {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 8px;
-        }
-
-        .color-picker label {
-            font-size: 12px;
-            min-width: 80px;
-        }
-
-        .color-picker input {
-            width: 60px;
-            height: 30px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .color-picker input:hover {
-            transform: scale(1.05);
-        }
-
-        .slider-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .slider-container label {
-            font-size: 12px;
-            min-width: 80px;
-        }
-
-        .slider-container input {
-            flex: 1;
-        }
-
-        .advanced-styles {
-            display: none;
-            flex-direction: column;
-            gap: 8px;
-            margin-top: 12px;
-        }
-
-        .advanced-styles.active {
-            display: flex;
-        }
-
-        .toggle-advanced {
-            font-size: 12px;
             color: var(--primary);
-            cursor: pointer;
-            text-decoration: underline;
-            align-self: flex-end;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 14px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
 
-        .css-editor {
-            width: 100%;
-            min-height: 100px;
-            padding: 8px;
+        /* Right Side Buttons (Top) */
+        .top-fabs {
+            pointer-events: auto;
+            display: flex;
+            gap: 8px;
+        }
+
+        .fab {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 6px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            background: var(--bg);
             color: var(--text);
-            resize: vertical;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: var(--shadow);
+            transition: all 0.2s; font-size: 14px;
+        }
+        .fab:hover { transform: scale(1.1); background: var(--bg); }
+        .fab.primary { background: var(--primary); color: white; border: none; }
+        
+        /* Bottom Right View Button (Above Input) */
+        .view-fab-container {
+            position: fixed;
+            bottom: 90px; /* Above input bar */
+            right: 16px;
+            z-index: 90;
+        }
+
+        /* --- SELECTION BAR --- */
+        #selectionBar {
+            position: fixed; top: 0; left: 0; right: 0;
+            background: var(--card-bg); border-bottom: 1px solid var(--border);
+            padding: 12px 16px; z-index: 1000; display: none;
+            align-items: center; justify-content: space-between;
+            box-shadow: var(--shadow); transform: translateY(-100%);
+            transition: transform 0.3s;
+        }
+        #selectionBar.active { display: flex; transform: translateY(0); }
+        #mergeSelected, #deleteSelected, #splitSelected {
+            background: var(--primary); color: white; border: none;
+            padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; margin-left: 8px;
+        }
+        #deleteSelected { background: #d32f2f; }
+
+        /* --- GRID --- */
+        #grid {
+            display: grid; grid-template-columns: repeat(var(--view-cols), 1fr); gap: 16px; padding: 16px;
+            max-width: 1400px; margin: 0 auto; transition: all 0.3s ease; min-height: 50vh;
+        }
+        body.view-grid #grid { grid-template-columns: repeat(2, 1fr); }
+        body.view-list #grid { grid-template-columns: 1fr; max-width: 800px; }
+        body.view-full #grid { display: block; padding: 0; gap: 0; }
+        body.view-full #grid .flip-card { height: 100vh; border-radius: 0; border: none; min-height: unset; }
+
+        /* --- CARD --- */
+        .flip-card {
+            min-height: var(--card-min-height); perspective: 1000px; border-radius: var(--radius);
+            overflow: hidden; box-shadow: var(--shadow); position: relative;
+            background: var(--card-bg); border: 1px solid var(--border);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .flip-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+        .flip-card.new { animation: appear 0.4s ease forwards; opacity: 0; transform: scale(0.95); }
+        @keyframes appear { to { opacity: 1; transform: scale(1); } }
+        .flip-card.selected { outline: 3px solid var(--primary); outline-offset: -3px; z-index: 10; }
+        .flip-card.locked { border: 2px dashed var(--primary); box-shadow: 0 0 10px rgba(196,30,58,0.3); }
+
+        .flip-card-inner { width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; position: relative; }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+        .card-face {
+            position: absolute; inset: 0; backface-visibility: hidden;
+            display: flex; flex-direction: column; padding: 16px; overflow-y: auto;
+            font-size: 15px; line-height: 1.6; background: inherit; color: inherit;
+        }
+        .card-back { transform: rotateY(180deg); }
+
+        .card-header {
+            position: sticky; top: 0; display: flex; justify-content: space-between; align-items: center;
+            padding-bottom: 8px; background: inherit; z-index: 5; border-bottom: 1px solid var(--border);
+            margin-bottom: 8px; gap: 8px;
+        }
+        .card-actions { display: flex; gap: 4px; }
+        .card-actions button { background: none; border: none; color: var(--text); cursor: pointer; padding: 4px; opacity: 0.5; border-radius: 4px; transition: all 0.2s; }
+        .card-actions button:hover { opacity: 1; background: rgba(255,255,255,0.1); }
+
+        /* --- FULLSCREEN --- */
+        .fullscreen-overlay {
+            position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: none; flex-direction: column;
+        }
+        .fullscreen-overlay.active { display: flex; }
+        .fs-header { padding: 12px 16px; background: var(--card-bg); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .fs-content { flex: 1; overflow-y: auto; padding: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .fs-pane { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; overflow-y: auto; height: 100%; }
+        .fs-pane h3 { margin-bottom: 12px; color: var(--primary); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; }
+
+        /* --- STREAMING --- */
+        .streaming { text-align: center; color: #888; padding: 20px; }
+        .cursor { display: inline-block; width: 3px; height: 1em; background: currentColor; animation: blink 1s infinite; vertical-align: middle; }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* --- INPUT BAR --- */
+        #inputPanel {
+            position: fixed; bottom: 0; left: 0; right: 0; background: var(--card-bg);
+            border-top: 1px solid var(--border); padding: 12px 16px; display: flex; gap: 12px;
+            z-index: 100; box-shadow: 0 -4px 20px rgba(0,0,0,0.2); align-items: center;
+        }
+        #userInput { flex: 1; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 16px; }
+        #userInput:focus { outline: none; border-color: var(--primary); }
+        #sendBtn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; white-space: nowrap; display: flex; align-items: center; gap: 8px; min-width: 44px; justify-content: center; }
+        #sendBtn:hover { background: #a1172f; }
+        #sendBtn.listening { background: #d32f2f; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        /* --- CONTEXT MENU --- */
+        #cardMenu {
+            position: fixed; background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
+            padding: 8px; display: none; flex-direction: column; gap: 4px; z-index: 2000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); min-width: 180px;
+        }
+        #cardMenu.active { display: flex; }
+        .menu-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 6px; cursor: pointer; color: var(--text); text-decoration: none; background: transparent; border: none; width: 100%; text-align: left; font-size: 14px; }
+        .menu-item:hover { background: rgba(255,255,255,0.1); }
+        .menu-item i { width: 20px; text-align: center; }
+        .menu-separator { height: 1px; background: var(--border); margin: 4px 0; }
+
+        /* --- MODALS --- */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1500;
+            display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal { background: var(--card-bg); border-radius: 16px; width: 100%; max-width: 600px; max-height: 90vh; border: 1px solid var(--border); display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.5); overflow: hidden; }
+        .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 20px; overflow-y: auto; }
+        .modal-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; }
+
+        textarea, input[type="text"], input[type="file"] {
+            width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text);
+            font-family: inherit; font-size: 15px; resize: vertical; min-height: 120px; margin-bottom: 12px;
+        }
+        input[type="file"] { min-height: auto; background: transparent; padding: 5px; }
+
+        button.btn { padding: 10px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #a1172f; }
+        .btn-danger { background: #d32f2f; color: white; }
+        .btn-danger:hover { background: #b71c1c; }
+        .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+        .btn-ghost:hover { background: rgba(255,255,255,0.05); }
+
+        /* --- STYLE FORMS --- */
+        .style-section { margin-bottom: 16px; }
+        .style-section h4 { font-size: 12px; text-transform: uppercase; opacity: 0.7; margin-bottom: 8px; letter-spacing: 0.5px; }
+        .color-picker { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .color-picker input { width: 40px; height: 30px; border: none; padding: 0; border-radius: 4px; cursor: pointer; }
+        .color-picker label { font-size: 13px; flex: 1; }
+        .toggle-group { display: flex; gap: 6px; flex-wrap: wrap; }
+        .toggle-btn { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; cursor: pointer; background: transparent; color: var(--text); }
+        .toggle-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .slider-group { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .slider-group input { flex: 1; }
+        .slider-group span { font-size: 12px; width: 40px; text-align: right; }
+        .lock-checkbox { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; }
+        .lock-checkbox input { width: auto; margin: 0; min-height: auto; }
+
+        /* --- LOADING & TOAST --- */
+        #loading { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 3000; flex-direction: column; color: white; }
+        #loading.active { display: flex; }
+        .loader { width: 40px; height: 40px; border: 4px solid #fff; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 12px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 10px 16px; border-radius: 20px; font-size: 13px; z-index: 2500; transition: transform 0.3s; opacity: 0; box-shadow: var(--shadow); }
+        #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        /* Empty State */
+        #emptyState { text-align: center; color: rgba(255,255,255,0.3); margin-top: 50px; font-size: 18px; pointer-events: none; }
+
+        @media (max-width: 768px) {
+            body.view-grid #grid { grid-template-columns: 1fr; }
+            .fs-content { grid-template-columns: 1fr; }
+            .modal { max-height: 85vh; }
         }
     </style>
 </head>
 <body>
-    <div id="brandPlaceholder">ai-Ndraft</div>
 
+    <!-- Top Bar: Logo + Menu Button + Undo -->
+    <div id="topBar">
+        <div style="display:flex; align-items:center; gap: 8px; pointer-events: auto;">
+            <button class="fab" id="undoFabTop" title="Undo Last Action"><i class="fas fa-undo"></i></button>
+            <div id="brandPlaceholder">ai-Ndraft Pro</div>
+        </div>
+        
+        <div class="top-fabs">
+            <button class="fab" id="menuFab" title="Main Menu (Import/Export/Settings)"><i class="fas fa-bars"></i></button>
+        </div>
+    </div>
+
+    <!-- Selection Bar (Sticky Top) -->
     <div id="selectionBar">
-        <button id="cancelSelect"><i class="fas fa-times"></i></button>
-        <span id="selectCount">0</span>
-        <button id="mergeSelected"><i class="fas fa-layer-group"></i> Combine</button>
+        <div>
+            <button id="cancelSelect" class="btn btn-ghost" style="border:none;"><i class="fas fa-times"></i></button>
+            <span id="selectCount" style="margin-left:10px; font-weight:600;">0 Selected</span>
+        </div>
+        <div>
+            <button id="splitSelected" title="Split Selected"><i class="fas fa-cut"></i></button>
+            <button id="mergeSelected" title="Merge Selected"><i class="fas fa-layer-group"></i></button>
+            <button id="deleteSelected" title="Delete Selected"><i class="fas fa-trash"></i></button>
+        </div>
     </div>
 
+    <!-- Fullscreen Overlay -->
     <div class="fullscreen-overlay" id="fullscreenOverlay">
-        <div class="fullscreen-card">
-            <div class="fullscreen-inner">
-                <div class="fullscreen-face">
-                    <div class="fullscreen-header">
-                        <button class="fullscreen-btn fullscreen-flip"><i class="fas fa-sync-alt"></i></button>
-                        <button class="fullscreen-btn fullscreen-close"><i class="fas fa-times"></i></button>
-                    </div>
-                    <div class="fullscreen-content" id="fsQuestion"></div>
-                </div>
-                <div class="fullscreen-face fullscreen-back">
-                    <div class="fullscreen-header">
-                        <button class="fullscreen-btn fullscreen-flip"><i class="fas fa-sync-alt"></i></button>
-                        <button class="fullscreen-btn fullscreen-close"><i class="fas fa-times"></i></button>
-                    </div>
-                    <div class="fullscreen-content" id="fsResponse"></div>
-                </div>
+        <div class="fs-header">
+            <div style="display:flex; gap:8px;">
+                <button class="btn btn-ghost" onclick="app.toggleFullscreenFlip()"><i class="fas fa-sync-alt"></i> Flip</button>
+                <button class="btn btn-ghost" onclick="app.setCardView('grid')"><i class="fas fa-th-large"></i> Exit</button>
+            </div>
+            <div style="display:flex; gap:8px;">
+                 <button class="btn btn-ghost" onclick="app.readCurrentFullscreen()"><i class="fas fa-volume-up"></i></button>
+                 <button class="btn btn-ghost" onclick="app.closeFullscreen()"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+        <div class="fs-content" id="fsContent">
+            <div class="fs-pane">
+                <h3>Request</h3>
+                <div id="fsQuestion"></div>
+            </div>
+            <div class="fs-pane">
+                <h3>Response</h3>
+                <div id="fsResponse"></div>
             </div>
         </div>
     </div>
 
-    <div id="grid"></div>
-
-    <div id="loading">Processing...</div>
-
-    <button id="moreBtn"><i class="fas fa-cog"></i></button>
-
-    <div class="modal" id="moreModal">
-        <div class="modal-content">
-            <h3>Settings</h3>
-            <div class="modal-actions">
-                <button id="toggleThemeBtn" title="Toggle Theme"><i class="fas fa-moon"></i></button>
-                <button id="toggleASRBtn" title="Toggle Speech Input"><i class="fas fa-microphone"></i></button>
-                <button id="toggleTTSBtn" title="Toggle Auto Read"><i class="fas fa-volume-up"></i></button>
-                <button id="modalExport" title="Export"><i class="fas fa-file-export"></i></button>
-                <button id="modalImport" title="Import"><i class="fas fa-file-import"></i></button>
-                <button id="modalClose" class="secondary" title="Close"><i class="fas fa-times"></i></button>
-            </div>
-            <input type="file" id="fileInput" style="display:none;" accept=".json">
-        </div>
+    <!-- Main Grid Area -->
+    <div id="grid">
+        <div id="emptyState">No cards yet. Type below to start.</div>
     </div>
 
-    <div id="cardMenu">
-        <button class="menu-btn" data-action="continue" title="Continue"><i class="fas fa-redo"></i></button>
-        <button class="menu-btn" data-action="copy" title="Copy Response"><i class="fas fa-copy"></i></button>
-        <button class="menu-btn" data-action="ai-edit" title="AI Edit"><i class="fas fa-magic"></i></button>
-        <button class="menu-btn" data-action="ai-theme" title="AI Theme"><i class="fas fa-palette"></i></button>
-        <button class="menu-btn" data-action="manual-edit-response" title="Edit Response"><i class="fas fa-edit"></i></button>
-        <button class="menu-btn" data-action="manual-edit-question" title="Edit Question"><i class="fas fa-pencil-alt"></i></button>
-        <button class="menu-btn" data-action="style" title="Style Card"><i class="fas fa-paint-brush"></i></button>
-        <button class="menu-btn" data-action="split" title="Split"><i class="fas fa-cut"></i></button>
-        <button class="menu-btn" data-action="fullscreen" title="Fullscreen"><i class="fas fa-expand"></i></button>
-        <button class="menu-btn" data-action="delete" title="Delete"><i class="fas fa-trash"></i></button>
+    <!-- View Button (Bottom Right, Above Input) -->
+    <div class="view-fab-container">
+        <button class="fab primary" id="viewFab" title="Change View (List/Grid/Full)"><i class="fas fa-columns"></i></button>
     </div>
 
-    <div class="style-panel" id="stylePanel">
-        <div class="style-section">
-            <h4>Text Style</h4>
-            <div class="style-controls">
-                <button class="style-btn" data-style="bold"><i class="fas fa-bold"></i> Bold</button>
-                <button class="style-btn" data-style="italic"><i class="fas fa-italic"></i> Italic</button>
-                <button class="style-btn" data-style="underline"><i class="fas fa-underline"></i> Underline</button>
-                <button class="style-btn" data-style="strikethrough"><i class="fas fa-strikethrough"></i> Strike</button>
-            </div>
-        </div>
-
-        <div class="style-section">
-            <h4>Text Size</h4>
-            <div class="style-controls">
-                <button class="style-btn" data-style="text-sm">Small</button>
-                <button class="style-btn" data-style="text-base">Normal</button>
-                <button class="style-btn" data-style="text-lg">Large</button>
-                <button class="style-btn" data-style="text-xl">X-Large</button>
-            </div>
-        </div>
-
-        <div class="style-section">
-            <h4>Colors</h4>
-            <div class="color-picker">
-                <label for="textColorPicker">Text:</label>
-                <input type="color" id="textColorPicker" value="#f5f5f5">
-            </div>
-            <div class="color-picker">
-                <label for="bgColorPicker">Background:</label>
-                <input type="color" id="bgColorPicker" value="#1e1e1e">
-            </div>
-            <div class="color-picker">
-                <label for="borderColorPicker">Border:</label>
-                <input type="color" id="borderColorPicker" value="#333">
-            </div>
-        </div>
-
-        <div class="style-section">
-            <h4>Spacing</h4>
-            <div class="slider-container">
-                <label for="paddingSlider">Padding:</label>
-                <input type="range" id="paddingSlider" min="8" max="32" value="16">
-                <span id="paddingValue">16px</span>
-            </div>
-            <div class="slider-container">
-                <label for="borderRadiusSlider">Radius:</label>
-                <input type="range" id="borderRadiusSlider" min="4" max="24" value="16">
-                <span id="borderRadiusValue">16px</span>
-            </div>
-            <div class="slider-container">
-                <label for="borderWidthSlider">Border:</label>
-                <input type="range" id="borderWidthSlider" min="0" max="4" value="1">
-                <span id="borderWidthValue">1px</span>
-            </div>
-        </div>
-
-        <div class="style-section">
-            <span class="toggle-advanced" id="toggleAdvanced">+ Advanced CSS</span>
-            <div class="advanced-styles" id="advancedStyles">
-                <textarea class="css-editor" id="customCSS" placeholder="Enter custom CSS rules..."></textarea>
-            </div>
-        </div>
-
-        <div class="modal-actions">
-            <button id="applyStyles" class="primary"><i class="fas fa-check"></i> Apply</button>
-            <button id="cancelStyles" class="secondary"><i class="fas fa-times"></i> Cancel</button>
-        </div>
-    </div>
-
-    <div class="modal" id="textEditorModal">
-        <div class="modal-content">
-            <h3>Edit</h3>
-            <textarea id="textEditorArea"></textarea>
-            <div class="modal-actions">
-                <button id="textEditorCancel" class="secondary"><i class="fas fa-times"></i></button>
-                <button id="textEditorSave" class="primary"><i class="fas fa-check"></i></button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal" id="mergePromptModal">
-        <div class="modal-content">
-            <h3>Merge Cards</h3>
-            <textarea id="mergePromptText" placeholder="Optional instructions"></textarea>
-            <div class="modal-actions">
-                <button id="mergePromptCancel" class="secondary"><i class="fas fa-times"></i></button>
-                <button id="mergePromptConfirm" class="primary"><i class="fas fa-check"></i></button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal" id="continuePromptModal">
-        <div class="modal-content">
-            <h3>Continue</h3>
-            <textarea id="continuePromptText" placeholder="Optional instructions"></textarea>
-            <div class="modal-actions">
-                <button id="continuePromptCancel" class="secondary"><i class="fas fa-times"></i></button>
-                <button id="continuePromptConfirm" class="primary"><i class="fas fa-check"></i></button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal" id="splitPromptModal">
-        <div class="modal-content">
-            <h3>Split</h3>
-            <textarea id="splitPromptText" placeholder="Optional instructions"></textarea>
-            <div class="modal-actions">
-                <button id="splitPromptCancel" class="secondary"><i class="fas fa-times"></i></button>
-                <button id="splitPromptConfirm" class="primary"><i class="fas fa-check"></i></button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal" id="editPromptModal">
-        <div class="modal-content">
-            <h3>AI Edit</h3>
-            <textarea id="editPromptText" placeholder="What changes?"></textarea>
-            <div class="modal-actions">
-                <button id="editPromptCancel" class="secondary"><i class="fas fa-times"></i></button>
-                <button id="editPromptConfirm" class="primary"><i class="fas fa-check"></i></button>
-            </div>
-        </div>
-    </div>
-
-    <!-- AI Theme Modal -->
-    <div class="modal" id="aiThemeModal">
-        <div class="modal-content">
-            <h3>AI Theme This Card</h3>
-            <textarea id="aiThemePrompt" placeholder="Describe any theme (Kill Bill, cyberpunk, vintage Polaroid, luxury gold, vaporwave...)"></textarea>
-            <div class="modal-actions">
-                <button class="secondary" id="cancelAITheme">Cancel</button>
-                <button class="primary" id="applyAITheme">Apply</button>
-            </div>
-        </div>
-    </div>
-
+    <!-- Input Panel (Bottom) -->
     <div id="inputPanel">
-        <input type="text" id="userInput" placeholder="full send">
-        <button id="sendBtn"><i class="fas fa-paper-plane"></i>send it</button>
+        <input type="text" id="userInput" placeholder="Type or say something..." autocomplete="off">
+        <button id="sendBtn"><i class="fas fa-paper-plane"></i></button>
     </div>
 
-<script>
-const PROXY_URL = "https://ai-proxy.ai-n.workers.dev/api/generate";
+    <!-- Card Context Menu -->
+    <div id="cardMenu">
+        <button class="menu-item" data-action="continue"><i class="fas fa-redo"></i> Continue</button>
+        <button class="menu-item" data-action="split"><i class="fas fa-cut"></i> Split</button>
+        <button class="menu-item" data-action="ai-edit"><i class="fas fa-magic"></i> AI Edit</button>
+        <div class="menu-separator"></div>
+        <button class="menu-item" data-action="ai-theme"><i class="fas fa-palette"></i> AI Theme</button>
+        <button class="menu-item" data-action="style"><i class="fas fa-paint-brush"></i> Manual Style</button>
+        <div class="menu-separator"></div>
+        <button class="menu-item" data-action="copy"><i class="fas fa-copy"></i> Copy</button>
+        <button class="menu-item" data-action="fullscreen"><i class="fas fa-expand"></i> Fullscreen</button>
+        <button class="menu-item" data-action="undo"><i class="fas fa-undo"></i> Undo</button>
+        <div class="menu-separator"></div>
+        <button class="menu-item" data-action="delete"><i class="fas fa-trash"></i> Delete</button>
+    </div>
 
-const DEFAULT_THEME = {
-    name: 'ai-Ndraft',
-    primary: '#c41e3a',
-    bg: '#121212',
-    cardBg: '#1e1e1e',
-    text: '#f5f5f5',
-    border: '#333'
-};
+    <!-- Modals -->
 
-const SYSTEM_PROMPT = `You are a helpful, casual AI assistant.
+    <!-- 1. Main Menu / Settings (Import/Export/Clear) -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Main Menu</h3>
+                <button class="btn btn-ghost" onclick="app.closeModal('settingsModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                
+                <!-- DATA MANAGEMENT -->
+                <div class="style-section">
+                    <h4>Data Management</h4>
+                    <p style="font-size:12px; opacity:0.7; margin-bottom:8px;">Export your session to JSON or import a previous one.</p>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom: 16px;">
+                        <button class="btn btn-primary" onclick="app.exportData()"><i class="fas fa-download"></i> Export</button>
+                        <button class="btn btn-ghost" onclick="document.getElementById('fileInput').click()"><i class="fas fa-upload"></i> Import</button>
+                        <input type="file" id="fileInput" style="display:none;" accept=".json" onchange="app.importData(this)">
+                    </div>
+                    <button class="btn btn-danger" onclick="app.clearAll()"><i class="fas fa-trash-alt"></i> Clear All Cards</button>
+                </div>
 
-You can ALSO control styling using special commands that must appear BEFORE the visible text. Users will usually talk in plain language ("make it xtina-red", "white label this"), you decide which commands to emit.
+                <div class="style-section">
+                    <h4>Theme</h4>
+                    <div class="toggle-group" style="margin-bottom:10px;">
+                        <button class="toggle-btn" onclick="app.toggleThemeMode()">Toggle Light/Dark</button>
+                        <button class="toggle-btn" onclick="app.toggleThemeLock()">
+                            <i class="fas fa-lock"></i> <span id="lockLabel">Lock Theme</span>
+                        </button>
+                    </div>
+                    <button class="btn btn-ghost" onclick="app.saveAppearance()">Save Appearance</button>
+                </div>
 
-Page-wide theme (affects whole app shell):
-- !page-theme:name,bg,cardBg,text,border,primary!
-  Example:
-  !page-theme:xtina,#2b0004,#1a0003,#ffe8f0,#552233,#ff1744!
+                <div class="style-section">
+                    <h4>View Mode</h4>
+                    <div class="toggle-group">
+                        <button class="toggle-btn" onclick="app.setCardView('list')">List</button>
+                        <button class="toggle-btn" onclick="app.setCardView('grid')">Grid (2 Col)</button>
+                        <button class="toggle-btn" onclick="app.setCardView('full')">Fullscreen</button>
+                    </div>
+                </div>
 
-Per-card styling (only affects that answer card):
-- !bg-color:hex!          e.g. !bg-color:#2b0004!
-- !text-color:hex!        e.g. !text-color:#ffe8f0!
-- !border-color:hex!
-- !padding:px!
-- !border-radius:px!
-- !font-size:px!
-- !font-weight:value!     (normal,bold)
-- !font-style:value!      (normal,italic)
-- !text-decoration:value! (none,underline,line-through)
-- !custom-css:rules!      (simple CSS fragment, the app will scope it)
+                <div class="style-section">
+                    <h4>Voice</h4>
+                    <div class="toggle-group">
+                        <button class="toggle-btn" id="asrToggle" onclick="app.toggleASR()">ASR (Mic)</button>
+                        <button class="toggle-btn" id="ttsToggle" onclick="app.toggleTTS()">Auto TTS</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-User language is plain:
-- "xtina red, pale text"  -> you pick matching colors.
-- "white-label neutral"   -> light bg, white cards, dark text, generic name.
-- "sticky note"           -> yellow card, black text, small rounded corners.
+    <!-- 2. Text Editor -->
+    <div class="modal-overlay" id="textEditorModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="editorTitle">Edit Text</h3>
+                <button class="btn btn-ghost" onclick="app.closeModal('textEditorModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <textarea id="textEditorArea"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="app.closeModal('textEditorModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="app.saveManualEdit()">Save</button>
+            </div>
+        </div>
+    </div>
 
-ALWAYS put the style commands at the top of your response, then a blank line, then the markdown content. Respond in clean markdown when helpful.`;
+    <!-- 3. Prompt Modal -->
+    <div class="modal-overlay" id="promptModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="promptTitle">Action</h3>
+                <button class="btn btn-ghost" onclick="app.closeModal('promptModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <p id="promptDesc" style="margin-bottom:8px; font-size:13px; opacity:0.8;"></p>
+                <textarea id="promptArea" placeholder="Optional instructions..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="app.closeModal('promptModal')">Cancel</button>
+                <button class="btn btn-primary" id="promptConfirmBtn">Execute</button>
+            </div>
+        </div>
+    </div>
 
-class App {
-    constructor() {
-        this.cards = [];
-        this.sessionId = "s-" + Date.now();
-        this.streamingId = null;
-        this.selected = new Set();
-        this.selectMode = false;
-        this.fullscreenId = null;
-        this.currentMenuId = null;
-        this.currentContinueId = null;
-        this.currentSplitId = null;
-        this.currentEditId = null;
-        this.editingCardId = null;
-        this.editingField = null;
-        this.currentStylingCard = null;
-        this.decoder = new TextDecoder();
-        this.recognizing = false;
-        this.recognition = null;
-        this.aiSpeechEnabled = true;
-        this.autoReadEnabled = false;
-        this.theme = { ...DEFAULT_THEME };
-        this.init();
-    }
+    <!-- 4. AI Theme Modal -->
+    <div class="modal-overlay" id="aiThemeModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>AI Stylist</h3>
+                <button class="btn btn-ghost" onclick="app.closeModal('aiThemeModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom:8px; font-size:13px; opacity:0.8;">Describe the vibe (e.g., "Cyberpunk", "Vintage Paper").</p>
+                <textarea id="aiThemePrompt" placeholder="Kill Bill red, pale text..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="app.closeModal('aiThemeModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="app.applyAITheme()">Generate & Apply</button>
+            </div>
+        </div>
+    </div>
 
-    init() {
-        this.load();
-        this.bind();
-        this.initASR();
-        this.updateTalkButton();
-        this.setupSliders();
+    <!-- 5. Style Editor -->
+    <div class="modal-overlay" id="styleModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Card Styles</h3>
+                <button class="btn btn-ghost" onclick="app.closeModal('styleModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="lock-checkbox">
+                    <input type="checkbox" id="styleLocked">
+                    <label for="styleLocked">Lock This Card's Style (Protect from AI)</label>
+                </div>
 
-        const themePref = localStorage.getItem('themeMode') || 'dark';
-        document.body.dataset.theme = themePref;
+                <div class="style-section">
+                    <h4>Text Style</h4>
+                    <div class="toggle-group">
+                        <button class="toggle-btn" data-style-prop="fontWeight" data-style-val="bold">Bold</button>
+                        <button class="toggle-btn" data-style-prop="fontStyle" data-style-val="italic">Italic</button>
+                        <button class="toggle-btn" data-style-prop="textDecoration" data-style-val="underline">Underline</button>
+                    </div>
+                </div>
+                <div class="style-section">
+                    <h4>Colors</h4>
+                    <div class="color-picker"><label>Text</label><input type="color" id="styleColor" value="#f5f5f5"></div>
+                    <div class="color-picker"><label>Background</label><input type="color" id="styleBg" value="#1e1e1e"></div>
+                    <div class="color-picker"><label>Border</label><input type="color" id="styleBorder" value="#333333"></div>
+                </div>
+                <div class="style-section">
+                    <h4>Dimensions</h4>
+                    <div class="slider-group"><label style="width:80px;">Padding</label><input type="range" id="stylePadding" min="4" max="40" value="16"><span id="valPad">16px</span></div>
+                    <div class="slider-group"><label style="width:80px;">Radius</label><input type="range" id="styleRadius" min="0" max="24" value="16"><span id="valRad">16px</span></div>
+                    <div class="slider-group"><label style="width:80px;">Border W</label><input type="range" id="styleWidth" min="0" max="4" value="1"><span id="valWid">1px</span></div>
+                </div>
+                <div class="style-section">
+                    <h4>Custom CSS (Scoped)</h4>
+                    <textarea id="styleCustom" style="min-height:60px; font-family:monospace;" placeholder="e.g., h1 { color: red; }"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="app.closeModal('styleModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="app.saveStyles()">Apply Styles</button>
+            </div>
+        </div>
+    </div>
 
-        const savedASR = localStorage.getItem('aiSpeechEnabled');
-        if (savedASR !== null) {
-            this.aiSpeechEnabled = savedASR === 'true';
-        }
+    <!-- Loading & Toast -->
+    <div id="loading"><div class="loader"></div><div>Processing...</div></div>
+    <div id="toast">Action Saved</div>
 
-        const savedAutoRead = localStorage.getItem('autoReadEnabled');
-        if (savedAutoRead !== null) {
-            this.autoReadEnabled = savedAutoRead === 'true';
-        }
+    <script>
+        /**
+         * ai-Ndraft Pro - Application Logic
+         */
+        
+        const PROXY_URL = "https://ai-proxy.ai-n.workers.dev/api/generate";
+        const STORAGE_KEY = "ai_ndraft_data_v2";
+        
+        const SYSTEM_PROMPT = `You are a helpful, casual AI assistant. You can control styling and app behavior.
 
-        // Apply theme on first load
-        this.applyTheme(this.theme);
-    }
+1. VISUAL STYLING (Start of response):
+   - Page Theme: !theme:Name,BgHex,CardBgHex,TextHex,BorderHex,PrimaryHex!
+   - Card Style: !bg:#hex! !text:#hex! !border:#hex! !pad:px! !radius:px! !bold! !italic!
 
-    setupSliders() {
-        const updateSliderValue = (sliderId, valueId) => {
-            const slider = document.getElementById(sliderId);
-            const value = document.getElementById(valueId);
-            value.textContent = slider.value + 'px';
-            slider.oninput = () => {
-                value.textContent = slider.value + 'px';
-            };
-        };
+2. APP ACTIONS (Hidden commands, put at end):
+   - !action:merge! (Merges current selection)
+   - !action:clear! (Clears the entire board)
+   - !action:view:grid! or !action:view:list! or !action:view:full! (Changes view)
 
-        updateSliderValue('paddingSlider', 'paddingValue');
-        updateSliderValue('borderRadiusSlider', 'borderRadiusValue');
-        updateSliderValue('borderWidthSlider', 'borderWidthValue');
-    }
+Example 1 (Style + Action):
+!theme:Gold,#1a1a1a,#2a2a2a,#ffd700,#ffd700,#b8860b!
+Hello World
+!action:view:grid!
 
-    initASR() {
-        if ("webkitSpeechRecognition" in window) {
-            this.recognition = new webkitSpeechRecognition();
-            this.recognition.continuous = false;
-            this.recognition.interimResults = false;
-            this.recognition.lang = "en-US";
+Example 2 (Clear):
+!action:clear!
 
-            this.recognition.onstart = () => {
-                this.recognizing = true;
-                this.updateTalkButton();
-            };
+User requests are natural language. Be efficient.`;
 
-            this.recognition.onend = () => {
-                this.recognizing = false;
-                this.updateTalkButton();
-            };
-
-            this.recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                const inputEl = document.getElementById('userInput');
-                inputEl.value = transcript;
-                this.maybeShowHint(transcript);
-                this.send();
-            };
-
-            this.recognition.onerror = (event) => {
-                console.error("Speech recognition error:", event.error);
-                this.recognizing = false;
-                this.updateTalkButton();
-            };
-        }
-    }
-
-    updateTalkButton() {
-        const talkBtn = document.getElementById('sendBtn');
-        if (this.recognizing) {
-            talkBtn.innerHTML = '<i class="fas fa-stop"></i> Stop';
-        } else if (this.aiSpeechEnabled && "webkitSpeechRecognition" in window) {
-            talkBtn.innerHTML = '<i class="fas fa-microphone"></i> Speak';
-        } else {
-            talkBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send';
-        }
-    }
-
-    // tiny "hidden onboarding": if user types 'brand', suggest what they can do
-    maybeShowHint(text) {
-        const t = text.toLowerCase();
-        if (t.includes('brand') || t.includes('theme')) {
-            const grid = document.getElementById('grid');
-            const hint = document.createElement('div');
-            hint.style.fontSize = '12px';
-            hint.style.opacity = '0.7';
-            hint.style.margin = '4px 8px';
-            hint.textContent = 'Tip: you can say things like "switch this to xtina red branding" or "make this white-label neutral" and the AI will restyle the page and cards.';
-            grid.prepend(hint);
-            setTimeout(() => hint.remove(), 8000);
-        }
-    }
-
-    bind() {
-        document.getElementById('sendBtn').onclick = () => {
-            if (this.recognizing) {
-                this.recognition.stop();
-            } else if (this.aiSpeechEnabled && "webkitSpeechRecognition" in window) {
-                this.recognition.start();
-            } else {
-                this.send();
-            }
-        };
-
-        const inputEl = document.getElementById('userInput');
-        inputEl.onkeydown = e => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                this.send();
-            }
-        };
-        inputEl.oninput = () => this.maybeShowHint(inputEl.value);
-
-        document.getElementById('moreBtn').onclick = () => {
-            document.getElementById('moreModal').classList.add('active');
-        };
-
-        document.getElementById('modalClose').onclick = () => {
-            document.getElementById('moreModal').classList.remove('active');
-        };
-
-        document.getElementById('toggleThemeBtn').onclick = () => {
-            const current = document.body.dataset.theme;
-            const newThemeMode = current === 'dark' ? 'light' : 'dark';
-            document.body.dataset.theme = newThemeMode;
-            localStorage.setItem('themeMode', newThemeMode);
-        };
-
-        document.getElementById('toggleASRBtn').onclick = () => {
-            this.aiSpeechEnabled = !this.aiSpeechEnabled;
-            localStorage.setItem('aiSpeechEnabled', this.aiSpeechEnabled);
-            this.updateTalkButton();
-        };
-
-        document.getElementById('toggleTTSBtn').onclick = () => {
-            this.autoReadEnabled = !this.autoReadEnabled;
-            localStorage.setItem('autoReadEnabled', this.autoReadEnabled);
-            const btn = document.getElementById('toggleTTSBtn');
-            btn.style.opacity = this.autoReadEnabled ? '1' : '0.5';
-        };
-
-        document.getElementById('modalExport').onclick = () => this.export();
-        document.getElementById('modalImport').onclick = () => document.getElementById('fileInput').click();
-        document.getElementById('fileInput').onchange = e => this.import(e);
-
-        document.querySelectorAll('.fullscreen-close').forEach(b => {
-            b.onclick = () => this.closeFS();
-        });
-
-        document.querySelectorAll('.fullscreen-flip').forEach(b => {
-            b.onclick = () => document.getElementById('fullscreenOverlay').classList.toggle('flipped');
-        });
-
-        document.getElementById('cancelSelect').onclick = () => this.exitSelect();
-        document.getElementById('mergeSelected').onclick = () => {
-            document.getElementById('mergePromptModal').classList.add('active');
-        };
-
-        document.getElementById('mergePromptCancel').onclick = () => {
-            document.getElementById('mergePromptModal').classList.remove('active');
-        };
-
-        document.getElementById('mergePromptConfirm').onclick = () => this.merge();
-
-        document.getElementById('continuePromptCancel').onclick = () => {
-            document.getElementById('continuePromptModal').classList.remove('active');
-        };
-
-        document.getElementById('continuePromptConfirm').onclick = () => this.continue();
-
-        document.getElementById('splitPromptCancel').onclick = () => {
-            document.getElementById('splitPromptModal').classList.remove('active');
-        };
-
-        document.getElementById('splitPromptConfirm').onclick = () => this.split();
-
-        document.getElementById('editPromptCancel').onclick = () => {
-            document.getElementById('editPromptModal').classList.remove('active');
-        };
-
-        document.getElementById('editPromptConfirm').onclick = () => this.performEdit();
-
-        document.getElementById('textEditorCancel').onclick = () => {
-            document.getElementById('textEditorModal').classList.remove('active');
-        };
-
-        document.getElementById('textEditorSave').onclick = () => this.saveManualEdit();
-
-        document.getElementById('cardMenu').onclick = e => {
-            const btn = e.target.closest('.menu-btn');
-            if (btn) {
-                const action = btn.dataset.action;
-                if (action.startsWith('manual-edit-')) {
-                    const field = action === 'manual-edit-question' ? 'q' : 'r';
-                    this.editText(this.currentMenuId, field);
-                } else if (action === 'style') {
-                    this.showStylePanel(this.currentMenuId);
-                } else {
-                    this.handle(action);
-                }
-                document.getElementById('cardMenu').classList.remove('active');
-            }
-        };
-
-        document.getElementById('applyStyles').onclick = () => this.applyStyles();
-        document.getElementById('cancelStyles').onclick = () => this.hideStylePanel();
-
-        document.getElementById('toggleAdvanced').onclick = () => {
-            document.getElementById('advancedStyles').classList.toggle('active');
-        };
-
-        document.querySelectorAll('.style-btn').forEach(btn => {
-            btn.onclick = () => {
-                btn.classList.toggle('active');
-            };
-        });
-    }
-
-    // Global theme: apply to CSS vars + brand text
-    applyTheme(theme) {
-        this.theme = { ...(this.theme || {}), ...theme };
-
-        document.documentElement.style.setProperty('--primary', this.theme.primary || DEFAULT_THEME.primary);
-        document.documentElement.style.setProperty('--bg', this.theme.bg || DEFAULT_THEME.bg);
-        document.documentElement.style.setProperty('--card-bg', this.theme.cardBg || DEFAULT_THEME.cardBg);
-        document.documentElement.style.setProperty('--text', this.theme.text || DEFAULT_THEME.text);
-        document.documentElement.style.setProperty('--border', this.theme.border || DEFAULT_THEME.border);
-
-        const brand = document.getElementById('brandPlaceholder');
-        if (brand && this.theme.name) {
-            brand.textContent = `⚡${this.theme.name}⚡`;
-        }
-    }
-
-    showStylePanel(cardId) {
-        this.currentStylingCard = cardId;
-        const card = this.cards.find(c => c.id === cardId);
-        if (!card) return;
-
-        const panel = document.getElementById('stylePanel');
-
-        document.querySelectorAll('.style-btn').forEach(btn => btn.classList.remove('active'));
-        document.getElementById('textColorPicker').value = '#f5f5f5';
-        document.getElementById('bgColorPicker').value = '#1e1e1e';
-        document.getElementById('borderColorPicker').value = '#333';
-        document.getElementById('paddingSlider').value = 16;
-        document.getElementById('paddingValue').textContent = '16px';
-        document.getElementById('borderRadiusSlider').value = 16;
-        document.getElementById('borderRadiusValue').textContent = '16px';
-        document.getElementById('borderWidthSlider').value = 1;
-        document.getElementById('borderWidthValue').textContent = '1px';
-        document.getElementById('customCSS').value = '';
-
-        if (card.styles) {
-            if (card.styles.fontWeight === 'bold') {
-                document.querySelector('.style-btn[data-style="bold"]').classList.add('active');
-            }
-            if (card.styles.fontStyle === 'italic') {
-                document.querySelector('.style-btn[data-style="italic"]').classList.add('active');
-            }
-            if (card.styles.textDecoration === 'underline') {
-                document.querySelector('.style-btn[data-style="underline"]').classList.add('active');
-            }
-            if (card.styles.textDecoration === 'line-through') {
-                document.querySelector('.style-btn[data-style="strikethrough"]').classList.add('active');
-            }
-
-            if (card.styles.fontSize) {
-                const sizeMap = {
-                    '12px': 'text-sm',
-                    '15px': 'text-base',
-                    '18px': 'text-lg',
-                    '21px': 'text-xl'
+        class App {
+            constructor() {
+                this.cards = [];
+                this.history = []; 
+                this.sessionId = "sess_" + Date.now();
+                this.theme = {
+                    name: 'ai-Ndraft',
+                    primary: '#c41e3a',
+                    bg: '#121212',
+                    cardBg: '#1e1e1e',
+                    text: '#f5f5f5',
+                    border: '#333',
+                    locked: false
                 };
-                const sizeClass = sizeMap[card.styles.fontSize];
-                if (sizeClass) {
-                    document.querySelector(`.style-btn[data-style="${sizeClass}"]`)?.classList.add('active');
+                this.settings = {
+                    view: 'list',
+                    autoTTS: false,
+                    asrEnabled: false
+                };
+
+                this.streamingId = null;
+                this.selectedIds = new Set();
+                this.contextMenuTargetId = null;
+                this.fullscreenId = null;
+                this.fsFlipped = false;
+                this.editingId = null; 
+                this.editingField = null;
+                this.stylingId = null; 
+                this.promptContext = null; 
+
+                this.recognizer = null;
+                this.isListening = false;
+
+                this.decoder = new TextDecoder();
+            }
+
+            async init() {
+                this.loadState();
+                this.applyTheme();
+                this.applyView();
+                this.bindEvents();
+                this.initASR();
+                this.renderAll();
+                this.updateToggles();
+                
+                document.getElementById('stylePadding').addEventListener('input', (e) => document.getElementById('valPad').textContent = e.target.value + 'px');
+                document.getElementById('styleRadius').addEventListener('input', (e) => document.getElementById('valRad').textContent = e.target.value + 'px');
+                document.getElementById('styleWidth').addEventListener('input', (e) => document.getElementById('valWid').textContent = e.target.value + 'px');
+            }
+
+            bindEvents() {
+                // Send / Input
+                const sendBtn = document.getElementById('sendBtn');
+                sendBtn.addEventListener('click', () => this.handleSendClick());
+                const input = document.getElementById('userInput');
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.handleSendClick();
+                    }
+                });
+
+                // Top Buttons
+                document.getElementById('menuFab').addEventListener('click', () => this.openModal('settingsModal'));
+                document.getElementById('viewFab').addEventListener('click', () => this.cycleView());
+                document.getElementById('undoFabTop').addEventListener('click', () => this.undo());
+
+                // Selection Bar
+                document.getElementById('cancelSelect').addEventListener('click', () => this.clearSelection());
+                document.getElementById('mergeSelected').addEventListener('click', () => this.promptAction('merge'));
+                document.getElementById('deleteSelected').addEventListener('click', () => this.bulkDelete());
+                document.getElementById('splitSelected').addEventListener('click', () => this.promptAction('split'));
+
+                // Context Menu
+                document.getElementById('cardMenu').addEventListener('click', (e) => {
+                    const btn = e.target.closest('.menu-item');
+                    if (btn && this.contextMenuTargetId) {
+                        const action = btn.dataset.action;
+                        if (action === 'undo') {
+                            this.undo();
+                        } else {
+                            this.handleCardAction(action, this.contextMenuTargetId);
+                        }
+                        this.closeCardMenu();
+                    }
+                });
+
+                // Modal Close on Overlay Click
+                document.querySelectorAll('.modal-overlay').forEach(overlay => {
+                    overlay.addEventListener('click', (e) => {
+                        if (e.target === overlay) {
+                            const id = overlay.id;
+                            this.closeModal(id);
+                        }
+                    });
+                });
+
+                document.getElementById('promptConfirmBtn').addEventListener('click', () => this.executePromptAction());
+
+                // Global Click to close menu
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('#cardMenu') && !e.target.closest('.card-actions') && !e.target.closest('.flip-card')) {
+                        this.closeCardMenu();
+                    }
+                });
+            }
+
+            saveState() {
+                const data = {
+                    cards: this.cards,
+                    theme: this.theme,
+                    settings: this.settings,
+                    sessionId: this.sessionId
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            }
+
+            loadState() {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    try {
+                        const data = JSON.parse(raw);
+                        this.cards = data.cards || [];
+                        this.theme = { ...this.theme, ...data.theme };
+                        this.settings = { ...this.settings, ...data.settings };
+                        this.sessionId = data.sessionId || this.sessionId;
+                    } catch (e) {
+                        console.error("Load failed", e);
+                    }
                 }
             }
 
-            if (card.styles.color) {
-                document.getElementById('textColorPicker').value = card.styles.color;
-            }
-            if (card.styles.backgroundColor) {
-                document.getElementById('bgColorPicker').value = card.styles.backgroundColor;
-            }
-            if (card.styles.borderColor) {
-                document.getElementById('borderColorPicker').value = card.styles.borderColor;
-            }
-
-            if (card.styles.padding) {
-                const padding = parseInt(card.styles.padding);
-                document.getElementById('paddingSlider').value = padding;
-                document.getElementById('paddingValue').textContent = padding + 'px';
-            }
-            if (card.styles.borderRadius) {
-                const radius = parseInt(card.styles.borderRadius);
-                document.getElementById('borderRadiusSlider').value = radius;
-                document.getElementById('borderRadiusValue').textContent = radius + 'px';
-            }
-            if (card.styles.borderWidth) {
-                const width = parseInt(card.styles.borderWidth);
-                document.getElementById('borderWidthSlider').value = width;
-                document.getElementById('borderWidthValue').textContent = width + 'px';
+            pushHistory(actionType) {
+                if (this.history.length > 10) this.history.shift();
+                this.history.push({
+                    cards: JSON.parse(JSON.stringify(this.cards)),
+                    theme: { ...this.theme },
+                    timestamp: Date.now(),
+                    action: actionType
+                });
+                this.showToast(`Saved: ${actionType}`);
             }
 
-            if (card.styles.customCSS) {
-                document.getElementById('customCSS').value = card.styles.customCSS;
-            }
-        }
-
-        const cardEl = document.querySelector(`[data-id="${cardId}"]`);
-        if (cardEl) {
-            const rect = cardEl.getBoundingClientRect();
-            panel.style.top = `${rect.top + window.scrollY}px`;
-            panel.style.left = `${rect.right + window.scrollX + 10}px`;
-        }
-
-        panel.classList.add('active');
-    }
-
-    hideStylePanel() {
-        document.getElementById('stylePanel').classList.remove('active');
-        this.currentStylingCard = null;
-    }
-
-    applyStyles() {
-        if (!this.currentStylingCard) return;
-
-        const card = this.cards.find(c => c.id === this.currentStylingCard);
-        if (!card) return;
-
-        const styles = {
-            fontWeight: document.querySelector('.style-btn[data-style="bold"]').classList.contains('active') ? 'bold' : 'normal',
-            fontStyle: document.querySelector('.style-btn[data-style="italic"]').classList.contains('active') ? 'italic' : 'normal',
-            textDecoration: document.querySelector('.style-btn[data-style="underline"]').classList.contains('active') ? 'underline' :
-                document.querySelector('.style-btn[data-style="strikethrough"]').classList.contains('active') ? 'line-through' : 'none',
-            fontSize: document.querySelector('.style-btn[data-style="text-sm"]').classList.contains('active') ? '12px' :
-                document.querySelector('.style-btn[data-style="text-lg"]').classList.contains('active') ? '18px' :
-                document.querySelector('.style-btn[data-style="text-xl"]').classList.contains('active') ? '21px' : '15px',
-            color: document.getElementById('textColorPicker').value,
-            backgroundColor: document.getElementById('bgColorPicker').value,
-            borderColor: document.getElementById('borderColorPicker').value,
-            padding: document.getElementById('paddingSlider').value + 'px',
-            borderRadius: document.getElementById('borderRadiusSlider').value + 'px',
-            borderWidth: document.getElementById('borderWidthSlider').value + 'px',
-            borderStyle: 'solid',
-            customCSS: document.getElementById('customCSS').value
-        };
-
-        card.styles = styles;
-        this.updateCardStyles(this.currentStylingCard, styles);
-        this.save();
-        this.hideStylePanel();
-    }
-
-    updateCardStyles(cardId, styles) {
-        const cardEl = document.querySelector(`[data-id="${cardId}"]`);
-        if (!cardEl) return;
-
-        const faces = cardEl.querySelectorAll('.card-face');
-        const cardInner = cardEl.querySelector('.flip-card-inner');
-
-        faces.forEach(face => {
-            face.style.fontWeight = styles.fontWeight || '';
-            face.style.fontStyle = styles.fontStyle || '';
-            face.style.textDecoration = styles.textDecoration === 'none' ? '' : (styles.textDecoration || '');
-            face.style.fontSize = styles.fontSize || '';
-
-            if (styles.color) face.style.color = styles.color;
-            if (styles.backgroundColor) face.style.backgroundColor = styles.backgroundColor;
-        });
-
-        if (styles.borderColor) cardEl.style.borderColor = styles.borderColor;
-        if (styles.borderWidth) cardEl.style.borderWidth = styles.borderWidth;
-        if (styles.borderStyle) cardEl.style.borderStyle = styles.borderStyle;
-        if (styles.borderRadius) cardEl.style.borderRadius = styles.borderRadius;
-
-        if (cardInner && styles.padding) {
-            cardInner.style.padding = styles.padding;
-        }
-
-        if (styles.customCSS) {
-            const styleId = `custom-style-${cardId}`;
-            let styleEl = document.getElementById(styleId);
-
-            if (!styleEl) {
-                styleEl = document.createElement('style');
-                styleEl.id = styleId;
-                document.head.appendChild(styleEl);
-            }
-
-            styleEl.textContent = `
-                [data-id="${cardId}"] ${styles.customCSS}
-            `;
-        }
-    }
-
-    // parse AI commands -> card styles + optional page theme
-    parseStyleCommands(text) {
-        const styles = {};
-        let themeUpdate = null;
-
-        const cmdRegex = /!(bg-color|text-color|border-color|padding|border-radius|font-size|font-weight|font-style|text-decoration|custom-css|page-theme):([^!]+)!/gi;
-
-        let match;
-        while ((match = cmdRegex.exec(text)) !== null) {
-            const [, prop, rawValue] = match;
-            const value = rawValue.trim();
-
-            switch (prop) {
-                case 'page-theme': {
-                    const [name, bg, cardBg, textColor, border, primary] = value.split(',').map(v => v.trim());
-                    themeUpdate = {
-                        name: name || this.theme.name,
-                        bg: bg || this.theme.bg,
-                        cardBg: cardBg || this.theme.cardBg,
-                        text: textColor || this.theme.text,
-                        border: border || this.theme.border,
-                        primary: primary || this.theme.primary
-                    };
-                    break;
-                }
-                case 'bg-color':
-                    styles.backgroundColor = value;
-                    break;
-                case 'text-color':
-                    styles.color = value;
-                    break;
-                case 'border-color':
-                    styles.borderColor = value;
-                    styles.borderStyle = styles.borderStyle || 'solid';
-                    styles.borderWidth = styles.borderWidth || '1px';
-                    break;
-                case 'padding':
-                    styles.padding = value.endsWith('px') ? value : `${value}px`;
-                    break;
-                case 'border-radius':
-                    styles.borderRadius = value.endsWith('px') ? value : `${value}px`;
-                    break;
-                case 'font-size':
-                    styles.fontSize = value.endsWith('px') ? value : `${value}px`;
-                    break;
-                case 'font-weight':
-                    styles.fontWeight = value;
-                    break;
-                case 'font-style':
-                    styles.fontStyle = value;
-                    break;
-                case 'text-decoration':
-                    styles.textDecoration = value;
-                    break;
-                case 'custom-css':
-                    styles.customCSS = value;
-                    break;
-            }
-        }
-
-        const cleanText = text.replace(cmdRegex, '').trim();
-        return { styles, themeUpdate, cleanText };
-    }
-
-    async send() {
-        const inputEl = document.getElementById('userInput');
-        const input = inputEl.value.trim();
-        if (!input) return;
-        this.maybeShowHint(input);
-        inputEl.value = '';
-
-        const id = this.add({ q: input, r: '...' }, true);
-        this.streamingId = id;
-        await this.request(input);
-    }
-
-    async request(prompt) {
-        try {
-            document.getElementById('loading').classList.add('show');
-            const payload = { sessionId: this.sessionId, prompt: SYSTEM_PROMPT + "\n\nUser: " + prompt };
-            const reader = await this.fetchProxy(payload);
-            await this.stream(reader);
-        } catch (e) {
-            this.update(this.streamingId, `<p style="color:red">Error: ${e.message}</p>`);
-        } finally {
-            document.getElementById('loading').classList.remove('show');
-            this.streamingId = null;
-        }
-    }
-
-    async fetchProxy(payload) {
-        const res = await fetch(PROXY_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
-        return res.body.getReader();
-    }
-
-    async stream(reader) {
-        let buffer = '', acc = '';
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            buffer += this.decoder.decode(value, { stream: true });
-            const parts = buffer.split('\n\n');
-            buffer = parts.pop() || '';
-            for (const part of parts) {
-                const line = part.split('\n').find(l => l.startsWith('data:'));
-                if (!line) continue;
-                const data = line.slice(6).trim();
-                if (data === '[DONE]') {
-                    const clean = acc.trim();
-                    this.finalize(this.streamingId, clean);
+            undo() {
+                if (this.history.length === 0) {
+                    this.showToast("Nothing to undo");
                     return;
                 }
-                try {
-                    const json = JSON.parse(data);
-                    const c = json.choices?.[0]?.delta?.content;
-                    if (c) {
-                        acc += c;
-                        this.update(this.streamingId, this.md(acc));
+                const lastState = this.history.pop();
+                this.cards = lastState.cards;
+                if (!this.theme.locked) this.theme = lastState.theme;
+                
+                this.saveState();
+                this.renderAll();
+                this.applyTheme();
+                this.showToast("Undid: " + lastState.action);
+            }
+
+            exportData() {
+                const data = {
+                    cards: this.cards,
+                    theme: this.theme,
+                    settings: this.settings,
+                    sessionId: this.sessionId
+                };
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `ai_ndraft_export_${Date.now()}.json`;
+                a.click();
+                this.showToast("Export downloaded");
+            }
+
+            importData(input) {
+                const file = input.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        this.pushHistory("Pre-Import Backup");
+                        this.cards = data.cards || [];
+                        this.theme = data.theme || this.theme;
+                        this.settings = data.settings || this.settings;
+                        this.sessionId = data.sessionId || this.sessionId;
+                        
+                        this.renderAll();
+                        this.applyTheme();
+                        this.applyView();
+                        this.saveState();
+                        this.showToast("Import Successful");
+                        this.closeModal('settingsModal');
+                    } catch (err) {
+                        alert("Invalid JSON file");
                     }
-                } catch {}
+                };
+                reader.readAsText(file);
+                input.value = ''; 
+            }
+
+            clearAll() {
+                if (confirm("Are you sure you want to delete ALL cards? This cannot be undone.")) {
+                    this.pushHistory("Clear All");
+                    this.cards = [];
+                    this.saveState();
+                    this.renderAll();
+                    this.closeModal('settingsModal');
+                    this.showToast("Grid Cleared");
+                }
+            }
+
+            addCard(q, r, styles = {}) {
+                const id = crypto.randomUUID();
+                const card = { id, q, r, styles };
+                this.cards.push(card);
+                this.pushHistory("Add Card");
+                this.renderCard(card, true);
+                return id;
+            }
+
+            deleteCard(id) {
+                this.cards = this.cards.filter(c => c.id !== id);
+                const el = document.querySelector(`.flip-card[data-id="${id}"]`);
+                if (el) el.remove();
+                if (this.fullscreenId === id) this.closeFullscreen();
+                this.saveState();
+            }
+
+            updateCardContent(id, q, r) {
+                const card = this.cards.find(c => c.id === id);
+                if (!card) return;
+                if (q !== null) card.q = q;
+                if (r !== null) card.r = r;
+                
+                const el = document.querySelector(`.flip-card[data-id="${id}"]`);
+                if (el) {
+                    if (q !== null) el.querySelector('.card-face:first-child').innerHTML = this.md(q);
+                    if (r !== null) {
+                        const rEl = el.querySelector('.response-content');
+                        if (rEl) rEl.innerHTML = this.md(r);
+                    }
+                }
+                this.saveState();
+            }
+
+            renderAll() {
+                const grid = document.getElementById('grid');
+                const empty = document.getElementById('emptyState');
+                grid.innerHTML = '';
+                
+                if (this.cards.length === 0) {
+                    grid.appendChild(empty);
+                    empty.style.display = 'block';
+                } else {
+                    empty.style.display = 'none';
+                    this.cards.forEach(c => this.renderCard(c, false));
+                }
+            }
+
+            renderCard(card, isNew) {
+                const grid = document.getElementById('grid');
+                const empty = document.getElementById('emptyState');
+                if (empty && empty.parentNode) empty.remove();
+
+                const div = document.createElement('div');
+                div.className = `flip-card ${isNew ? 'new' : ''}`;
+                div.dataset.id = card.id;
+                
+                if (card.styles && card.styles.locked) {
+                    div.classList.add('locked');
+                }
+
+                const rHtml = card.r === '...' ? '<div class="streaming"><span class="cursor"></span></div>' : this.md(card.r);
+
+                div.innerHTML = `
+                    <div class="flip-card-inner">
+                        <div class="card-face">
+                            <div class="card-header">
+                                <span style="font-size:12px; opacity:0.6;">REQ</span>
+                                <div class="card-actions">
+                                    <button onclick="app.openCardMenu('${card.id}', event)" title="Actions"><i class="fas fa-ellipsis-v"></i></button>
+                                    <button onclick="app.toggleSelect('${card.id}', event)" title="Select"><i class="fas fa-check-circle"></i></button>
+                                </div>
+                            </div>
+                            <div class="content">${this.md(card.q)}</div>
+                        </div>
+                        <div class="card-face card-back">
+                            <div class="card-header">
+                                <span style="font-size:12px; opacity:0.6;">RESPONSE</span>
+                                <div class="card-actions">
+                                    <button onclick="app.readCard('${card.id}', event)"><i class="fas fa-volume-up"></i></button>
+                                    <button onclick="app.openCardMenu('${card.id}', event)"><i class="fas fa-ellipsis-v"></i></button>
+                                </div>
+                            </div>
+                            <div class="response-content">${rHtml}</div>
+                        </div>
+                    </div>
+                `;
+
+                if (card.styles) this.applyCardStyleToEl(div, card.styles);
+
+                div.addEventListener('click', (e) => {
+                    if (e.target.closest('button') || e.target.closest('.card-actions')) return;
+                    if (this.selectedIds.size > 0) {
+                        e.stopPropagation();
+                        this.toggleSelect(card.id, e);
+                        return;
+                    }
+                    div.classList.toggle('flipped');
+                    if (this.settings.view === 'full') this.openFullscreen(card.id);
+                });
+
+                div.addEventListener('dblclick', (e) => {
+                    if (!e.target.closest('button')) this.openFullscreen(card.id);
+                });
+
+                let pressTimer;
+                div.addEventListener('touchstart', (e) => {
+                    pressTimer = setTimeout(() => this.openCardMenu(card.id, e), 600);
+                });
+                div.addEventListener('touchend', () => clearTimeout(pressTimer));
+
+                grid.appendChild(div);
+            }
+
+            handleSendClick() {
+                const input = document.getElementById('userInput');
+                const val = input.value.trim();
+                if (!val) return;
+
+                if (this.isListening) {
+                    this.recognition.stop();
+                    return;
+                }
+
+                if (this.settings.asrEnabled && this.recognizer) {
+                    this.recognition.start();
+                    return;
+                }
+
+                this.sendRequest(val);
+                input.value = '';
+            }
+
+            async sendRequest(prompt, contextCardId = null) {
+                this.toggleLoading(true);
+                this.streamingId = contextCardId ? contextCardId : this.addCard(prompt, '...', {});
+                const cardEl = document.querySelector(`.flip-card[data-id="${this.streamingId}"]`);
+                if(cardEl && !contextCardId) setTimeout(() => cardEl.classList.add('flipped'), 100);
+
+                let fullPrompt = SYSTEM_PROMPT + "\n\nUser: " + prompt;
+                if (contextCardId) {
+                    const oldCard = this.cards.find(c => c.id === contextCardId);
+                    if (oldCard) {
+                        fullPrompt = `Previous Request: ${oldCard.q}\nPrevious Response: ${oldCard.r}\n\nUser Instruction: ${prompt}\n\nProvide a continuation or refinement.`;
+                    }
+                }
+
+                try {
+                    const res = await fetch(PROXY_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sessionId: this.sessionId, prompt: fullPrompt })
+                    });
+
+                    if (!res.ok) throw new Error("Proxy Error");
+
+                    const reader = res.body.getReader();
+                    let buffer = '';
+                    let accumulated = '';
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        buffer += this.decoder.decode(value, { stream: true });
+                        
+                        const lines = buffer.split('\n\n');
+                        buffer = lines.pop() || '';
+                        for (const line of lines) {
+                            const jsonStr = line.replace('data: ', '').trim();
+                            if (!jsonStr || jsonStr === '[DONE]') continue;
+                            try {
+                                const json = JSON.parse(jsonStr);
+                                const chunk = json.choices?.[0]?.delta?.content;
+                                if (chunk) {
+                                    accumulated += chunk;
+                                    this.updateStreamingContent(accumulated);
+                                }
+                            } catch {}
+                        }
+                    }
+
+                    this.finalizeResponse(accumulated);
+
+                } catch (err) {
+                    this.updateStreamingContent(`Error: ${err.message}`);
+                    this.streamingId = null; 
+                } finally {
+                    this.toggleLoading(false);
+                }
+            }
+
+            updateStreamingContent(text) {
+                if (!this.streamingId) return;
+                const visible = text.replace(/![^!]+!/g, '');
+                const el = document.querySelector(`.flip-card[data-id="${this.streamingId}"] .response-content`);
+                if (el) {
+                    el.innerHTML = this.md(visible) + '<div class="streaming"><span class="cursor"></span></div>';
+                    el.scrollTop = el.scrollHeight;
+                }
+
+                if (this.fullscreenId === this.streamingId) {
+                    const fsEl = document.getElementById('fsResponse');
+                    if (fsEl) {
+                        fsEl.innerHTML = this.md(visible) + '<div class="streaming"><span class="cursor"></span></div>';
+                        fsEl.scrollTop = fsEl.scrollHeight;
+                    }
+                }
+            }
+
+            finalizeResponse(fullText) {
+                const id = this.streamingId;
+                if (!id) return;
+
+                const { cleanText, styles, themeUpdate, actions } = this.parseCommands(fullText);
+                const card = this.cards.find(c => c.id === id);
+                
+                if (card) {
+                    if (card.styles && card.styles.locked) {
+                        this.showToast("Card Locked - Style changes ignored");
+                    } else {
+                        if (Object.keys(styles).length > 0) {
+                            card.styles = { ...card.styles, ...styles };
+                        }
+                    }
+                    card.r = cleanText;
+                }
+
+                const cleanHtml = this.md(cleanText);
+                const el = document.querySelector(`.flip-card[data-id="${id}"] .response-content`);
+                if (el) el.innerHTML = cleanHtml;
+
+                if (this.fullscreenId === id) {
+                    document.getElementById('fsResponse').innerHTML = cleanHtml;
+                }
+
+                if (card && (!card.styles || !card.styles.locked)) {
+                    if (Object.keys(styles).length > 0) {
+                        const cardEl = document.querySelector(`.flip-card[data-id="${id}"]`);
+                        if (cardEl) this.applyCardStyleToEl(cardEl, styles);
+                    }
+                }
+
+                if (themeUpdate) {
+                    if (this.theme.locked) {
+                        this.showToast("Global Theme Locked");
+                    } else {
+                        this.theme = { ...this.theme, ...themeUpdate };
+                        this.applyTheme();
+                        this.saveState();
+                        this.showToast(`Theme: ${themeUpdate.name || 'Updated'}`);
+                    }
+                }
+
+                if (actions.length > 0) {
+                    actions.forEach(action => {
+                        if (action === 'clear') this.clearAll();
+                        if (action === 'merge') {
+                             if (this.selectedIds.size > 1) {
+                                 this.merge();
+                             } else {
+                                 this.showToast("AI requested merge, but no cards selected.");
+                             }
+                        }
+                        if (action.startsWith('view:')) {
+                            const view = action.split(':')[1];
+                            if (['list', 'grid', 'full'].includes(view)) {
+                                this.setCardView(view);
+                                this.showToast(`AI switched to ${view}`);
+                            }
+                        }
+                    });
+                }
+
+                if (this.settings.autoTTS) this.readCard(id);
+
+                this.streamingId = null;
+                this.pushHistory("AI Response");
+            }
+
+            parseCommands(text) {
+                const cmdRegex = /!(theme|bg|text|border|pad|radius|font|bold|italic|css|action):?([^!]+)!/gi;
+                let styles = {};
+                let actions = [];
+                let themeUpdate = null;
+                let match;
+                let safeText = text;
+
+                while ((match = cmdRegex.exec(text)) !== null) {
+                    const type = match[1].toLowerCase();
+                    const val = match[2].trim();
+
+                    if (type === 'theme') {
+                        const [name, bg, cardBg, textC, border, primary] = val.split(',').map(s => s.trim());
+                        themeUpdate = { name, bg, cardBg, text: textC, border, primary };
+                    } else if (type === 'bg') styles.backgroundColor = val;
+                    else if (type === 'text') styles.color = val;
+                    else if (type === 'border') styles.borderColor = val;
+                    else if (type === 'pad') styles.padding = val.endsWith('px') ? val : val + 'px';
+                    else if (type === 'radius') styles.borderRadius = val.endsWith('px') ? val : val + 'px';
+                    else if (type === 'font') styles.fontSize = val.endsWith('px') ? val : val + 'px';
+                    else if (type === 'bold') styles.fontWeight = 'bold';
+                    else if (type === 'italic') styles.fontStyle = 'italic';
+                    else if (type === 'css') styles.customCSS = val;
+                    else if (type === 'action') actions.push(val);
+
+                    safeText = safeText.replace(match[0], '');
+                }
+
+                return { cleanText: safeText.trim(), styles, themeUpdate, actions };
+            }
+
+            applyCardStyleToEl(el, styles) {
+                const face = el.querySelectorAll('.card-face');
+                face.forEach(f => {
+                    if (styles.color) f.style.color = styles.color;
+                    if (styles.backgroundColor) f.style.backgroundColor = styles.backgroundColor;
+                    if (styles.fontSize) f.style.fontSize = styles.fontSize;
+                    if (styles.fontWeight) f.style.fontWeight = styles.fontWeight;
+                    if (styles.fontStyle) f.style.fontStyle = styles.fontStyle;
+                    if (styles.padding) f.style.padding = styles.padding;
+                });
+                
+                if (styles.borderColor) el.style.borderColor = styles.borderColor;
+                if (styles.borderRadius) el.style.borderRadius = styles.borderRadius;
+                
+                if (styles.customCSS) {
+                    const id = `style-${el.dataset.id}`;
+                    let styleTag = document.getElementById(id);
+                    if (!styleTag) {
+                        styleTag = document.createElement('style');
+                        styleTag.id = id;
+                        document.head.appendChild(styleTag);
+                    }
+                    styleTag.textContent = `[data-id="${el.dataset.id}"] ${styles.customCSS}`;
+                }
+            }
+
+            openCardMenu(id, e) {
+                if (e && e.preventDefault) e.preventDefault();
+                if (e && e.stopPropagation) e.stopPropagation();
+                
+                this.contextMenuTargetId = id;
+                const menu = document.getElementById('cardMenu');
+                
+                let x, y;
+                if (e && e.clientX) {
+                    x = e.clientX;
+                    y = e.clientY;
+                } else if (e && e.touches && e.touches[0]) {
+                    x = e.touches[0].clientX;
+                    y = e.touches[0].clientY;
+                } else {
+                    const rect = document.querySelector(`.flip-card[data-id="${id}"]`).getBoundingClientRect();
+                    x = rect.left + rect.width / 2;
+                    y = rect.top + rect.height / 2;
+                }
+
+                if (x + 200 > window.innerWidth) x = window.innerWidth - 210;
+                if (y + 300 > window.innerHeight) y = window.innerHeight - 310;
+
+                menu.style.left = `${x}px`;
+                menu.style.top = `${y}px`;
+                menu.classList.add('active');
+            }
+
+            closeCardMenu() {
+                document.getElementById('cardMenu').classList.remove('active');
+                this.contextMenuTargetId = null;
+            }
+
+            handleCardAction(action, id) {
+                const card = this.cards.find(c => c.id === id);
+                if (!card) return;
+
+                switch (action) {
+                    case 'continue': this.promptAction('continue', id); break;
+                    case 'split': this.promptAction('split', id); break;
+                    case 'ai-edit': this.promptAction('ai-edit', id); break;
+                    case 'ai-theme': 
+                        this.editingId = id; 
+                        this.openModal('aiThemeModal'); 
+                        break;
+                    case 'copy': 
+                        navigator.clipboard.writeText(card.r || card.q || '');
+                        this.showToast('Copied to clipboard');
+                        break;
+                    case 'fullscreen': this.openFullscreen(id); break;
+                    case 'delete': 
+                        if(confirm("Delete this card?")) {
+                            this.deleteCard(id);
+                            this.showToast('Card deleted');
+                        }
+                        break;
+                    case 'style':
+                        this.stylingId = id;
+                        this.loadStyleValues(card.styles || {});
+                        this.openModal('styleModal');
+                        break;
+                    case 'manual-edit-response':
+                        this.editingId = id; this.editingField = 'r';
+                        this.openEditor(card.r);
+                        break;
+                    case 'manual-edit-question':
+                        this.editingId = id; this.editingField = 'q';
+                        this.openEditor(card.q);
+                        break;
+                }
+            }
+
+            openModal(id) {
+                document.getElementById(id).classList.add('active');
+            }
+
+            closeModal(id) {
+                document.getElementById(id).classList.remove('active');
+                if (id === 'promptModal') this.promptContext = null;
+                if (id === 'styleModal') this.stylingId = null;
+                if (id === 'textEditorModal') { this.editingId = null; this.editingField = null; }
+            }
+
+            openEditor(text) {
+                document.getElementById('textEditorArea').value = text;
+                document.getElementById('editorTitle').textContent = `Edit ${this.editingField === 'q' ? 'Question' : 'Response'}`;
+                this.openModal('textEditorModal');
+            }
+
+            saveManualEdit() {
+                const val = document.getElementById('textEditorArea').value.trim();
+                if (this.editingId && this.editingField) {
+                    this.pushHistory("Manual Edit");
+                    this.updateCardContent(this.editingId, this.editingField === 'q' ? val : null, this.editingField === 'r' ? val : null);
+                    this.closeModal('textEditorModal');
+                }
+            }
+
+            loadStyleValues(styles) {
+                const lockCheck = document.getElementById('styleLocked');
+                lockCheck.checked = !!styles.locked;
+
+                document.getElementById('styleColor').value = styles.color || '#f5f5f5';
+                document.getElementById('styleBg').value = styles.backgroundColor || '#1e1e1e';
+                document.getElementById('styleBorder').value = styles.borderColor || '#333333';
+                document.getElementById('stylePadding').value = parseInt(styles.padding || '16');
+                document.getElementById('styleRadius').value = parseInt(styles.borderRadius || '16');
+                document.getElementById('styleWidth').value = parseInt(styles.borderWidth || '1');
+                document.getElementById('styleCustom').value = styles.customCSS || '';
+
+                document.getElementById('valPad').textContent = (parseInt(styles.padding || '16')) + 'px';
+                document.getElementById('valRad').textContent = (parseInt(styles.borderRadius || '16')) + 'px';
+                document.getElementById('valWid').textContent = (parseInt(styles.borderWidth || '1')) + 'px';
+
+                document.querySelectorAll('.toggle-btn[data-style-prop]').forEach(btn => {
+                    const prop = btn.dataset.styleProp;
+                    const val = btn.dataset.styleVal;
+                    const current = styles[prop];
+                    if ((prop === 'textDecoration' && current === 'underline') || current === val) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+
+            saveStyles() {
+                if (!this.stylingId) return;
+                
+                const isLocked = document.getElementById('styleLocked').checked;
+                
+                const styles = {
+                    locked: isLocked,
+                    color: document.getElementById('styleColor').value,
+                    backgroundColor: document.getElementById('styleBg').value,
+                    borderColor: document.getElementById('styleBorder').value,
+                    padding: document.getElementById('stylePadding').value + 'px',
+                    borderRadius: document.getElementById('styleRadius').value + 'px',
+                    borderWidth: document.getElementById('styleWidth').value + 'px',
+                    customCSS: document.getElementById('styleCustom').value
+                };
+
+                document.querySelectorAll('.toggle-btn.active').forEach(btn => {
+                    const prop = btn.dataset.styleProp;
+                    const val = btn.dataset.styleVal;
+                    if (prop === 'textDecoration') {
+                        styles.textDecoration = val;
+                    } else {
+                        styles[prop] = val;
+                    }
+                });
+
+                const card = this.cards.find(c => c.id === this.stylingId);
+                if (card) {
+                    card.styles = { ...(card.styles || {}), ...styles };
+                    this.saveState();
+                    
+                    const el = document.querySelector(`.flip-card[data-id="${this.stylingId}"]`);
+                    if (el) {
+                        this.applyCardStyleToEl(el, styles);
+                        if(isLocked) el.classList.add('locked');
+                        else el.classList.remove('locked');
+                    }
+                    
+                    this.pushHistory("Style Change");
+                    this.closeModal('styleModal');
+                }
+            }
+
+            promptAction(action, id = null) {
+                if (!id && this.selectedIds.size > 0) {
+                    id = Array.from(this.selectedIds)[0];
+                }
+                if (!id && action !== 'merge') return; 
+
+                this.promptContext = { action, id };
+                const title = document.getElementById('promptTitle');
+                const desc = document.getElementById('promptDesc');
+                const btn = document.getElementById('promptConfirmBtn');
+
+                if (action === 'continue') {
+                    title.textContent = "Continue Card";
+                    desc.textContent = "Instruct the AI on how to continue the response.";
+                    btn.textContent = "Continue";
+                } else if (action === 'split') {
+                    title.textContent = "Split Card";
+                    desc.textContent = "How should the AI split this content?";
+                    btn.textContent = "Split";
+                } else if (action === 'ai-edit') {
+                    title.textContent = "AI Edit";
+                    desc.textContent = "What changes do you want?";
+                    btn.textContent = "Edit";
+                } else if (action === 'merge') {
+                    title.textContent = "Merge Cards";
+                    desc.textContent = "Combine selected cards. Instructions?";
+                    btn.textContent = `Merge (${this.selectedIds.size})`;
+                }
+
+                this.openModal('promptModal');
+            }
+
+            executePromptAction() {
+                const instructions = document.getElementById('promptArea').value.trim();
+                const { action, id } = this.promptContext;
+                const card = this.cards.find(c => c.id === id);
+                
+                this.closeModal('promptModal');
+                document.getElementById('promptArea').value = '';
+
+                if (action === 'merge') {
+                    this.merge(instructions);
+                    return;
+                }
+
+                if (!card) return;
+                let userPrompt = "";
+
+                if (action === 'continue') {
+                    userPrompt = `CONTINUE: Original: "${card.q}". Current: "${card.r}". Instruct: ${instructions}`;
+                    this.sendRequest(userPrompt, id);
+                } else if (action === 'split') {
+                    userPrompt = `SPLIT: ${instructions}. Text: ${card.r}`;
+                    this.sendRequest(userPrompt, null);
+                } else if (action === 'ai-edit') {
+                    userPrompt = `EDIT: ${instructions}. Current: ${card.r}`;
+                    this.sendRequest(userPrompt, null);
+                }
+            }
+
+            merge(instructions = "") {
+                if (this.selectedIds.size < 2) {
+                    this.showToast("Select 2+ cards to merge");
+                    return;
+                }
+
+                const sel = Array.from(this.selectedIds).map(id => this.cards.find(c => c.id === id));
+                const content = sel.map(c => `---\n${c.q}\n${c.r}`).join('\n');
+                const prompt = instructions 
+                    ? `Merge these into one based on: ${instructions}\n\n${content}`
+                    : `Combine these into one coherent response:\n\n${content}`;
+
+                const id = this.addCard(`Merged ${sel.length} cards`, '...', {});
+                this.streamingId = id;
+                this.clearSelection(); 
+                this.requestMergeUpdate(id, prompt);
+            }
+
+            async requestMergeUpdate(id, prompt) {
+                this.toggleLoading(true);
+                try {
+                    const res = await fetch(PROXY_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sessionId: this.sessionId, prompt: SYSTEM_PROMPT + "\n\nUser: " + prompt })
+                    });
+                    const reader = res.body.getReader();
+                    let buffer = '';
+                    let accumulated = '';
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        buffer += this.decoder.decode(value, { stream: true });
+                        const lines = buffer.split('\n\n');
+                        buffer = lines.pop() || '';
+                        for (const line of lines) {
+                            const jsonStr = line.replace('data: ', '').trim();
+                            if (!jsonStr || jsonStr === '[DONE]') continue;
+                            try {
+                                const json = JSON.parse(jsonStr);
+                                const chunk = json.choices?.[0]?.delta?.content;
+                                if (chunk) {
+                                    accumulated += chunk;
+                                    this.updateStreamingContent(accumulated);
+                                }
+                            } catch {}
+                        }
+                    }
+                    this.finalizeResponse(accumulated);
+                } catch (e) {
+                    this.updateStreamingContent("Merge failed.");
+                }
+                this.toggleLoading(false);
+            }
+
+            applyAITheme() {
+                const desc = document.getElementById('aiThemePrompt').value.trim();
+                if (!desc) return;
+                
+                if (this.editingId) {
+                    const card = this.cards.find(c => c.id === this.editingId);
+                    if (card && card.styles && card.styles.locked) {
+                        this.showToast("Card Locked - Rejected");
+                        this.closeModal('aiThemeModal');
+                        return;
+                    }
+                }
+
+                if (this.theme.locked) {
+                    this.showToast("Global Theme Locked");
+                    this.closeModal('aiThemeModal');
+                    return;
+                }
+
+                const prompt = `Generate ONLY a style definition in this exact format:
+!theme:Name,BgHex,CardBgHex,TextHex,BorderHex,PrimaryHex!
+Based on this vibe: ${desc}
+Do not output any other text.`;
+
+                this.toggleLoading(true);
+                this.closeModal('aiThemeModal');
+                this.showToast("Generating Theme...");
+
+                fetch(PROXY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: prompt })
+                })
+                .then(res => {
+                    const reader = res.body.getReader();
+                    let fullText = "";
+                    const processChunk = () => {
+                        return reader.read().then(({done, value}) => {
+                            if (done) {
+                                const { themeUpdate } = this.parseCommands(fullText);
+                                if (themeUpdate) {
+                                    this.theme = { ...this.theme, ...themeUpdate };
+                                    this.applyTheme();
+                                    this.saveState();
+                                    this.showToast(`Theme: ${themeUpdate.name}`);
+                                }
+                                this.toggleLoading(false);
+                                return;
+                            }
+                            const text = this.decoder.decode(value, { stream: true });
+                            fullText += text;
+                            return processChunk();
+                        });
+                    };
+                    return processChunk();
+                })
+                .catch(e => {
+                    this.toggleLoading(false);
+                    alert("Theme generation failed.");
+                });
+            }
+
+            toggleSelect(id, e) {
+                if (e && e.stopPropagation) e.stopPropagation();
+                const el = document.querySelector(`.flip-card[data-id="${id}"]`);
+                if (this.selectedIds.has(id)) {
+                    this.selectedIds.delete(id);
+                    el.classList.remove('selected');
+                } else {
+                    this.selectedIds.add(id);
+                    el.classList.add('selected');
+                }
+                this.updateSelectionUI();
+            }
+
+            updateSelectionUI() {
+                const bar = document.getElementById('selectionBar');
+                const count = document.getElementById('selectCount');
+                const mergeBtn = document.getElementById('mergeSelected');
+                const splitBtn = document.getElementById('splitSelected');
+
+                if (this.selectedIds.size > 0) {
+                    bar.classList.add('active');
+                    count.textContent = `${this.selectedIds.size} Selected`;
+                    mergeBtn.style.display = this.selectedIds.size > 1 ? 'inline-block' : 'none';
+                    splitBtn.style.display = this.selectedIds.size === 1 ? 'inline-block' : 'none';
+                } else {
+                    bar.classList.remove('active');
+                }
+            }
+
+            clearSelection() {
+                this.selectedIds.forEach(id => {
+                    const el = document.querySelector(`.flip-card[data-id="${id}"]`);
+                    if (el) el.classList.remove('selected');
+                });
+                this.selectedIds.clear();
+                this.updateSelectionUI();
+            }
+
+            bulkDelete() {
+                if (!confirm(`Delete ${this.selectedIds.size} cards?`)) return;
+                this.pushHistory("Bulk Delete");
+                this.selectedIds.forEach(id => {
+                    this.cards = this.cards.filter(c => c.id !== id);
+                    const el = document.querySelector(`.flip-card[data-id="${id}"]`);
+                    if (el) el.remove();
+                });
+                this.clearSelection();
+                this.saveState();
+                if (this.cards.length === 0) {
+                    const grid = document.getElementById('grid');
+                    if (!document.getElementById('emptyState')) {
+                        const empty = document.createElement('div');
+                        empty.id = 'emptyState';
+                        empty.textContent = "No cards yet. Type below to start.";
+                        grid.appendChild(empty);
+                    }
+                }
+            }
+
+            openFullscreen(id) {
+                const card = this.cards.find(c => c.id === id);
+                if (!card) return;
+
+                this.fullscreenId = id;
+                this.fsFlipped = false;
+
+                document.getElementById('fsQuestion').innerHTML = this.md(card.q);
+                document.getElementById('fsResponse').innerHTML = this.md(card.r);
+
+                const ov = document.getElementById('fullscreenOverlay');
+                ov.classList.add('active');
+            }
+
+            closeFullscreen() {
+                document.getElementById('fullscreenOverlay').classList.remove('active');
+                this.fullscreenId = null;
+            }
+
+            toggleFullscreenFlip() {
+                if (!this.fullscreenId) return;
+                this.fsFlipped = !this.fsFlipped;
+                const content = document.getElementById('fsContent');
+                content.style.transform = this.fsFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)';
+                content.style.transformStyle = 'preserve-3d';
+                content.style.backfaceVisibility = 'hidden';
+            }
+            
+            readCurrentFullscreen() {
+                if (this.fullscreenId) this.readCard(this.fullscreenId);
+            }
+
+            setCardView(view) {
+                this.settings.view = view;
+                document.body.className = ''; 
+                if (view === 'grid') document.body.classList.add('view-grid');
+                if (view === 'list') document.body.classList.add('view-list');
+                if (view === 'full') document.body.classList.add('view-full');
+                this.saveState();
+            }
+
+            cycleView() {
+                const views = ['list', 'grid', 'full'];
+                const next = views[(views.indexOf(this.settings.view) + 1) % views.length];
+                this.setCardView(next);
+                this.showToast(`View: ${next.toUpperCase()}`);
+            }
+
+            applyView() {
+                this.setCardView(this.settings.view);
+            }
+
+            toggleThemeMode() {
+                const current = document.body.getAttribute('data-theme');
+                const next = current === 'light' ? 'dark' : 'light';
+                document.body.setAttribute('data-theme', next);
+                if (next === 'light') {
+                    this.theme.bg = '#f8f9fa'; this.theme.cardBg = '#ffffff'; this.theme.text = '#222'; this.theme.border = '#ddd';
+                } else {
+                    this.theme.bg = '#121212'; this.theme.cardBg = '#1e1e1e'; this.theme.text = '#f5f5f5'; this.theme.border = '#333';
+                }
+                this.applyTheme();
+                this.saveState();
+            }
+
+            toggleThemeLock() {
+                this.theme.locked = !this.theme.locked;
+                document.getElementById('lockLabel').textContent = this.theme.locked ? "Theme Locked" : "Lock Theme";
+                this.showToast(this.theme.locked ? "Global Theme Locked" : "Global Theme Unlocked");
+                this.saveState();
+            }
+
+            saveAppearance() {
+                this.pushHistory("Appearance Save");
+                this.showToast("Appearance Saved");
+            }
+
+            applyTheme() {
+                const r = document.documentElement.style;
+                r.setProperty('--primary', this.theme.primary);
+                r.setProperty('--bg', this.theme.bg);
+                r.setProperty('--card-bg', this.theme.cardBg);
+                r.setProperty('--text', this.theme.text);
+                r.setProperty('--border', this.theme.border);
+                const brand = document.getElementById('brandPlaceholder');
+                if (brand) brand.textContent = this.theme.name || 'ai-Ndraft';
+            }
+
+            initASR() {
+                if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    this.recognition = new SpeechRecognition();
+                    this.recognition.continuous = false;
+                    this.recognition.lang = 'en-US';
+                    this.recognition.interimResults = false;
+
+                    this.recognition.onstart = () => {
+                        this.isListening = true;
+                        const btn = document.getElementById('sendBtn');
+                        btn.innerHTML = '<i class="fas fa-stop"></i>';
+                        btn.classList.add('listening');
+                        btn.title = "Stop Listening";
+                    };
+
+                    this.recognition.onend = () => {
+                        this.isListening = false;
+                        const btn = document.getElementById('sendBtn');
+                        btn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+                        btn.classList.remove('listening');
+                        btn.title = "Send";
+                    };
+
+                    this.recognition.onresult = (event) => {
+                        const transcript = event.results[0][0].transcript;
+                        document.getElementById('userInput').value = transcript;
+                    };
+                }
+            }
+
+            toggleASR() {
+                this.settings.asrEnabled = !this.settings.asrEnabled;
+                this.updateToggles();
+                this.saveState();
+            }
+
+            toggleTTS() {
+                this.settings.autoTTS = !this.settings.autoTTS;
+                this.updateToggles();
+                this.saveState();
+            }
+
+            updateToggles() {
+                const asrBtn = document.getElementById('asrToggle');
+                const ttsBtn = document.getElementById('ttsToggle');
+                if (asrBtn) asrBtn.classList.toggle('active', this.settings.asrEnabled);
+                if (ttsBtn) ttsBtn.classList.toggle('active', this.settings.autoTTS);
+            }
+
+            readCard(id, e) {
+                if (e && e.stopPropagation) e.stopPropagation();
+                const card = this.cards.find(c => c.id === id);
+                if (!card || !card.r) return;
+                if (responsiveVoice.isPlaying()) {
+                    responsiveVoice.cancel();
+                } else {
+                    const text = card.r.replace(/[#*_`]/g, '').substring(0, 2000);
+                    responsiveVoice.speak(text, "US English Female", { rate: 1.1 });
+                }
+            }
+
+            toggleLoading(show) {
+                const el = document.getElementById('loading');
+                if (show) el.classList.add('active');
+                else el.classList.remove('active');
+            }
+
+            showToast(msg) {
+                const t = document.getElementById('toast');
+                t.textContent = msg;
+                t.classList.add('show');
+                setTimeout(() => t.classList.remove('show'), 2000);
+            }
+
+            md(text) {
+                if (!text) return '';
+                return DOMPurify.sanitize(marked.parse(text));
             }
         }
-    }
 
-    finalize(id, text) {
-        const { styles, themeUpdate, cleanText } = this.parseStyleCommands(text);
-        const html = cleanText ? this.md(cleanText) : '<em>Empty</em>';
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            window.app = new App();
+            window.app.init();
+        });
 
-        this.update(id, html);
-
-        const card = this.cards.find(c => c.id === id);
-        if (card) {
-            card.r = cleanText;
-            card.styles = { ...(card.styles || {}), ...styles };
-            if (Object.keys(card.styles).length > 0) {
-                this.updateCardStyles(id, card.styles);
-            }
-        }
-
-        if (themeUpdate) {
-            this.applyTheme(themeUpdate);
-        }
-
-        this.save();
-
-        if (this.autoReadEnabled) {
-            setTimeout(() => this.readCard(id), 500);
-        }
-    }
-
-    update(id, html) {
-        const gridEl = document.querySelector(`[data-id="${id}"] .response-content`);
-        const fsEl = document.getElementById('fsResponse');
-        const fullHtml = html + (this.streamingId === id ? '<div class="streaming"><span class="cursor"></span></div>' : '');
-
-        if (gridEl) {
-            gridEl.innerHTML = fullHtml;
-            gridEl.scrollTop = gridEl.scrollHeight;
-        }
-        if (this.fullscreenId === id && fsEl) {
-            fsEl.innerHTML = fullHtml;
-            fsEl.scrollTop = fsEl.scrollHeight;
-        }
-    }
-
-    add(data, fs = false) {
-        const id = crypto.randomUUID();
-        const card = { id, q: data.q, r: data.r || '', styles: data.styles || {} };
-        this.cards.push(card);
-        this.render(card, true);
-        if (fs) this.openFS(id, true);
-        this.save();
-        return id;
-    }
-
-    render(card, newCard = false) {
-        const el = document.createElement('div');
-        el.className = `flip-card ${newCard ? 'new' : ''}`;
-        el.dataset.id = card.id;
-
-        const rhtml = (card.r === '...')
-            ? '<div class="streaming"><span class="cursor"></span></div>'
-            : this.md(card.r);
-
-        el.innerHTML = `
-            <div class="flip-card-inner">
-                <div class="card-header">
-                    <button class="tts-btn" title="Read Aloud"><i class="fas fa-volume-up"></i></button>
-                </div>
-                <div class="card-face">${this.md(card.q)}</div>
-                <div class="card-face card-back">
-                    <div class="response-content">${rhtml}</div>
-                </div>
-            </div>
-        `;
-
-        if (card.styles && Object.keys(card.styles).length > 0) {
-            this.updateCardStyles(card.id, card.styles);
-        }
-
-        el.querySelector('.tts-btn').onclick = (e) => {
-            e.stopPropagation();
-            this.readCard(card.id);
-        };
-
-        let timer;
-        el.ontouchstart = e => {
-            if (e.touches.length === 1) timer = setTimeout(() => this.enterSelect(card.id, el), 600);
-            if (e.touches.length === 2) {
-                e.preventDefault();
-                this.currentMenuId = card.id;
-                document.getElementById('cardMenu').classList.add('active');
-            }
-        };
-        el.ontouchend = el.ontouchmove = () => clearTimeout(timer);
-
-        el.onclick = e => {
-            if (this.selectMode) {
-                e.preventDefault();
-                this.toggleSelect(card.id, el);
-                return;
-            }
-            el.classList.toggle('flipped');
-        };
-        el.ondblclick = () => this.openFS(card.id);
-
-        document.getElementById('grid').appendChild(el);
-        if (card.r && card.r !== '...') setTimeout(() => el.classList.add('flipped'), 100);
-    }
-
-    handle(action) {
-        const card = this.cards.find(c => c.id === this.currentMenuId);
-        if (!card) return;
-
-        if (action === 'continue') this.promptContinue(card.id);
-        if (action === 'copy') navigator.clipboard.writeText(card.r || '');
-        if (action === 'ai-edit') this.promptEdit(card.id);
-        if (action === 'split') this.promptSplit(card.id);
-        if (action === 'fullscreen') this.openFS(card.id);
-        if (action === 'delete') if (confirm('Delete this card?')) this.del(card.id);
-    }
-
-    readCard(cardId) {
-        const card = this.cards.find(c => c.id === cardId);
-        if (!card) return;
-
-        const textToRead = card.r || card.q;
-        if (responsiveVoice.isPlaying()) {
-            responsiveVoice.cancel();
-        } else {
-            responsiveVoice.speak(this.sanitizeTextForSpeech(textToRead), "US English Female");
-        }
-    }
-
-    sanitizeTextForSpeech(text) {
-        return text
-            .replace(/\*\*(.*?)\*\*/g, "$1")
-            .replace(/\*(.*?)\*/g, "$1")
-            .replace(/`(.*?)`/g, "$1")
-            .replace(/``````/g, "Here is the code: $1")
-            .replace(/!(bg-color|text-color|border-color|padding|border-radius|font-size|font-weight|font-style|text-decoration|custom-css|page-theme):[^!]+!/gi, "");
-    }
-
-    editText(id, field) {
-        const card = this.cards.find(c => c.id === id);
-        if (!card) return;
-        this.editingCardId = id;
-        this.editingField = field;
-        document.getElementById('textEditorArea').value = field === 'q' ? card.q : card.r;
-        document.getElementById('textEditorModal').classList.add('active');
-    }
-
-    saveManualEdit() {
-        const text = document.getElementById('textEditorArea').value.trim();
-        const card = this.cards.find(c => c.id === this.editingCardId);
-        if (!card) return;
-
-        if (this.editingField === 'q') {
-            card.q = text;
-            const qEl = document.querySelector(`[data-id="${this.editingCardId}"] .card-face:first-child`);
-            if (qEl) qEl.innerHTML = this.md(text);
-            if (this.fullscreenId === this.editingCardId) {
-                document.getElementById('fsQuestion').innerHTML = this.md(text);
-            }
-        } else {
-            card.r = text;
-            const html = this.md(text);
-            const rEl = document.querySelector(`[data-id="${this.editingCardId}"] .response-content`);
-            if (rEl) rEl.innerHTML = html;
-            if (this.fullscreenId === this.editingCardId) {
-                document.getElementById('fsResponse').innerHTML = html;
-            }
-        }
-
-        this.save();
-        document.getElementById('textEditorModal').classList.remove('active');
-    }
-
-    promptContinue(id) {
-        this.currentContinueId = id;
-        document.getElementById('continuePromptText').value = '';
-        document.getElementById('continuePromptModal').classList.add('active');
-    }
-
-    async continue() {
-        const card = this.cards.find(c => c.id === this.currentContinueId);
-        if (!card) return;
-
-        const custom = document.getElementById('continuePromptText').value.trim();
-        const context = `User request: ${card.q}\n\nPrevious response:\n${card.r || ''}`;
-        const prompt = custom
-            ? `${context}\n\nAdditional instructions: ${custom}\n\nContinue the response:`
-            : `${context}\n\nContinue the response naturally from where it left off:`;
-
-        const id = this.add({ q: `Continued from: ${card.q.slice(0, 30)}...`, r: '...' }, true);
-        this.streamingId = id;
-        await this.request(prompt);
-        document.getElementById('continuePromptModal').classList.remove('active');
-    }
-
-    promptSplit(id) {
-        this.currentSplitId = id;
-        document.getElementById('splitPromptText').value = '';
-        document.getElementById('splitPromptModal').classList.add('active');
-    }
-
-    async split() {
-        const card = this.cards.find(c => c.id === this.currentSplitId);
-        if (!card) return;
-
-        const custom = document.getElementById('splitPromptText').value.trim();
-        const prompt = custom
-            ? `Split the text below according to these instructions: ${custom}\n\nText:\n${card.r}`
-            : `Split the following text into clear, logical sections with descriptive titles:\n\n${card.r}`;
-
-        const id = this.add({ q: `Split from: ${card.q.slice(0, 30)}...`, r: '...' }, true);
-        this.streamingId = id;
-        await this.request(prompt);
-        document.getElementById('splitPromptModal').classList.remove('active');
-    }
-
-    promptEdit(id) {
-        this.currentEditId = id;
-        document.getElementById('editPromptText').value = '';
-        document.getElementById('editPromptModal').classList.add('active');
-    }
-
-    async performEdit() {
-        const card = this.cards.find(c => c.id === this.currentEditId);
-        if (!card) return;
-
-        const instructions = document.getElementById('editPromptText').value.trim() || 'Improve clarity, flow, and structure';
-        const prompt = `Original request: ${card.q}\n\nCurrent response:\n${card.r || ''}\n\nInstructions: ${instructions}\n\nOutput only the revised response:`;
-
-        const id = this.add({ q: `Edited: ${card.q.slice(0, 30)}...`, r: '...' }, true);
-        this.streamingId = id;
-        await this.request(prompt);
-        document.getElementById('editPromptModal').classList.remove('active');
-    }
-
-    merge() {
-        if (this.selected.size < 2) return;
-
-        const sel = Array.from(this.selected).map(id => this.cards.find(c => c.id === id));
-        const content = sel.map(c => c.r || '').join('\n\n');
-        const custom = document.getElementById('mergePromptText').value.trim();
-
-        let prompt;
-        if (custom) {
-            prompt = `Merge the following texts into one cohesive response based on these instructions: ${custom}
-
-Texts to merge:
-${content}
-
-Merged response (output only the final content):`;
-        } else {
-            prompt = `The following are multiple response drafts. Combine them into one single, coherent, well-written response. Keep all key details and improve the overall flow.
-
-Drafts:
-${content}
-
-Final merged response (output only the content):`;
-        }
-
-        const id = this.add({ q: `Merged ${sel.length} cards`, r: '...' }, true);
-        this.streamingId = id;
-        this.request(prompt);
-        document.getElementById('mergePromptModal').classList.remove('active');
-        this.exitSelect();
-    }
-
-    openFS(id, back = false) {
-        const card = this.cards.find(c => c.id === id);
-        if (!card) return;
-
-        document.getElementById('fsQuestion').innerHTML = this.md(card.q);
-        const responseEl = document.getElementById('fsResponse');
-        const baseHtml = (card.r && card.r !== '...') ? this.md(card.r) : '<div class="streaming"><span class="cursor"></span></div>';
-        responseEl.innerHTML = baseHtml + (this.streamingId === id ? '<div class="streaming"><span class="cursor"></span></div>' : '');
-
-        const ov = document.getElementById('fullscreenOverlay');
-        ov.classList.add('active');
-        if (back) ov.classList.add('flipped');
-        else ov.classList.remove('flipped');
-        this.fullscreenId = id;
-        document.body.style.overflow = 'hidden';
-    }
-
-    closeFS() {
-        document.getElementById('fullscreenOverlay').classList.remove('active', 'flipped');
-        this.fullscreenId = null;
-        document.body.style.overflow = '';
-    }
-
-    del(id) {
-        this.cards = this.cards.filter(c => c.id !== id);
-        document.querySelector(`[data-id="${id}"]`)?.remove();
-        if (this.fullscreenId === id) this.closeFS();
-        this.save();
-    }
-
-    enterSelect(id, el) {
-        this.selectMode = true;
-        this.selected.clear();
-        this.toggleSelect(id, el);
-    }
-
-    toggleSelect(id, el) {
-        el.classList.toggle('selected');
-        if (this.selected.has(id)) this.selected.delete(id);
-        else this.selected.add(id);
-
-        document.getElementById('selectCount').textContent = this.selected.size;
-        document.getElementById('mergeSelected').style.display = this.selected.size >= 2 ? 'block' : 'none';
-        document.getElementById('selectionBar').classList.toggle('active', this.selected.size > 0);
-    }
-
-    exitSelect() {
-        this.selectMode = false;
-        this.selected.clear();
-        document.querySelectorAll('.flip-card.selected').forEach(e => e.classList.remove('selected'));
-        document.getElementById('selectionBar').classList.remove('active');
-    }
-
-    export() {
-        const data = { cards: this.cards, sessionId: this.sessionId, theme: this.theme };
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'parametric-cards.json';
-        a.click();
-        URL.revokeObjectURL(url);
-    }
-
-    import(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const r = new FileReader();
-        r.onload = ev => {
-            try {
-                const d = JSON.parse(ev.target.result);
-                this.cards = d.cards || [];
-                this.sessionId = d.sessionId || this.sessionId;
-                this.theme = d.theme || { ...DEFAULT_THEME };
-                document.getElementById('grid').innerHTML = '';
-                this.applyTheme(this.theme);
-                this.cards.forEach(c => this.render(c));
-                this.save();
-            } catch (err) {
-                alert('Import failed');
-            }
-        };
-        r.readAsText(file);
-    }
-
-    save() {
-        localStorage.setItem('data', JSON.stringify({
-            cards: this.cards,
-            sessionId: this.sessionId,
-            theme: this.theme
-        }));
-    }
-
-    load() {
-        const raw = localStorage.getItem('data');
-        if (raw) {
-            try {
-                const d = JSON.parse(raw);
-                this.cards = d.cards || [];
-                this.sessionId = d.sessionId || this.sessionId;
-                this.theme = d.theme || { ...DEFAULT_THEME };
-                this.cards.forEach(c => this.render(c));
-            } catch (err) {
-                console.error('Load failed:', err);
-            }
-        }
-    }
-
-    md(t) {
-        return t ? DOMPurify.sanitize(marked.parse(t)) : '';
-    }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    const app = new App();
-    const autoReadBtn = document.getElementById('toggleTTSBtn');
-    autoReadBtn.style.opacity = app.autoReadEnabled ? '1' : '0.5';
-});
-</script>
-
+    </script>
 </body>
 </html>
