@@ -412,10 +412,12 @@ class App {
         input.value = '';
     }
 
-    scrollToBottom(element, force = false) {
+    // FIX: Uniform scrolling logic
+    scrollToStreamingContent(element) {
         if (!element) return;
+        // Only scroll if user is near bottom (within 150px)
         const isNearBottom = (element.scrollHeight - element.scrollTop - element.clientHeight) < 150;
-        if (force || isNearBottom) {
+        if (isNearBottom) {
             element.scrollTop = element.scrollHeight;
         }
     }
@@ -469,6 +471,7 @@ class App {
                         const chunk = json.choices?.[0]?.delta?.content;
                         if (chunk) {
                             accumulated += chunk;
+                            // Always call updateStreamingContent, it handles the logic
                             if (isFirstChunk) {
                                 this.updateStreamingContent(accumulated, true);
                                 isFirstChunk = false;
@@ -504,10 +507,12 @@ class App {
         }
     }
 
+    // FIX: Consistent scrolling for Card View, Grid View, and Fullscreen
     updateStreamingContent(text, replace = false) {
         if (!this.streamingId) return;
         const visible = text.replace(/![^!]+!/g, '');
         
+        // 1. Update Card View (List/Grid)
         const el = document.querySelector(`.flip-card[data-id="${this.streamingId}"] .response-content`);
         if (el) {
             if (replace) {
@@ -515,19 +520,21 @@ class App {
             } else {
                 el.innerHTML = this.md(visible) + '<div class="streaming"><span class="cursor"></span></div>';
             }
-            this.scrollToBottom(el, replace);
+            // Apply uniform scroll logic
+            this.scrollToStreamingContent(el);
         }
 
+        // 2. Update Fullscreen if active
         if (this.fullscreenId === this.streamingId) {
-            const fsEl = document.getElementById('fsResponse');
-            if (fsEl) {
+            const fsPane = document.getElementById('fsResponsePane');
+            if (fsPane) {
+                // Inside fullscreen, we want to scroll the pane container
                 if (replace) {
-                    fsEl.innerHTML = this.md(visible);
+                    document.getElementById('fsResponse').innerHTML = this.md(visible);
                 } else {
-                    fsEl.innerHTML = this.md(visible) + '<div class="streaming"><span class="cursor"></span></div>';
+                    document.getElementById('fsResponse').innerHTML = this.md(visible) + '<div class="streaming"><span class="cursor"></span></div>';
                 }
-                const fsPane = document.getElementById('fsResponsePane');
-                this.scrollToBottom(fsPane, replace);
+                this.scrollToStreamingContent(fsPane);
             }
         }
     }
@@ -556,10 +563,14 @@ class App {
 
         if (this.fullscreenId === id) {
             document.getElementById('fsResponse').innerHTML = cleanHtml;
+            // Ensure final scroll to bottom
+            const fsPane = document.getElementById('fsResponsePane');
+            if (fsPane) fsPane.scrollTop = fsPane.scrollHeight;
         }
 
+        // Apply visual styles to card (only if Global Theme is NOT locked)
         if (card && (!card.styles || !card.styles.locked)) {
-            if (Object.keys(styles).length > 0) {
+            if (Object.keys(styles).length > 0 && !this.theme.locked) {
                 const cardEl = document.querySelector(`.flip-card[data-id="${id}"]`);
                 if (cardEl) this.applyCardStyleToEl(cardEl, styles);
             }
@@ -809,6 +820,13 @@ class App {
     saveStyles() {
         if (!this.stylingId) return;
         
+        // FIX: Global Theme Lock also prevents manual style changes
+        if (this.theme.locked) {
+            this.showToast("Global Theme Locked - Cannot change card styles");
+            this.closeModal('styleModal');
+            return;
+        }
+
         const isLocked = document.getElementById('styleLocked').checked;
         
         const styles = {
@@ -1123,6 +1141,7 @@ Do not output any other text.`;
         const ov = document.getElementById('fullscreenOverlay');
         ov.classList.add('active');
         
+        // Scroll to bottom on open
         setTimeout(() => {
             const responsePane = document.getElementById('fsResponsePane');
             if (responsePane) responsePane.scrollTop = responsePane.scrollHeight;
