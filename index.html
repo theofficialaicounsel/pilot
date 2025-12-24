@@ -143,16 +143,21 @@
         }
         .fullscreen-overlay.active { display: flex; }
         .fs-header { padding: 12px 16px; background: var(--card-bg); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        
+        /* MODIFIED: Single column layout for fullscreen */
         .fs-content { 
-            flex: 1; overflow-y: auto; padding: 24px; 
-            display: grid; grid-template-columns: 1fr 1fr; gap: 16px; 
-            height: 0; /* Important for proper scrolling */
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 24px; 
+            display: block; /* Changed from grid to block */
         }
         .fs-pane { 
             background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); 
             padding: 16px; overflow-y: auto; 
-            height: 100%; /* Fill the grid cell */
+            height: 100%; /* Fill the container */
             min-height: 0; /* Allow flexbox to work */
+            width: 100%; /* Full width */
+            margin-bottom: 0; /* No gap */
         }
         .fs-pane h3 { margin-bottom: 12px; color: var(--primary); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; }
 
@@ -314,10 +319,7 @@
             </div>
         </div>
         <div class="fs-content" id="fsContent">
-            <div class="fs-pane" id="fsRequestPane">
-                <h3>Request</h3>
-                <div id="fsQuestion"></div>
-            </div>
+            <!-- MODIFIED: Single pane for response only -->
             <div class="fs-pane" id="fsResponsePane">
                 <h3>Response</h3>
                 <div id="fsResponse"></div>
@@ -345,6 +347,7 @@
     <div id="cardMenu">
         <button class="menu-item" data-action="continue"><i class="fas fa-redo"></i> Continue</button>
         <button class="menu-item" data-action="split"><i class="fas fa-cut"></i> Split</button>
+        <button class="menu-item" data-action="merge"><i class="fas fa-layer-group"></i> Merge</button>
         <button class="menu-item" data-action="ai-edit"><i class="fas fa-magic"></i> AI Edit</button>
         <div class="menu-separator"></div>
         <button class="menu-item" data-action="ai-theme"><i class="fas fa-palette"></i> AI Theme</button>
@@ -1223,6 +1226,25 @@ User requests are natural language. Be efficient.`;
                 switch (action) {
                     case 'continue': this.promptAction('continue', id); break;
                     case 'split': this.promptAction('split', id); break;
+                    case 'merge':
+                        // Ensure clicked card is selected
+                        if (!this.selectedIds.has(id)) {
+                            this.selectedIds.add(id);
+                            const el = document.querySelector(`.flip-card[data-id="${id}"]`);
+                            if (el) el.classList.add('selected');
+                        }
+                        
+                        // Check if we have at least 2 cards
+                        if (this.selectedIds.size < 2) {
+                            this.showToast("Need at least 2 cards to merge");
+                            this.updateSelectionUI();
+                            return;
+                        }
+                        
+                        // Update selection UI and proceed
+                        this.updateSelectionUI();
+                        this.promptAction('merge');
+                        break;
                     case 'ai-edit': this.promptAction('ai-edit', id); break;
                     case 'ai-theme': 
                         this.editingId = id; 
@@ -1614,7 +1636,10 @@ Do not output any other text.`;
                 this.fullscreenId = id;
                 this.fsFlipped = false;
 
-                document.getElementById('fsQuestion').innerHTML = this.md(card.q);
+                // MODIFIED: Only show response in fullscreen, no request column
+                // Update the header to show request as a tooltip or title
+                const header = document.querySelector('.fs-header h3');
+                if (header) header.textContent = `Response: ${card.q.substring(0, 50)}...`;
                 
                 // MODIFIED: Show streaming indicator in fullscreen if streaming
                 if (card.r === '...' && this.streamingId === id) {
@@ -1626,7 +1651,7 @@ Do not output any other text.`;
                 const ov = document.getElementById('fullscreenOverlay');
                 ov.classList.add('active');
                 
-                // MODIFIED: Ensure fullscreen panes scroll correctly
+                // MODIFIED: Ensure fullscreen pane scrolls correctly
                 setTimeout(() => {
                     const responsePane = document.getElementById('fsResponsePane');
                     if (responsePane) {
@@ -1648,16 +1673,12 @@ Do not output any other text.`;
                 content.style.transformStyle = 'preserve-3d';
                 content.style.backfaceVisibility = 'hidden';
                 
-                // MODIFIED: Fix the panes for 3D flip
-                const panes = content.querySelectorAll('.fs-pane');
-                panes.forEach(pane => {
+                // MODIFIED: Fix the pane for 3D flip
+                const pane = content.querySelector('.fs-pane');
+                if (pane) {
                     pane.style.backfaceVisibility = 'hidden';
-                    if (this.fsFlipped) {
-                        pane.style.transform = 'rotateY(180deg)';
-                    } else {
-                        pane.style.transform = 'rotateY(0deg)';
-                    }
-                });
+                    pane.style.transform = this.fsFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)';
+                }
             }
             
             readCurrentFullscreen() {
