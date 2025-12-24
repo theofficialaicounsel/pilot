@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ai-Ndraft Pro</title>
+    <title>ai-Ncards</title>
     <link rel="stylesheet" href="style.css">
     
     <!-- External Libraries (CDN) -->
@@ -18,7 +18,7 @@
     <div id="topBar">
         <div style="display:flex; align-items:center; gap: 8px; pointer-events: auto;">
             <button class="fab" id="undoFabTop" title="Undo"><i class="fas fa-undo"></i></button>
-            <div id="brandPlaceholder">ai-Ndraft Pro</div>
+            <div id="brandPlaceholder">ai-Ncards</div>
         </div>
         <div class="top-fabs">
             <button class="fab" id="menuFab" title="Menu (Import/Export)"><i class="fas fa-bars"></i></button>
@@ -51,12 +51,10 @@
             </div>
         </div>
         <div class="fs-content" id="fsContent">
-            <!-- Request Pane (Optional, usually hidden in single view, but available if flipped) -->
             <div class="fs-pane" id="fsRequestPane" style="display:none;">
                 <h3>Request</h3>
                 <div id="fsRequest"></div>
             </div>
-            <!-- Response Pane (Main) -->
             <div class="fs-pane" id="fsResponsePane">
                 <h3>Response</h3>
                 <div id="fsResponse"></div>
@@ -65,7 +63,6 @@
     </div>
 
     <!-- Grid Area -->
-    <!-- Added tabindex for keyboard navigation -->
     <div id="grid" tabindex="0">
         <div id="emptyState">
             <h3>Start Creating</h3>
@@ -131,6 +128,10 @@
                         <input type="file" id="fileInput" style="display:none;" accept=".json" onchange="app.importData(this)">
                     </div>
                     <button class="btn btn-danger" onclick="app.clearAll()"><i class="fas fa-trash-alt"></i> Clear All Cards</button>
+                    <br><br>
+                    <button class="btn btn-danger" onclick="app.resetApp()" style="background-color: #b71c1c; border: 1px solid #d32f2f;">
+                        <i class="fas fa-power-off"></i> Factory Reset (Clear Storage)
+                    </button>
                 </div>
 
                 <div class="style-section">

@@ -241,6 +241,13 @@ class App {
         }
     }
 
+    resetApp() {
+        if (confirm("WARNING: This will delete ALL data, settings, and history. The app will restart to the welcome screen. Are you sure?")) {
+            localStorage.removeItem(STORAGE_KEY);
+            window.location.reload();
+        }
+    }
+
     addCard(q, r, styles = {}) {
         const id = crypto.randomUUID();
         const card = { id, q, r, styles };
@@ -1222,7 +1229,7 @@ Do not output any other text.`;
         r.setProperty('--text', this.theme.text);
         r.setProperty('--border', this.theme.border);
         const brand = document.getElementById('brandPlaceholder');
-        if (brand) brand.textContent = this.theme.name || 'ai-Ndraft';
+        if (brand) brand.textContent = this.theme.name || 'ai-nspired: cards;
     }
 
     initASR() {
