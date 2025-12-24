@@ -12,11 +12,6 @@ const SYSTEM_PROMPT = `You are a helpful, casual AI assistant. You can control s
    - !action:clear! (Clears the entire board)
    - !action:view:grid! or !action:view:list! or !action:view:full! (Changes view)
 
-Example 1 (Style + Action):
-!theme:Gold,#1a1a1a,#2a2a2a,#ffd700,#ffd700,#b8860b!
-Hello World
-!action:view:grid!
-
 User requests are natural language. Be efficient.`;
 
 class App {
@@ -25,7 +20,7 @@ class App {
         this.history = []; 
         this.sessionId = "sess_" + Date.now();
         this.theme = {
-            name: 'ai-Ndraft',
+            name: 'ai-Ncards',
             primary: '#c41e3a',
             bg: '#121212',
             cardBg: '#1e1e1e',
@@ -198,7 +193,7 @@ class App {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `ai_ndraft_export_${Date.now()}.json`;
+        a.download = `ai_ncards_export_${Date.now()}.json`;
         a.click();
         this.showToast("Export downloaded");
     }
@@ -1229,7 +1224,7 @@ Do not output any other text.`;
         r.setProperty('--text', this.theme.text);
         r.setProperty('--border', this.theme.border);
         const brand = document.getElementById('brandPlaceholder');
-        if (brand) brand.textContent = this.theme.name || 'ai-nspired: cards;
+        if (brand) brand.textContent = this.theme.name || 'ai-Ncards';
     }
 
     initASR() {
@@ -1313,7 +1308,6 @@ Do not output any other text.`;
     }
 }
 
-// Initialize App
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new App();
     window.app.init();
