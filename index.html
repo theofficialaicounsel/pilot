@@ -34,145 +34,60 @@
         }
 
         /* View Modes */
-        body.view-grid { --view-cols: 2; } /* Default for Desktop */
+        body.view-grid { --view-cols: 2; }
         body.view-full { --view-cols: 1; }
 
         /* MOBILE OPTIMIZATION */
         @media (max-width: 768px) {
-            body.view-grid {
-                /* Force 2x2 on mobile even if screen is small */
-                --view-cols: 2; 
-            }
-            
-            /* Adjust grid gap and padding for touch */
-            #grid {
-                gap: 10px;
-                padding: 10px;
-            }
-
-            /* Make Input Bar touch-friendly */
-            #inputPanel {
-                padding: 10px;
-                gap: 8px;
-                padding-bottom: calc(10px + var(--safe-area-bottom));
-            }
-
-            #userInput {
-                padding: 14px; /* Larger touch target */
-                font-size: 16px; /* Prevents iOS zoom */
-            }
-
-            #sendBtn {
-                padding: 12px 16px;
-                min-width: 50px; /* Easier to tap */
-                height: 48px;
-            }
-
-            /* Adjust Top Buttons */
-            #topBar {
-                height: 50px;
-            }
-            .fab {
-                width: 36px;
-                height: 36px;
-                font-size: 12px;
-            }
-            
-            /* Move View Button slightly up to avoid keyboard bar overlap */
-            .view-fab-container {
-                bottom: 95px; 
-                right: 10px;
-            }
-
-            /* Card Text Sizing */
-            .card-face {
-                font-size: 14px;
-            }
-            
-            /* Context Menu adjustments for Mobile */
-            #cardMenu {
-                min-width: 200px;
-                bottom: 10px; /* Stick to bottom on mobile if needed, but we use center usually */
-                left: 50% !important;
-                transform: translateX(-50%) !important;
-                top: auto !important;
-                bottom: 80px; /* Above input */
-                border-bottom-left-radius: 0;
-                border-bottom-right-radius: 0;
-            }
+            body.view-grid { --view-cols: 2; } /* Force 2x2 */
+            #grid { gap: 10px; padding: 10px; }
+            #inputPanel { padding: 10px; gap: 8px; padding-bottom: calc(10px + var(--safe-area-bottom)); }
+            #userInput { padding: 14px; font-size: 16px; height: 48px; }
+            #sendBtn { padding: 12px 16px; min-width: 50px; height: 48px; font-size: 22px; }
+            #topBar { height: 50px; }
+            .fab { width: 36px; height: 36px; font-size: 12px; }
+            .view-fab-container { bottom: 95px; right: 10px; }
+            .card-face { font-size: 14px; }
+            #cardMenu { min-width: 200px; left: 50% !important; transform: translateX(-50%) !important; top: auto !important; bottom: 80px; }
         }
 
-        /* --- GENERAL STYLES --- */
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        
         body {
             font-family: system-ui, -apple-system, sans-serif;
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
-            padding-top: 50px; /* Space for top bar */
-            padding-bottom: 80px; /* Space for input */
+            padding-top: 50px;
+            padding-bottom: 80px;
             transition: background 0.3s, color 0.3s;
             overflow-x: hidden;
         }
 
         /* Top Bar */
         #topBar {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            height: 50px;
-            padding: 0 10px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            z-index: 50;
-            background: linear-gradient(to bottom, var(--bg), transparent);
-            pointer-events: none;
+            position: fixed; top: 0; left: 0; right: 0; height: 50px;
+            padding: 0 10px; display: flex; align-items: center; justify-content: space-between;
+            z-index: 50; background: linear-gradient(to bottom, var(--bg), transparent); pointer-events: none;
         }
-
-        #brandPlaceholder {
-            pointer-events: none;
-            font-weight: 900;
-            color: var(--primary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 12px;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-        }
-
-        .top-fabs {
-            pointer-events: auto;
-            display: flex;
-            gap: 6px;
-        }
-
+        #brandPlaceholder { pointer-events: none; font-weight: 900; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; font-size: 12px; }
+        .top-fabs { pointer-events: auto; display: flex; gap: 6px; }
         .fab {
-            width: 36px; height: 36px;
-            border-radius: 50%;
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            color: var(--text);
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; box-shadow: var(--shadow);
-            transition: all 0.2s; font-size: 12px;
-            backdrop-filter: blur(5px);
+            width: 36px; height: 36px; border-radius: 50%; background: var(--card-bg);
+            border: 1px solid var(--border); color: var(--text); display: flex; align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: var(--shadow); transition: all 0.2s; font-size: 12px; backdrop-filter: blur(5px);
         }
         .fab:hover { transform: scale(1.1); background: var(--bg); }
         .fab.primary { background: var(--primary); color: white; border: none; }
 
         /* Selection Bar */
         #selectionBar {
-            position: fixed; top: 0; left: 0; right: 0;
-            background: var(--card-bg); border-bottom: 1px solid var(--border);
-            padding: 10px; z-index: 1000; display: none;
-            align-items: center; justify-content: space-between;
-            box-shadow: var(--shadow); transform: translateY(-100%);
-            transition: transform 0.3s;
+            position: fixed; top: 0; left: 0; right: 0; background: var(--card-bg); border-bottom: 1px solid var(--border);
+            padding: 10px; z-index: 1000; display: none; align-items: center; justify-content: space-between;
+            box-shadow: var(--shadow); transform: translateY(-100%); transition: transform 0.3s;
         }
         #selectionBar.active { display: flex; transform: translateY(0); }
         #mergeSelected, #deleteSelected, #splitSelected {
-            background: var(--primary); color: white; border: none;
-            padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; margin-left: 6px;
+            background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; margin-left: 6px;
             display: flex; align-items: center; gap: 4px;
         }
         #deleteSelected { background: #d32f2f; }
@@ -180,33 +95,19 @@
 
         /* Grid Area */
         #grid {
-            display: grid; 
-            grid-template-columns: repeat(var(--view-cols), 1fr); 
-            gap: 16px; 
-            padding: 16px;
-            max-width: 1000px; 
-            margin: 0 auto; 
-            transition: all 0.3s ease; 
-            min-height: 50vh;
+            display: grid; grid-template-columns: repeat(var(--view-cols), 1fr); gap: 16px; padding: 16px;
+            max-width: 1000px; margin: 0 auto; transition: all 0.3s ease; min-height: 50vh;
         }
-
         body.view-full #grid { display: block; padding: 0; gap: 0; }
         body.view-full #grid .flip-card { height: 100vh; border-radius: 0; border: none; min-height: unset; }
 
         /* Card */
         .flip-card {
-            min-height: var(--card-min-height); 
-            perspective: 1000px; 
-            border-radius: var(--radius);
-            overflow: hidden; 
-            box-shadow: var(--shadow); 
-            position: relative;
-            background: var(--card-bg); 
-            border: 1px solid var(--border);
-            transition: transform 0.2s, box-shadow 0.2s;
-            touch-action: manipulation; /* Improves touch response */
+            min-height: var(--card-min-height); perspective: 1000px; border-radius: var(--radius);
+            overflow: hidden; box-shadow: var(--shadow); position: relative;
+            background: var(--card-bg); border: 1px solid var(--border);
+            transition: transform 0.2s, box-shadow 0.2s; touch-action: manipulation;
         }
-        
         .flip-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
         .flip-card.new { animation: appear 0.4s ease forwards; opacity: 0; transform: scale(0.95); }
         @keyframes appear { to { opacity: 1; transform: scale(1); } }
@@ -232,7 +133,7 @@
         .card-actions button { 
             background: none; border: none; color: var(--text); cursor: pointer; 
             padding: 4px; opacity: 0.4; border-radius: 4px; transition: all 0.2s; 
-            min-width: 30px; min-height: 30px; /* Touch target */
+            min-width: 30px; min-height: 30px;
         }
         .card-actions button:hover { opacity: 1; background: rgba(255,255,255,0.1); }
 
@@ -246,82 +147,66 @@
         .fs-pane { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; overflow-y: auto; height: 100%; }
         .fs-pane h3 { margin-bottom: 12px; color: var(--primary); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; }
 
-        /* Streaming */
+        /* Streaming & Thinking Visuals */
         .streaming { text-align: center; color: #888; padding: 20px; }
         .cursor { display: inline-block; width: 3px; height: 1em; background: currentColor; animation: blink 1s infinite; vertical-align: middle; }
         @keyframes blink { 50% { opacity: 0; } }
+        
+        /* The "Thinking" indicator - replaces the blocking spinner */
+        .thinking-indicator {
+            display: inline-block;
+            color: var(--primary);
+            font-weight: bold;
+            margin-top: 10px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            animation: pulse-text 1.5s infinite;
+        }
+        @keyframes pulse-text { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
 
         /* Input Bar - MOBILE OPTIMIZED */
         #inputPanel {
             position: fixed; bottom: 0; left: 0; right: 0; 
-            background: var(--card-bg);
-            border-top: 1px solid var(--border); 
-            padding: 12px; 
-            display: flex; gap: 10px;
-            z-index: 100; 
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.2); 
-            align-items: center;
+            background: var(--card-bg); border-top: 1px solid var(--border); 
+            padding: 12px; display: flex; gap: 10px; z-index: 100; 
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.2); align-items: center;
             padding-bottom: calc(12px + var(--safe-area-bottom));
         }
         
         #userInput {
-            flex: 1; 
-            padding: 12px 14px; 
-            border-radius: 24px; /* Rounded pill shape */
-            border: 1px solid var(--border); 
-            background: var(--bg); 
-            color: var(--text); 
-            font-size: 16px; /* Prevents zoom on iOS */
-            outline: none; 
-            transition: border 0.2s;
-            resize: none;
-            height: 46px;
-            max-height: 100px;
-            overflow-y: auto;
+            flex: 1; padding: 12px 14px; border-radius: 24px; border: 1px solid var(--border); 
+            background: var(--bg); color: var(--text); font-size: 16px; outline: none; 
+            transition: border 0.2s; resize: none; height: 46px; max-height: 100px; overflow-y: auto;
         }
         #userInput:focus { border-color: var(--primary); }
 
-        /* THE NEW SEND ICON ⏎ */
+        /* NEW SEND ICON ⏎ */
         #sendBtn { 
-            background: var(--primary); 
-            color: white; 
-            border: none; 
-            padding: 0 16px; 
-            border-radius: 24px; 
-            cursor: pointer; 
-            font-weight: bold; 
+            background: var(--primary); color: white; border: none; padding: 0 16px; 
+            border-radius: 24px; cursor: pointer; font-weight: bold; 
             display: flex; align-items: center; justify-content: center; 
-            min-width: 46px; 
-            height: 46px; 
-            font-size: 22px; /* Big icon */
-            transition: all 0.2s; 
-            flex-shrink: 0;
+            min-width: 46px; height: 46px; font-size: 22px; 
+            transition: all 0.2s; flex-shrink: 0;
         }
         #sendBtn:hover { background: #a1172f; transform: translateY(-1px); }
-        #sendBtn.listening { background: #d32f2f; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        #sendBtn.listening { background: #d32f2f; animation: pulse-btn 1s infinite; }
+        @keyframes pulse-btn { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
         /* View Button (Bottom Right) */
-        .view-fab-container {
-            position: fixed;
-            bottom: 80px; /* Above input */
-            right: 12px;
-            z-index: 90;
-        }
+        .view-fab-container { position: fixed; bottom: 80px; right: 12px; z-index: 90; }
 
         /* Context Menu */
         #cardMenu {
             position: fixed; background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
             padding: 6px; display: none; flex-direction: column; gap: 2px; z-index: 2000;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); min-width: 180px;
-            max-height: 60vh; overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); min-width: 180px; max-height: 60vh; overflow-y: auto;
         }
         #cardMenu.active { display: flex; }
         .menu-item { 
-            display: flex; align-items: center; gap: 10px; padding: 10px 12px; 
-            border-radius: 6px; cursor: pointer; color: var(--text); 
-            background: transparent; border: none; width: 100%; text-align: left; font-size: 14px; 
-            transition: background 0.1s;
+            display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 6px; 
+            cursor: pointer; color: var(--text); background: transparent; border: none; width: 100%; 
+            text-align: left; font-size: 14px; transition: background 0.1s;
         }
         .menu-item:active { background: rgba(255,255,255,0.1); }
         .menu-item i { width: 20px; text-align: center; }
@@ -360,11 +245,7 @@
         .slider-group input { flex: 1; }
         .lock-checkbox { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; }
 
-        /* Loading & Toast */
-        #loading { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 3000; flex-direction: column; color: white; }
-        #loading.active { display: flex; }
-        .loader { width: 40px; height: 40px; border: 4px solid #fff; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 12px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        /* Toast */
         #toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 10px 16px; border-radius: 20px; font-size: 13px; z-index: 2500; transition: transform 0.3s; opacity: 0; box-shadow: var(--shadow); }
         #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
@@ -434,7 +315,6 @@
     <!-- Input Panel -->
     <div id="inputPanel">
         <input type="text" id="userInput" placeholder="Type or say something..." autocomplete="off" spellcheck="false">
-        <!-- Icon changed to ⏎ (Enter) -->
         <button id="sendBtn" title="Send">⏎</button>
     </div>
 
@@ -603,8 +483,7 @@
         </div>
     </div>
 
-    <!-- Loading & Toast -->
-    <div id="loading"><div class="loader"></div><div>Processing...</div></div>
+    <!-- Toast -->
     <div id="toast">Action Saved</div>
 
     <script>
@@ -900,7 +779,7 @@ User requests are natural language. Be efficient.`;
                     div.classList.add('locked');
                 }
 
-                const rHtml = card.r === '...' ? '<div class="streaming"><span class="cursor"></span></div>' : this.md(card.r);
+                const rHtml = card.r === '...' ? '<div class="streaming"><span class="thinking-indicator">Thinking...</span></div>' : this.md(card.r);
 
                 div.innerHTML = `
                     <div class="flip-card-inner">
@@ -931,7 +810,7 @@ User requests are natural language. Be efficient.`;
 
                 // --- TOUCH INTERACTIONS ---
                 
-                // 1. Short Tap: Flip (if not touching buttons)
+                // 1. Short Tap: Flip
                 div.addEventListener('click', (e) => {
                     if (e.target.closest('button') || e.target.closest('.card-actions')) return;
                     if (this.selectedIds.size > 0) {
@@ -943,13 +822,12 @@ User requests are natural language. Be efficient.`;
                     if (this.settings.view === 'full') this.openFullscreen(card.id);
                 });
 
-                // 2. Double Tap: Flip (Better for mobile)
+                // 2. Double Tap: Flip
                 let lastTap = 0;
                 div.addEventListener('touchend', (e) => {
                     const currentTime = new Date().getTime();
                     const tapLength = currentTime - lastTap;
                     if (tapLength < 300 && tapLength > 0) {
-                        // Double tap detected
                         if (e.target.closest('button') || e.target.closest('.card-actions')) return;
                         div.classList.toggle('flipped');
                         e.preventDefault();
@@ -957,16 +835,14 @@ User requests are natural language. Be efficient.`;
                     lastTap = currentTime;
                 });
 
-                // 3. Long Press: Open Menu (Instant)
+                // 3. Long Press: Menu
                 let pressTimer;
                 div.addEventListener('touchstart', (e) => {
-                    // Don't trigger if selecting
                     if (this.selectedIds.size > 0) return;
                     pressTimer = setTimeout(() => {
                         this.openCardMenu(card.id, e);
-                        // Vibrate for feedback
                         if (navigator.vibrate) navigator.vibrate(50);
-                    }, 400); // Shorter time for mobile feel
+                    }, 400);
                 });
                 div.addEventListener('touchend', () => clearTimeout(pressTimer));
                 div.addEventListener('touchmove', () => clearTimeout(pressTimer));
@@ -999,8 +875,10 @@ User requests are natural language. Be efficient.`;
             }
 
             async sendRequest(prompt, contextCardId = null) {
-                this.toggleLoading(true);
+                // We do NOT toggle a loading screen here anymore.
+                // We add the card immediately with "Thinking..." text.
                 this.streamingId = contextCardId ? contextCardId : this.addCard(prompt, '...', {});
+                
                 const cardEl = document.querySelector(`.flip-card[data-id="${this.streamingId}"]`);
                 if(cardEl && !contextCardId) setTimeout(() => cardEl.classList.add('flipped'), 100);
 
@@ -1024,6 +902,7 @@ User requests are natural language. Be efficient.`;
                     const reader = res.body.getReader();
                     let buffer = '';
                     let accumulated = '';
+                    let isFirstChunk = true;
 
                     while (true) {
                         const { done, value } = await reader.read();
@@ -1040,7 +919,13 @@ User requests are natural language. Be efficient.`;
                                 const chunk = json.choices?.[0]?.delta?.content;
                                 if (chunk) {
                                     accumulated += chunk;
-                                    this.updateStreamingContent(accumulated);
+                                    // If it's the first chunk, replace "Thinking" with the actual content
+                                    if (isFirstChunk) {
+                                        this.updateStreamingContent(accumulated, true);
+                                        isFirstChunk = false;
+                                    } else {
+                                        this.updateStreamingContent(accumulated, false);
+                                    }
                                 }
                             } catch {}
                         }
@@ -1049,26 +934,32 @@ User requests are natural language. Be efficient.`;
                     this.finalizeResponse(accumulated);
 
                 } catch (err) {
-                    this.updateStreamingContent(`Error: ${err.message}`);
+                    // Show error IN the card, don't alert
+                    const el = document.querySelector(`.flip-card[data-id="${this.streamingId}"] .response-content`);
+                    if (el) el.innerHTML = `<span style="color: #ff6b6b; font-weight: bold;">Error: ${err.message}</span>`;
                     this.streamingId = null; 
-                } finally {
-                    this.toggleLoading(false);
                 }
             }
 
-            updateStreamingContent(text) {
+            updateStreamingContent(text, replace = false) {
                 if (!this.streamingId) return;
                 const visible = text.replace(/![^!]+!/g, '');
                 const el = document.querySelector(`.flip-card[data-id="${this.streamingId}"] .response-content`);
+                
                 if (el) {
-                    el.innerHTML = this.md(visible) + '<div class="streaming"><span class="cursor"></span></div>';
+                    if (replace) {
+                        el.innerHTML = this.md(visible); // Replace "Thinking..."
+                    } else {
+                        el.innerHTML = this.md(visible) + '<div class="streaming"><span class="cursor"></span></div>';
+                    }
+                    // Auto scroll only if user hasn't scrolled up manually (omitted for simplicity, but good practice)
                     el.scrollTop = el.scrollHeight;
                 }
 
                 if (this.fullscreenId === this.streamingId) {
                     const fsEl = document.getElementById('fsResponse');
                     if (fsEl) {
-                        fsEl.innerHTML = this.md(visible) + '<div class="streaming"><span class="cursor"></span></div>';
+                        fsEl.innerHTML = this.md(visible);
                         fsEl.scrollTop = fsEl.scrollHeight;
                     }
                 }
@@ -1450,7 +1341,6 @@ User requests are natural language. Be efficient.`;
             }
 
             async requestMergeUpdate(id, prompt) {
-                this.toggleLoading(true);
                 try {
                     const res = await fetch(PROXY_URL, {
                         method: 'POST',
@@ -1460,6 +1350,7 @@ User requests are natural language. Be efficient.`;
                     const reader = res.body.getReader();
                     let buffer = '';
                     let accumulated = '';
+                    let isFirstChunk = true;
                     while (true) {
                         const { done, value } = await reader.read();
                         if (done) break;
@@ -1474,16 +1365,21 @@ User requests are natural language. Be efficient.`;
                                 const chunk = json.choices?.[0]?.delta?.content;
                                 if (chunk) {
                                     accumulated += chunk;
-                                    this.updateStreamingContent(accumulated);
+                                    if (isFirstChunk) {
+                                        this.updateStreamingContent(accumulated, true);
+                                        isFirstChunk = false;
+                                    } else {
+                                        this.updateStreamingContent(accumulated, false);
+                                    }
                                 }
                             } catch {}
                         }
                     }
                     this.finalizeResponse(accumulated);
                 } catch (e) {
-                    this.updateStreamingContent("Merge failed.");
+                    const el = document.querySelector(`.flip-card[data-id="${id}"] .response-content`);
+                    if (el) el.innerHTML = `<span style="color: #ff6b6b;">Merge Failed: ${e.message}</span>`;
                 }
-                this.toggleLoading(false);
             }
 
             applyAITheme() {
@@ -1510,16 +1406,21 @@ User requests are natural language. Be efficient.`;
 Based on this vibe: ${desc}
 Do not output any other text.`;
 
-                this.toggleLoading(true);
                 this.closeModal('aiThemeModal');
+                // We will show a toast while generating, but let the stream update happen if we trick the system
+                // For simplicity in this modal, we'll just assume success or failure after a short wait
+                // Ideally, we'd attach to a stream. Let's just alert the user if it fails.
+                
+                // Actually, let's use a temporary hidden "dummy" card to handle the stream parsing
                 this.showToast("Generating Theme...");
-
+                
                 fetch(PROXY_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt: prompt })
                 })
                 .then(res => {
+                    // We need to read the stream to get the text
                     const reader = res.body.getReader();
                     let fullText = "";
                     const processChunk = () => {
@@ -1531,8 +1432,9 @@ Do not output any other text.`;
                                     this.applyTheme();
                                     this.saveState();
                                     this.showToast(`Theme: ${themeUpdate.name}`);
+                                } else {
+                                    this.showToast("Theme generation failed (parse error)");
                                 }
-                                this.toggleLoading(false);
                                 return;
                             }
                             const text = this.decoder.decode(value, { stream: true });
@@ -1543,8 +1445,7 @@ Do not output any other text.`;
                     return processChunk();
                 })
                 .catch(e => {
-                    this.toggleLoading(false);
-                    alert("Theme generation failed.");
+                    this.showToast("Theme generation failed");
                 });
             }
 
@@ -1755,12 +1656,6 @@ Do not output any other text.`;
                     const text = card.r.replace(/[#*_`]/g, '').substring(0, 2000);
                     responsiveVoice.speak(text, "US English Female", { rate: 1.1 });
                 }
-            }
-
-            toggleLoading(show) {
-                const el = document.getElementById('loading');
-                if (show) el.classList.add('active');
-                else el.classList.remove('active');
             }
 
             showToast(msg) {
