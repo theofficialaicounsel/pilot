@@ -148,7 +148,7 @@
         .fs-pane h3 { margin-bottom: 12px; color: var(--primary); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; }
 
         /* Streaming & Thinking Visuals */
-        .streaming { text-align: center; color: #888; padding: 20px; }
+        .streaming { text-align: center; color: #888; padding: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .cursor { display: inline-block; width: 3px; height: 1em; background: currentColor; animation: blink 1s infinite; vertical-align: middle; }
         @keyframes blink { 50% { opacity: 0; } }
         
@@ -157,13 +157,27 @@
             display: inline-block;
             color: var(--primary);
             font-weight: bold;
-            margin-top: 10px;
             font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 1px;
             animation: pulse-text 1.5s infinite;
         }
         @keyframes pulse-text { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
+
+        /* Stop Stream Button */
+        .stop-stream-btn {
+            background: #d32f2f;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            vertical-align: middle;
+            margin-left: 10px;
+            transition: all 0.2s;
+        }
+        .stop-stream-btn:hover { background: #b71c1c; transform: scale(1.05); }
 
         /* Input Bar - MOBILE OPTIMIZED */
         #inputPanel {
@@ -545,6 +559,7 @@ User requests are natural language. Be efficient.`;
                 this.isListening = false;
 
                 this.decoder = new TextDecoder();
+                this.abortController = null; // NEW: For stopping streams
             }
 
             async init() {
@@ -556,6 +571,13 @@ User requests are natural language. Be efficient.`;
                 this.renderAll();
                 this.updateToggles();
                 
+                // NEW: Add beforeunload listener
+                window.addEventListener('beforeunload', (e) => {
+                    if (this.streamingId) {
+                        this.stopStream();
+                    }
+                });
+
                 document.getElementById('stylePadding').addEventListener('input', (e) => document.getElementById('valPad').textContent = e.target.value + 'px');
                 document.getElementById('styleRadius').addEventListener('input', (e) => document.getElementById('valRad').textContent = e.target.value + 'px');
                 document.getElementById('styleWidth').addEventListener('input', (e) => document.getElementById('valWid').textContent = e.target.value + 'px');
@@ -779,7 +801,17 @@ User requests are natural language. Be efficient.`;
                     div.classList.add('locked');
                 }
 
-                const rHtml = card.r === '...' ? '<div class="streaming"><span class="thinking-indicator">Thinking...</span></div>' : this.md(card.r);
+                // MODIFIED: Include stop button if this is the streaming card
+                let rHtml;
+                if (card.r === '...') {
+                    if (this.streamingId === card.id) {
+                        rHtml = '<div class="streaming"><span class="thinking-indicator">Thinking...</span><button class="stop-stream-btn" onclick="app.stopStream()">Stop</button></div>';
+                    } else {
+                        rHtml = '<div class="streaming"><span class="thinking-indicator">Thinking...</span></div>';
+                    }
+                } else {
+                    rHtml = this.md(card.r);
+                }
 
                 div.innerHTML = `
                     <div class="flip-card-inner">
@@ -874,6 +906,16 @@ User requests are natural language. Be efficient.`;
                 input.value = '';
             }
 
+            // NEW: Scroll helper method
+            scrollToBottom(element) {
+                if (!element) return;
+                // Check if user is near bottom (within 100px) before scrolling
+                const isNearBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 100;
+                if (isNearBottom) {
+                    element.scrollTop = element.scrollHeight;
+                }
+            }
+
             async sendRequest(prompt, contextCardId = null) {
                 // We do NOT toggle a loading screen here anymore.
                 // We add the card immediately with "Thinking..." text.
@@ -890,11 +932,16 @@ User requests are natural language. Be efficient.`;
                     }
                 }
 
+                // NEW: Create abort controller
+                this.abortController = new AbortController();
+                const signal = this.abortController.signal;
+
                 try {
                     const res = await fetch(PROXY_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ sessionId: this.sessionId, prompt: fullPrompt })
+                        body: JSON.stringify({ sessionId: this.sessionId, prompt: fullPrompt }),
+                        signal // NEW: Add abort signal
                     });
 
                     if (!res.ok) throw new Error("Proxy Error");
@@ -934,13 +981,36 @@ User requests are natural language. Be efficient.`;
                     this.finalizeResponse(accumulated);
 
                 } catch (err) {
+                    // MODIFIED: Handle abort specifically
+                    if (err.name === 'AbortError') {
+                        const el = document.querySelector(`.flip-card[data-id="${this.streamingId}"] .response-content`);
+                        if (el) {
+                            const currentContent = el.innerHTML;
+                            el.innerHTML = currentContent + '<div style="color:#ff6b6b; margin-top:10px;">[Streaming Stopped by User]</div>';
+                        }
+                        this.streamingId = null;
+                        return;
+                    }
                     // Show error IN the card, don't alert
                     const el = document.querySelector(`.flip-card[data-id="${this.streamingId}"] .response-content`);
                     if (el) el.innerHTML = `<span style="color: #ff6b6b; font-weight: bold;">Error: ${err.message}</span>`;
                     this.streamingId = null; 
+                } finally {
+                    // NEW: Clean up abort controller
+                    this.abortController = null;
                 }
             }
 
+            // NEW: Stop stream method
+            stopStream() {
+                if (this.abortController) {
+                    this.abortController.abort();
+                    this.abortController = null;
+                    this.showToast("Streaming stopped");
+                }
+            }
+
+            // MODIFIED: Now calls scrollToBottom
             updateStreamingContent(text, replace = false) {
                 if (!this.streamingId) return;
                 const visible = text.replace(/![^!]+!/g, '');
@@ -952,15 +1022,15 @@ User requests are natural language. Be efficient.`;
                     } else {
                         el.innerHTML = this.md(visible) + '<div class="streaming"><span class="cursor"></span></div>';
                     }
-                    // Auto scroll only if user hasn't scrolled up manually (omitted for simplicity, but good practice)
-                    el.scrollTop = el.scrollHeight;
+                    // Auto scroll only if user hasn't scrolled up manually
+                    this.scrollToBottom(el);
                 }
 
                 if (this.fullscreenId === this.streamingId) {
                     const fsEl = document.getElementById('fsResponse');
                     if (fsEl) {
                         fsEl.innerHTML = this.md(visible);
-                        fsEl.scrollTop = fsEl.scrollHeight;
+                        this.scrollToBottom(fsEl);
                     }
                 }
             }
@@ -1341,11 +1411,16 @@ User requests are natural language. Be efficient.`;
             }
 
             async requestMergeUpdate(id, prompt) {
+                // NEW: Create abort controller
+                this.abortController = new AbortController();
+                const signal = this.abortController.signal;
+
                 try {
                     const res = await fetch(PROXY_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ sessionId: this.sessionId, prompt: SYSTEM_PROMPT + "\n\nUser: " + prompt })
+                        body: JSON.stringify({ sessionId: this.sessionId, prompt: SYSTEM_PROMPT + "\n\nUser: " + prompt }),
+                        signal // NEW: Add abort signal
                     });
                     const reader = res.body.getReader();
                     let buffer = '';
@@ -1376,9 +1451,19 @@ User requests are natural language. Be efficient.`;
                         }
                     }
                     this.finalizeResponse(accumulated);
-                } catch (e) {
+                } catch (err) {
+                    if (err.name === 'AbortError') {
+                        const el = document.querySelector(`.flip-card[data-id="${id}"] .response-content`);
+                        if (el) {
+                            const currentContent = el.innerHTML;
+                            el.innerHTML = currentContent + '<div style="color:#ff6b6b; margin-top:10px;">[Merge Stopped by User]</div>';
+                        }
+                        return;
+                    }
                     const el = document.querySelector(`.flip-card[data-id="${id}"] .response-content`);
-                    if (el) el.innerHTML = `<span style="color: #ff6b6b;">Merge Failed: ${e.message}</span>`;
+                    if (el) el.innerHTML = `<span style="color: #ff6b6b;">Merge Failed: ${err.message}</span>`;
+                } finally {
+                    this.abortController = null;
                 }
             }
 
